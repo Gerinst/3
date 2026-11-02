@@ -1,5 +1,7 @@
 const assert = require('node:assert/strict');
 const vm = require('node:vm');
+const fs = require('node:fs');
+const path = require('node:path');
 const { load, eml, pdf, textAdvice } = require('./fixtures.cjs');
 
 // Hand-written semantic oracles, independent of scores, regexes and current parser output.
@@ -41,7 +43,7 @@ function other(r) {
   assert.equal(r.verdict, 'other', 'a clearly unrelated message is not a payment advice');
   assert.equal(r.needsReview, false);
 }
-function add(name, input, oracle) { cases.push({ name, input, oracle }); }
+function add(name, input, oracle, mailbox) { cases.push({ name, input, oracle, mailbox }); }
 function message(text, carrier, subject = 'Unterlagen', extra = {}) {
   if (carrier === 'body') return eml({ subject, body: text, ...extra });
   const attachment = carrier === 'pdf'
@@ -124,6 +126,24 @@ for (const [name, text] of negatives) matrix(name, text, other);
 
 // Conflicting evidence must prevent both subject and category changes.
 const attachment = { name: 'remittance.pdf', type: 'application/pdf', text: pdf(textAdvice('1.287,43')) };
+// The archived inputs are exact copies, including the quoted reminder and the attached payment proposal.
+for (const file of ['H033.eml', 'T203.eml']) add('archived future non-payment ' + file,
+  fs.readFileSync(path.join(__dirname, 'legacy-regressions', file)).toString('base64'), other,
+  'debitoren@nordwerk.example');
+const futureReply = 'Der Betrag von 2.902,84 EUR wird nächste Woche überwiesen, sobald unser Geschäftsführer zurück ist und die Zahlung freigeben kann.';
+const futureProposal = 'Anbei unser Zahlungsvorschlag für den nächsten Zahllauf. Der Vorschlag ist noch nicht freigegeben. Das Zahlungsavis erhalten Sie wie gewohnt nach Ausführung der Zahlung.';
+add('future reply without advice remains untouched', eml({ body: futureReply }), other);
+add('future reply beside a matching issued advice requires review', eml({ body: futureReply,
+  attachments: [{ name: 'avis.pdf', type: 'application/pdf', text: pdf(textAdvice('2.902,84')) }] }), review);
+add('unissued future advice beside an invoice remains untouched', eml({ body: futureProposal,
+  attachments: [{ name: 'rechnung.txt', text: 'Rechnung Nr. 4711\nRechnungsbetrag: 1.287,43 EUR\nBitte bezahlen Sie innerhalb von 14 Tagen.' }] }), other);
+add('future proposal contradicts an attached issued advice', eml({ body: futureProposal, attachments: [attachment] }), review);
+add('future proposal cannot hide an unreadable attachment', eml({ body: futureProposal,
+  attachments: [{ name: 'beleg.pdf', type: 'application/pdf', text: '%PDF-1.4\n%%EOF' }] }), review);
+add('future statement does not hide a cancellation', eml({ body: futureReply + '\nDie Zahlung wurde storniert.' }), review);
+add('future proposal does not hide a cancelled advice', eml({ body: futureProposal + '\nDas Zahlungsavis wurde storniert.' }), review);
+add('pending body without amount still blocks a readable advice', eml({
+  body: 'Remittance advice\nPayment status: Pending\nNo transfer has been executed.', attachments: [attachment] }), review);
 for (const [name, body] of [
   ['DE amount contradiction', 'Anbei das Zahlungsavis. Tatsaechlich haben wir heute nur 800,17 EUR ueberwiesen.'],
   ['EN amount contradiction', 'Attached is the remittance advice. The payment actually sent today is EUR 800.17.'],
@@ -175,7 +195,8 @@ for (const test of cases) {
   let result;
   try {
     ctx.semanticTestInput = test.input;
-    result = vm.runInContext('main({}, semanticTestInput)', ctx, { timeout: 5000 });
+    ctx.semanticMailbox = test.mailbox;
+    result = vm.runInContext("main({}, semanticTestInput, '', undefined, semanticMailbox)", ctx, { timeout: 5000 });
     test.oracle(result);
     passed++;
   } catch (error) {

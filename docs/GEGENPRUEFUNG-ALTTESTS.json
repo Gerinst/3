@@ -1,0 +1,1174 @@
+{
+  "sourceRepository": "Gerinst/2testordner",
+  "sourceCommit": "b9ada7d60cdb2ce76dfc06a90834cecce23ab422",
+  "parserBaseCommit": "03620a3476da84c499b04b3cfc8ee33724967337",
+  "parserSha256": "1a1c90b15217572d0b425726aa3897823b272fb4fdad09c11296266c365e9964",
+  "scope": "Local current-parser execution only; no archived JS executed, no external mail or Microsoft 365 calls. Legacy UI expectations intentionally not asserted.",
+  "summary": {
+    "records": 2920,
+    "existing": 2390,
+    "uniqueExecutions": 2305,
+    "missing": 530,
+    "empty": 0,
+    "regenerated": 685,
+    "withOracle": 2390,
+    "noOracle": 0,
+    "executionErrors": 0,
+    "findingCases": 0,
+    "conservativeReview": 781,
+    "expectedOtherReviewed": 40,
+    "legacyBehaviorDifferences": 4,
+    "originalFindingCases": 0,
+    "regeneratedFindingCases": 0,
+    "distinctInputHashes": 2287,
+    "elapsedSeconds": 58.2
+  },
+  "missingFiles": [
+    "test/bench/corpus/bank/bank_01_gutschriftsanzeige-volksbank.pdf",
+    "test/bench/corpus/bank/bank_02_sepa-auftragsbestaetigung.pdf",
+    "test/bench/corpus/bank/bank_03_brief-skonto-im-satz.pdf",
+    "test/bench/corpus/bank/bank_04_brief-kurz-quartz.pdf",
+    "test/bench/corpus/bank/bank_05_email-outlook-tabelle.pdf",
+    "test/bench/corpus/bank/bank_06_portal-remittance-en.pdf",
+    "test/bench/corpus/bank/bank_07_portal-zahlungsbenachrichtigung-de.pdf",
+    "test/bench/corpus/bank/bank_08_remittance-usd-wire.pdf",
+    "test/bench/corpus/bank/bank_09_payment-advice-nl-eur.pdf",
+    "test/bench/corpus/bank/bank_10_avis-oesterreich-skonto3.pdf",
+    "test/bench/corpus/bank/bank_11_verguetungsanzeige-schweiz-chf.pdf",
+    "test/bench/corpus/bank/bank_12_gutschrift-courier-legacy.pdf",
+    "test/bench/corpus/bank/bank_13_bankavis-im-auftrag.pdf",
+    "test/bench/corpus/bank/bank_14_email-plaintext.pdf",
+    "test/bench/corpus/bank/bank_15_teilzahlung-brief.pdf",
+    "test/bench/corpus/bank/bank_16_skonto3-satz-mwst.pdf",
+    "test/bench/corpus/bank/bank_17_gutschrift-auslandszahlung-entgelte.pdf",
+    "test/bench/corpus/bank/bank_18_check-stub-usd.pdf",
+    "test/bench/corpus/bank/bank_19_schweiz-skonto-typo-apostroph.pdf",
+    "test/bench/corpus/bank/bank_20_oesterreich-gutschrift-verrechnet.pdf",
+    "test/bench/corpus/bank/bank_21_lastschrift-vorabankuendigung.pdf",
+    "test/bench/corpus/bank/bank_22_kontoauszug.pdf",
+    "test/bench/corpus/bank/bank_23_zahlungserinnerung.pdf",
+    "test/bench/corpus/bank/bank_24_email-reply-teilzahlung-en.pdf",
+    "test/bench/corpus/bank/bank_25_portal-sammelavis-mehrseitig.pdf",
+    "test/bench/corpus/bank/bank_26_sepa-verwendungszweck-betraege.pdf",
+    "test/bench/corpus/bank/bank_27_betrag-in-worten.pdf",
+    "test/bench/corpus/bank/bank_28_portal-invoice-paid-en.pdf",
+    "test/bench/corpus/bank/bank_29_oesterreich-email-kurz.pdf",
+    "test/bench/corpus/bank/bank_30_email-euro-suffix.pdf",
+    "test/bench/corpus/deductions/deductions_01_sap-skonto-table.pdf",
+    "test/bench/corpus/deductions/deductions_02_summary-block-single.pdf",
+    "test/bench/corpus/deductions/deductions_03_invoices-minus-creditnote.pdf",
+    "test/bench/corpus/deductions/deductions_04_letter-abzueglich-skonto.pdf",
+    "test/bench/corpus/deductions/deductions_05_skonto-column-rightmost.pdf",
+    "test/bench/corpus/deductions/deductions_06_partial-payment-rest.pdf",
+    "test/bench/corpus/deductions/deductions_07_final-invoice-retention.pdf",
+    "test/bench/corpus/deductions/deductions_08_bank-fee-deduction.pdf",
+    "test/bench/corpus/deductions/deductions_09_two-column-summary-line.pdf",
+    "test/bench/corpus/deductions/deductions_10_million-amount.pdf",
+    "test/bench/corpus/deductions/deductions_11_narrow-nbsp-thousands.pdf",
+    "test/bench/corpus/deductions/deductions_12_invoice-copy-page2.pdf",
+    "test/bench/corpus/deductions/deductions_13_offset-credit-sections.pdf",
+    "test/bench/corpus/deductions/deductions_14_mono-paid-open-columns.pdf",
+    "test/bench/corpus/deductions/deductions_15_plaintext-cups.pdf",
+    "test/bench/corpus/deductions/deductions_16_construction-withholding-tax.pdf",
+    "test/bench/corpus/deductions/deductions_17_landscape-skonto-percent.pdf",
+    "test/bench/corpus/deductions/deductions_18_banking-transfer-remittance.pdf",
+    "test/bench/corpus/deductions/deductions_19_landscape-re-gs-list.pdf",
+    "test/bench/corpus/deductions/deductions_20_two-page-carry-forward.pdf",
+    "test/bench/corpus/deductions/deductions_21_vat-breakdown-skonto.pdf",
+    "test/bench/corpus/deductions/deductions_22_skonto-vat-correction-nnbsp.pdf",
+    "test/bench/corpus/deductions/deductions_23_defect-retention-letter.pdf",
+    "test/bench/corpus/deductions/deductions_24_sap-trailing-minus.pdf",
+    "test/bench/corpus/deductions/deductions_25_austrian-aviso-bonus.pdf",
+    "test/bench/corpus/deductions/deductions_26_swiss-chf-apostrophe.pdf",
+    "test/bench/corpus/deductions/deductions_27_retailer-deduction-codes.pdf",
+    "test/bench/corpus/deductions/deductions_28_header-box-two-pairs.pdf",
+    "test/bench/corpus/deductions/deductions_29_gesamtbetrag-before-skonto.pdf",
+    "test/bench/corpus/deductions/deductions_30_progress-payment-checked.pdf",
+    "test/bench/corpus/erp/erp_01_sap-f110-single.pdf",
+    "test/bench/corpus/erp/erp_02_sap-f110-six-skonto.pdf",
+    "test/bench/corpus/erp/erp_03_sap-credit-trailing-minus.pdf",
+    "test/bench/corpus/erp/erp_04_sap-two-pages-uebertrag.pdf",
+    "test/bench/corpus/erp/erp_05_bc-single-skonto.pdf",
+    "test/bench/corpus/erp/erp_06_bc-five-invoices-band.pdf",
+    "test/bench/corpus/erp/erp_07_d365-credit-leading-minus.pdf",
+    "test/bench/corpus/erp/erp_08_sage100-style-fixed-width.pdf",
+    "test/bench/corpus/erp/erp_09_datev-style-zahlungsavis.pdf",
+    "test/bench/corpus/erp/erp_10_lexware-style-letter-single.pdf",
+    "test/bench/corpus/erp/erp_11_abacus-style-chf-apostrophe.pdf",
+    "test/bench/corpus/erp/erp_12_infor-ln-style-uppercase.pdf",
+    "test/bench/corpus/erp/erp_13_proalpha-seven-summary.pdf",
+    "test/bench/corpus/erp/erp_14_word-letter-euro-sign.pdf",
+    "test/bench/corpus/erp/erp_15_sap-usd-foreign.pdf",
+    "test/bench/corpus/erp/erp_16_bc-two-pages-uebertrag.pdf",
+    "test/bench/corpus/erp/erp_17_sap-netting-receivable.pdf",
+    "test/bench/corpus/erp/erp_18_sage50-summary-block.pdf",
+    "test/bench/corpus/erp/erp_19_datev-style-sepa-avis.pdf",
+    "test/bench/corpus/erp/erp_20_infor-landscape-net-vat-gross.pdf",
+    "test/bench/corpus/erp/erp_21_nav-classic-gutschrift.pdf",
+    "test/bench/corpus/erp/erp_22_sap-smartform-three-sums.pdf",
+    "test/bench/corpus/erp/erp_23_bau-schlussrechnung-einbehalt.pdf",
+    "test/bench/corpus/erp/erp_24_lexware-style-two-invoices.pdf",
+    "test/bench/corpus/erp/erp_25_infor-m3-bilingual.pdf",
+    "test/bench/corpus/erp/erp_26_sap-asterisk-amount-box.pdf",
+    "test/bench/corpus/erp/erp_27_proalpha-teilzahlung-rest.pdf",
+    "test/bench/corpus/erp/erp_28_bc-balance-after-payment.pdf",
+    "test/bench/corpus/erp/erp_29_shared-service-summary-box-top.pdf",
+    "test/bench/corpus/erp/erp_30_sap-bauabzugsteuer.pdf",
+    "test/bench/corpus/production/production_01_chrome-sap-standard.pdf",
+    "test/bench/corpus/production/production_02_chrome-landscape-wide-table.pdf",
+    "test/bench/corpus/production/production_03_chrome-letterspaced-labels.pdf",
+    "test/bench/corpus/production/production_04_chrome-two-column-list.pdf",
+    "test/bench/corpus/production/production_05_chrome-summary-box-drawn-last.pdf",
+    "test/bench/corpus/production/production_06_chrome-long-24-pages-uebertrag.pdf",
+    "test/bench/corpus/production/production_07_chrome-portal-print-header-footer.pdf",
+    "test/bench/corpus/production/production_08_chrome-us-letter-bilingual.pdf",
+    "test/bench/corpus/production/production_09_chrome-spool-monospace-trailing-minus.pdf",
+    "test/bench/corpus/production/production_10_chrome-svg-card-rotated-sidebar.pdf",
+    "test/bench/corpus/production/production_11_quartz-coretext-standard.pdf",
+    "test/bench/corpus/production/production_12_macos-textedit-rtf-tabs-print.pdf",
+    "test/bench/corpus/production/production_13_quartz-rotate90-landscape-content.pdf",
+    "test/bench/corpus/production/production_14_quartz-encrypted-owner-pw-municipal.pdf",
+    "test/bench/corpus/production/production_15_pdfkit-encrypted-hospital-sap.pdf",
+    "test/bench/corpus/production/production_16_cups-texttopdf-plain-text.pdf",
+    "test/bench/corpus/production/production_17_quartz-fake-bold-double-draw.pdf",
+    "test/bench/corpus/production/production_18_node-uncompressed-per-word-text.pdf",
+    "test/bench/corpus/production/production_19_node-body-in-form-xobject.pdf",
+    "test/bench/corpus/production/production_20_node-nested-xobjects-scaled.pdf",
+    "test/bench/corpus/production/production_21_node-acroform-filled-fields.pdf",
+    "test/bench/corpus/production/production_22_node-acroform-incremental-fill.pdf",
+    "test/bench/corpus/production/production_23_node-ocr-scan-skew08-invisible-text.pdf",
+    "test/bench/corpus/production/production_24_node-ocr-glyphless-type0-skew14.pdf",
+    "test/bench/corpus/production/production_25_node-rotate270-landscape-table.pdf",
+    "test/bench/corpus/production/production_26_node-greenbar-landscape-courier.pdf",
+    "test/bench/corpus/production/production_27_node-two-column-interleaved-stream.pdf",
+    "test/bench/corpus/production/production_28_node-columnwise-emission-shaded-total.pdf",
+    "test/bench/corpus/production/production_29_node-objstm-xrefstream-kerned-tj.pdf",
+    "test/bench/corpus/production/production_30_node-21-pages-cover-summary-then-detail.pdf",
+    "test/bench/corpus/traps/traps_01_lieferavis-spedition.pdf",
+    "test/bench/corpus/traps/traps_02_versandavis-desadv.pdf",
+    "test/bench/corpus/traps/traps_03_avisierung-zeitfenster.pdf",
+    "test/bench/corpus/traps/traps_04_lastschriftankuendigung-energie.pdf",
+    "test/bench/corpus/traps/traps_05_rechnung-saas-lastschrift.pdf",
+    "test/bench/corpus/traps/traps_06_rechnung-skonto-zahlbetrag.pdf",
+    "test/bench/corpus/traps/traps_07_schlussrechnung-abschlaege.pdf",
+    "test/bench/corpus/traps/traps_08_zahlungserinnerung.pdf",
+    "test/bench/corpus/traps/traps_09_mahnung-3-gebuehren.pdf",
+    "test/bench/corpus/traps/traps_10_kontoauszug-girokonto.pdf",
+    "test/bench/corpus/traps/traps_11_auftragsbestaetigung.pdf",
+    "test/bench/corpus/traps/traps_12_angebot-heizung.pdf",
+    "test/bench/corpus/traps/traps_13_gutschrift-lieferant-verrechnung.pdf",
+    "test/bench/corpus/traps/traps_14_preisliste-2027.pdf",
+    "test/bench/corpus/traps/traps_15_agb-zahlungsbedingungen.pdf",
+    "test/bench/corpus/traps/traps_16_lieferschein.pdf",
+    "test/bench/corpus/traps/traps_17_proforma-vorkasse.pdf",
+    "test/bench/corpus/traps/traps_18_stornorechnung.pdf",
+    "test/bench/corpus/traps/traps_19_saldenbestaetigung.pdf",
+    "test/bench/corpus/traps/traps_20_kreditkartenabrechnung.pdf",
+    "test/bench/corpus/traps/traps_21_leasing-zahlungsplan.pdf",
+    "test/bench/corpus/traps/traps_22_inkasso-forderungsaufstellung.pdf",
+    "test/bench/corpus/traps/traps_23_versandbestaetigung-webshop.pdf",
+    "test/bench/corpus/traps/traps_24_verzollungsavis-einfuhr.pdf",
+    "test/bench/corpus/traps/traps_25_kundenkontoauszug-op.pdf",
+    "test/bench/corpus/traps/traps_26_email-zahlungsavis-angefordert.pdf",
+    "test/bench/corpus/traps/traps_27_abschlagsplan-strom.pdf",
+    "test/bench/corpus/traps/traps_28_rechnung-mehrseitig-uebertrag.pdf",
+    "test/bench/corpus/traps/traps_29_abholavis-nachnahme.pdf",
+    "test/bench/corpus/traps/traps_30_ruecklastschrift-benachrichtigung.pdf",
+    "test/bench/corpus2/complex/complex_01_uebertrag-4seiten.pdf",
+    "test/bench/corpus2/complex/complex_02_verrechnung-gegenforderung.pdf",
+    "test/bench/corpus2/complex/complex_03_storno-neubuchung.pdf",
+    "test/bench/corpus2/complex/complex_04_gutschriften-gemischt.pdf",
+    "test/bench/corpus2/complex/complex_05_skonto-teilweise.pdf",
+    "test/bench/corpus2/complex/complex_06_zinsabzug-anzahlung.pdf",
+    "test/bench/corpus2/complex/complex_07_usd-eur-umrechnung.pdf",
+    "test/bench/corpus2/complex/complex_08_chf-eur-schweiz.pdf",
+    "test/bench/corpus2/complex/complex_09_zahlbetrag-links.pdf",
+    "test/bench/corpus2/complex/complex_10_summenblock-seite1.pdf",
+    "test/bench/corpus2/complex/complex_11_fusszeile-gesamtbetrag.pdf",
+    "test/bench/corpus2/complex/complex_12_siebenstellig-bauleistungen.pdf",
+    "test/bench/corpus2/complex/complex_13_querformat-9spalten.pdf",
+    "test/bench/corpus2/complex/complex_14_gesamtbetrag-vor-fortsetzung.pdf",
+    "test/bench/corpus2/complex/complex_15_150-posten-textdruck.pdf",
+    "test/bench/corpus2/complex/complex_16_bauabzugsteuer-einbehalt.pdf",
+    "test/bench/corpus2/complex/complex_17_jahresbonus-wkz-verrechnung.pdf",
+    "test/bench/corpus2/complex/complex_18_sap-druckliste-courier.pdf",
+    "test/bench/corpus2/complex/complex_19_gedreht-querformat-verrechnung.pdf",
+    "test/bench/corpus2/complex/complex_20_saldovortrag-nichtfaellig.pdf",
+    "test/bench/corpus2/complex/complex_21_rechnungen-gutschriften-bloecke.pdf",
+    "test/bench/corpus2/complex/complex_22_konzern-drei-gesellschaften.pdf",
+    "test/bench/corpus2/complex/complex_23_remittance-englisch-letter.pdf",
+    "test/bench/corpus2/complex/complex_24_teilzahlungen-raten.pdf",
+    "test/bench/corpus2/complex/complex_25_querformat-quartz-140posten.pdf",
+    "test/bench/corpus2/complex/complex_26_verzugszinsen-zuschlag.pdf",
+    "test/bench/corpus2/complex/complex_27_stadtkasse-aufrechnung.pdf",
+    "test/bench/corpus2/complex/complex_28_versicherung-regulierung.pdf",
+    "test/bench/corpus2/complex/complex_29_provisionsabrechnung-vorschuss.pdf",
+    "test/bench/corpus2/complex/complex_30_faelligkeitsgruppen-spaltenweise.pdf",
+    "test/bench/corpus2/international/international_01_uk-remittance-total-paid.pdf",
+    "test/bench/corpus2/international/international_02_us-payment-advice-usd-discount.pdf",
+    "test/bench/corpus2/international/international_03_ie-credit-note-parentheses.pdf",
+    "test/bench/corpus2/international/international_04_in-tds-withholding.pdf",
+    "test/bench/corpus2/international/international_05_nl-betalingsadvies.pdf",
+    "test/bench/corpus2/international/international_06_fr-avis-de-paiement.pdf",
+    "test/bench/corpus2/international/international_07_fr-escompte-avoir.pdf",
+    "test/bench/corpus2/international/international_08_it-avviso-di-pagamento.pdf",
+    "test/bench/corpus2/international/international_09_ch-zahlungsanzeige-strich.pdf",
+    "test/bench/corpus2/international/international_10_pl-awizo-bilingual.pdf",
+    "test/bench/corpus2/international/international_11_pl-wht-licence-fee.pdf",
+    "test/bench/corpus2/international/international_12_cz-avizo-czk-equivalent.pdf",
+    "test/bench/corpus2/international/international_13_ch-zahlungsavis-chf.pdf",
+    "test/bench/corpus2/international/international_14_ch-fr-frais-our-chf-debit.pdf",
+    "test/bench/corpus2/international/international_15_at-zahlungsavis-skonto.pdf",
+    "test/bench/corpus2/international/international_16_sap-en-payment-advice-note.pdf",
+    "test/bench/corpus2/international/international_17_sap-en-deduction-trailing-minus.pdf",
+    "test/bench/corpus2/international/international_18_us-wire-fee-deducted.pdf",
+    "test/bench/corpus2/international/international_19_uk-gbp-remittance.pdf",
+    "test/bench/corpus2/international/international_20_nl-betaalspecificatie-creditnota.pdf",
+    "test/bench/corpus2/international/international_21_uk-eur-paid-gbp-equivalent.pdf",
+    "test/bench/corpus2/international/international_22_in-bank-outward-remittance-mt103.pdf",
+    "test/bench/corpus2/international/international_23_en-two-page-carried-forward.pdf",
+    "test/bench/corpus2/international/international_24_ie-narrative-no-total-row.pdf",
+    "test/bench/corpus2/international/international_25_sg-plaintext-payment-advice.pdf",
+    "test/bench/corpus2/international/international_26_es-aviso-de-pago.pdf",
+    "test/bench/corpus2/international/international_27_us-purchase-order-nonavis.pdf",
+    "test/bench/corpus2/international/international_28_fr-releve-de-compte-nonavis.pdf",
+    "test/bench/corpus2/international/international_29_us-electronic-payment-notification.pdf",
+    "test/bench/corpus2/international/international_30_ie-partial-payment-balance.pdf",
+    "test/bench/corpus2/sectors/sectors_01_stadtkasse-zahlungsmitteilung.pdf",
+    "test/bench/corpus2/sectors/sectors_02_kreiskasse-aufrechnung.pdf",
+    "test/bench/corpus2/sectors/sectors_03_landeskasse-sammelzahlung.pdf",
+    "test/bench/corpus2/sectors/sectors_04_gemeindekasse-skonto.pdf",
+    "test/bench/corpus2/sectors/sectors_05_stadt-abschlag-einbehalt.pdf",
+    "test/bench/corpus2/sectors/sectors_06_stadtkasse-mahnung.pdf",
+    "test/bench/corpus2/sectors/sectors_07_krankenkasse-aag-erstattung.pdf",
+    "test/bench/corpus2/sectors/sectors_08_krankenkasse-hilfsmittel-sammelavis.pdf",
+    "test/bench/corpus2/sectors/sectors_09_kfz-haftpflicht-quote.pdf",
+    "test/bench/corpus2/sectors/sectors_10_leitungswasser-selbstbeteiligung.pdf",
+    "test/bench/corpus2/sectors/sectors_11_versicherung-leistungsablehnung.pdf",
+    "test/bench/corpus2/sectors/sectors_12_haftpflicht-neu-fuer-alt.pdf",
+    "test/bench/corpus2/sectors/sectors_13_gu-abschlag-sicherheitseinbehalt.pdf",
+    "test/bench/corpus2/sectors/sectors_14_bauabzugsteuer-abschlag.pdf",
+    "test/bench/corpus2/sectors/sectors_15_schlussrechnung-skonto-einbehalt.pdf",
+    "test/bench/corpus2/sectors/sectors_16_gu-zahlungsavis-erp.pdf",
+    "test/bench/corpus2/sectors/sectors_17_freigabe-sicherheitseinbehalt.pdf",
+    "test/bench/corpus2/sectors/sectors_18_pruefvermerk-abschlagsrechnung.pdf",
+    "test/bench/corpus2/sectors/sectors_19_zentralregulierung-delkredere.pdf",
+    "test/bench/corpus2/sectors/sectors_20_fachhandelsring-bonus-wkz.pdf",
+    "test/bench/corpus2/sectors/sectors_21_zentralregulierung-mainframe.pdf",
+    "test/bench/corpus2/sectors/sectors_22_zentralregulierung-kopfkasten.pdf",
+    "test/bench/corpus2/sectors/sectors_23_einkaufsgemeinschaft-delkredere.pdf",
+    "test/bench/corpus2/sectors/sectors_24_stadtwerke-guthaben-erstattung.pdf",
+    "test/bench/corpus2/sectors/sectors_25_eeg-einspeiseverguetung-gutschrift.pdf",
+    "test/bench/corpus2/sectors/sectors_26_gas-jahresabrechnung-nachzahlung.pdf",
+    "test/bench/corpus2/sectors/sectors_27_strom-guthaben-verrechnung.pdf",
+    "test/bench/corpus2/sectors/sectors_28_mieter-zahlungsavis-miete.pdf",
+    "test/bench/corpus2/sectors/sectors_29_leasing-kaufpreiszahlung.pdf",
+    "test/bench/corpus2/sectors/sectors_30_kautionsabrechnung-gewerbe.pdf",
+    "test/bench/corpus2/smallbiz/smallbiz_01_word-letter-hiermit.pdf",
+    "test/bench/corpus2/smallbiz/smallbiz_02_gdocs-zahlung-erfolgt.pdf",
+    "test/bench/corpus2/smallbiz/smallbiz_03_belegwerk-avis-3-rechnungen.pdf",
+    "test/bench/corpus2/smallbiz/smallbiz_04_kontorist-skonto-einzeln.pdf",
+    "test/bench/corpus2/smallbiz/smallbiz_05_excel-tabelle-gaststaette.pdf",
+    "test/bench/corpus2/smallbiz/smallbiz_06_outlook-mail-druck.pdf",
+    "test/bench/corpus2/smallbiz/smallbiz_07_einzeiler-text.pdf",
+    "test/bench/corpus2/smallbiz/smallbiz_08_maler-komma-strich.pdf",
+    "test/bench/corpus2/smallbiz/smallbiz_09_webmail-informell-euro.pdf",
+    "test/bench/corpus2/smallbiz/smallbiz_10_berater-eur-praefix.pdf",
+    "test/bench/corpus2/smallbiz/smallbiz_11_pages-brief-zwei-rechnungen.pdf",
+    "test/bench/corpus2/smallbiz/smallbiz_12_rechnix-zahlungsausgang.pdf",
+    "test/bench/corpus2/smallbiz/smallbiz_13_buchfix-avis-tabelle.pdf",
+    "test/bench/corpus2/smallbiz/smallbiz_14_elektro-brief-fusszeile.pdf",
+    "test/bench/corpus2/smallbiz/smallbiz_15_zahnarztpraxis-verdana.pdf",
+    "test/bench/corpus2/smallbiz/smallbiz_16_sportverein-palatino.pdf",
+    "test/bench/corpus2/smallbiz/smallbiz_17_autohaus-tj-array.pdf",
+    "test/bench/corpus2/smallbiz/smallbiz_18_fibu-textdruck-skonto.pdf",
+    "test/bench/corpus2/smallbiz/smallbiz_19_gdocs-letter-aufzaehlung.pdf",
+    "test/bench/corpus2/smallbiz/smallbiz_20_kanzlei-zur-anweisung.pdf",
+    "test/bench/corpus2/smallbiz/smallbiz_21_mail-antwort-mit-zitat.pdf",
+    "test/bench/corpus2/smallbiz/smallbiz_22_skonto-im-fliesstext.pdf",
+    "test/bench/corpus2/smallbiz/smallbiz_23_mail-skonto-drei-prozent.pdf",
+    "test/bench/corpus2/smallbiz/smallbiz_24_restzahlung-zweite-rate.pdf",
+    "test/bench/corpus2/smallbiz/smallbiz_25_teilzahlung-erste-rate.pdf",
+    "test/bench/corpus2/smallbiz/smallbiz_26_tippfehler-komma-strich-euro.pdf",
+    "test/bench/corpus2/smallbiz/smallbiz_27_verrechnung-gutschrift.pdf",
+    "test/bench/corpus2/smallbiz/smallbiz_28_freelancer-rechnung-kein-avis.pdf",
+    "test/bench/corpus2/smallbiz/smallbiz_29_rueckfrage-statt-zahlung.pdf",
+    "test/bench/corpus2/smallbiz/smallbiz_30_excel-mehrere-summen.pdf",
+    "test/bench/corpus2/traps2/traps2_01_lieferavis.pdf",
+    "test/bench/corpus2/traps2/traps2_02_versandavis-desadv.pdf",
+    "test/bench/corpus2/traps2/traps2_03_speditionsavis-unfrei.pdf",
+    "test/bench/corpus2/traps2/traps2_04_abholavis-retoure.pdf",
+    "test/bench/corpus2/traps2/traps2_05_containeravis-arrival-notice.pdf",
+    "test/bench/corpus2/traps2/traps2_06_zollavis-einfuhrabgaben.pdf",
+    "test/bench/corpus2/traps2/traps2_07_avis-autovermietung-rechnung.pdf",
+    "test/bench/corpus2/traps2/traps2_08_avis-de-livraison.pdf",
+    "test/bench/corpus2/traps2/traps2_09_bitte-um-zahlungsavis.pdf",
+    "test/bench/corpus2/traps2/traps2_10_zahlungserinnerung.pdf",
+    "test/bench/corpus2/traps2/traps2_11_mahnung-2.pdf",
+    "test/bench/corpus2/traps2/traps2_12_rechnung-zahlbetrag-skonto.pdf",
+    "test/bench/corpus2/traps2/traps2_13_abschlagsrechnung-bau.pdf",
+    "test/bench/corpus2/traps2/traps2_14_stadtwerke-jahresabrechnung.pdf",
+    "test/bench/corpus2/traps2/traps2_15_mahnbescheid.pdf",
+    "test/bench/corpus2/traps2/traps2_16_sepa-ruecklastschrift.pdf",
+    "test/bench/corpus2/traps2/traps2_17_kontoauszug.pdf",
+    "test/bench/corpus2/traps2/traps2_18_auftragsbestaetigung.pdf",
+    "test/bench/corpus2/traps2/traps2_19_lieferanten-gutschrift.pdf",
+    "test/bench/corpus2/traps2/traps2_20_inkasso-forderung.pdf",
+    "test/bench/corpus2/traps2/traps2_21_gewerbesteuerbescheid.pdf",
+    "test/bench/corpus2/traps2/traps2_22_gehaltsabrechnung.pdf",
+    "test/bench/corpus2/traps2/traps2_23_reisekostenabrechnung.pdf",
+    "test/bench/corpus2/traps2/traps2_24_lastschrift-vorabankuendigung.pdf",
+    "test/bench/corpus2/traps2/traps2_25_proforma-vorauskasse.pdf",
+    "test/bench/corpus2/traps2/traps2_26_zahlungsavis-formular-leer.pdf",
+    "test/bench/corpus2/traps2/traps2_27_avis-d-echeance.pdf",
+    "test/bench/corpus2/traps2/traps2_28_dokumenteninkasso-avis.pdf",
+    "test/bench/corpus2/traps2/traps2_29_akkreditiv-avisierung.pdf",
+    "test/bench/corpus2/traps2/traps2_30_kreditkartenabrechnung.pdf",
+    "test/bench/corpus3/everyday/everyday_01_sap_f110_avis.pdf",
+    "test/bench/corpus3/everyday/everyday_02_datev_style_avis.pdf",
+    "test/bench/corpus3/everyday/everyday_03_business_central_avis.pdf",
+    "test/bench/corpus3/everyday/everyday_04_sage_style_avis.pdf",
+    "test/bench/corpus3/everyday/everyday_05_kleinbetrieb_einzelrechnung.pdf",
+    "test/bench/corpus3/everyday/everyday_06_bank_gutschriftsanzeige.pdf",
+    "test/bench/corpus3/everyday/everyday_07_outlook_mail_print.pdf",
+    "test/bench/corpus3/everyday/everyday_08_brief_einzelrechnung_skonto.pdf",
+    "test/bench/corpus3/everyday/everyday_09_credit_notes_netted.pdf",
+    "test/bench/corpus3/everyday/everyday_10_sammelavis_20_rechnungen.pdf",
+    "test/bench/corpus3/everyday/everyday_11_spool_textliste.pdf",
+    "test/bench/corpus3/everyday/everyday_12_bau_sicherheitseinbehalt.pdf",
+    "test/bench/corpus3/everyday/everyday_13_lieferantenrechnung_kein_avis.pdf",
+    "test/bench/corpus3/everyday/everyday_14_ssc_payment_advice_en_de.pdf",
+    "test/bench/corpus3/everyday/everyday_15_teilzahlung_rate.pdf",
+    "test/bench/corpus3/foreign/foreign_01_nl_betalingsadvies.pdf",
+    "test/bench/corpus3/foreign/foreign_02_fr_avis_de_virement.pdf",
+    "test/bench/corpus3/foreign/foreign_03_it_contabile_bonifico.pdf",
+    "test/bench/corpus3/foreign/foreign_04_es_aviso_de_pago_sap.pdf",
+    "test/bench/corpus3/foreign/foreign_05_pl_awizo_podatek_u_zrodla.pdf",
+    "test/bench/corpus3/foreign/foreign_06_cz_avizo_o_platbe.pdf",
+    "test/bench/corpus3/foreign/foreign_07_dk_betalingsadvis.pdf",
+    "test/bench/corpus3/foreign/foreign_08_se_betalningsavisering.pdf",
+    "test/bench/corpus3/foreign/foreign_09_pt_aviso_pagamento_nota_credito.pdf",
+    "test/bench/corpus3/foreign/foreign_10_uk_remittance_advice_gbp.pdf",
+    "test/bench/corpus3/foreign/foreign_11_us_remittance_wire_fee.pdf",
+    "test/bench/corpus3/foreign/foreign_12_ch_avis_de_paiement_chf.pdf",
+    "test/bench/corpus3/foreign/foreign_13_be_betalingsbericht.pdf",
+    "test/bench/corpus3/foreign/foreign_14_uk_bank_confirmation_fx.pdf",
+    "test/bench/corpus3/foreign/foreign_15_es_carta_de_pago_multipagina.pdf",
+    "test/bench/corpus3/netting/netting_01_skonto_brief.pdf",
+    "test/bench/corpus3/netting/netting_02_gutschriften_verrechnet.pdf",
+    "test/bench/corpus3/netting/netting_03_sap_druckliste.pdf",
+    "test/bench/corpus3/netting/netting_04_zentralregulierung_delkredere.pdf",
+    "test/bench/corpus3/netting/netting_05_sicherheitseinbehalt_abschlag.pdf",
+    "test/bench/corpus3/netting/netting_06_ratenzahlung_zinsen.pdf",
+    "test/bench/corpus3/netting/netting_07_summenbox_oben.pdf",
+    "test/bench/corpus3/netting/netting_08_abzuege_nach_summe.pdf",
+    "test/bench/corpus3/netting/netting_09_aufrechnung_brief.pdf",
+    "test/bench/corpus3/netting/netting_10_remittance_bankspesen_en.pdf",
+    "test/bench/corpus3/netting/netting_11_verrechnung_saldo_negativ.pdf",
+    "test/bench/corpus3/netting/netting_12_uebertrag_zweiseitig.pdf",
+    "test/bench/corpus3/netting/netting_13_handel_abzugsschluessel.pdf",
+    "test/bench/corpus3/netting/netting_14_skonto_ust_korrektur.pdf",
+    "test/bench/corpus3/netting/netting_15_klartext_kleinbetrieb.pdf",
+    "test/bench/corpus3/notadvice/notadvice_01_zahlungserinnerung.pdf",
+    "test/bench/corpus3/notadvice/notadvice_02_mahnung2_verzugszinsen.pdf",
+    "test/bench/corpus3/notadvice/notadvice_03_mahnbescheid.pdf",
+    "test/bench/corpus3/notadvice/notadvice_04_rechnung_skonto.pdf",
+    "test/bench/corpus3/notadvice/notadvice_05_gutschrift_verrechnung.pdf",
+    "test/bench/corpus3/notadvice/notadvice_06_auftragsbestaetigung.pdf",
+    "test/bench/corpus3/notadvice/notadvice_07_purchase_order_usd.pdf",
+    "test/bench/corpus3/notadvice/notadvice_08_versandavis.pdf",
+    "test/bench/corpus3/notadvice/notadvice_09_ankunftsavis_spedition.pdf",
+    "test/bench/corpus3/notadvice/notadvice_10_lastschrift_vorabankuendigung.pdf",
+    "test/bench/corpus3/notadvice/notadvice_11_kontoauszug.pdf",
+    "test/bench/corpus3/notadvice/notadvice_12_entgeltabrechnung.pdf",
+    "test/bench/corpus3/notadvice/notadvice_13_reisekostenabrechnung.pdf",
+    "test/bench/corpus3/notadvice/notadvice_14_bitte_um_zahlungsavis.pdf",
+    "test/bench/corpus3/notadvice/notadvice_15_avis_echeance_fr.pdf",
+    "test/bench/corpus3/pdfquirks/pdfquirks_01_chrome-basic-letter.pdf",
+    "test/bench/corpus3/pdfquirks/pdfquirks_02_chrome-perglyph-portal.pdf",
+    "test/bench/corpus3/pdfquirks/pdfquirks_03_quartz-letter.pdf",
+    "test/bench/corpus3/pdfquirks/pdfquirks_04_cups-text-sap.pdf",
+    "test/bench/corpus3/pdfquirks/pdfquirks_05_chrome-landscape-wide.pdf",
+    "test/bench/corpus3/pdfquirks/pdfquirks_06_chrome-multipage-carryover.pdf",
+    "test/bench/corpus3/pdfquirks/pdfquirks_07_acroform-filled.pdf",
+    "test/bench/corpus3/pdfquirks/pdfquirks_08_rotate90-landscape.pdf",
+    "test/bench/corpus3/pdfquirks/pdfquirks_09_mixed-rotation-swiss.pdf",
+    "test/bench/corpus3/pdfquirks/pdfquirks_10_signed-visible-sigbox.pdf",
+    "test/bench/corpus3/pdfquirks/pdfquirks_11_pdfkit-encrypted-ownerpw.pdf",
+    "test/bench/corpus3/pdfquirks/pdfquirks_12_scan-ocr-skewed.pdf",
+    "test/bench/corpus3/pdfquirks/pdfquirks_13_objstm-xrefstream.pdf",
+    "test/bench/corpus3/pdfquirks/pdfquirks_14_chrome-onlinebanking-print.pdf",
+    "test/bench/corpus3/pdfquirks/pdfquirks_15_fontbatched-columnmajor.pdf",
+    "test/bench/corpus4/daily/daily_01_sap-zahlungsavis-skonto.pdf",
+    "test/bench/corpus4/daily/daily_02_datev-einzelrechnung.pdf",
+    "test/bench/corpus4/daily/daily_03_bc-zahlungsavis.pdf",
+    "test/bench/corpus4/daily/daily_04_sage-zahlungsavis-gutschrift.pdf",
+    "test/bench/corpus4/daily/daily_05_lexware-kurzavis.pdf",
+    "test/bench/corpus4/daily/daily_06_infor-listendruck.pdf",
+    "test/bench/corpus4/daily/daily_07_bank-gutschriftsanzeige.pdf",
+    "test/bench/corpus4/daily/daily_08_kundenbrief-skonto.pdf",
+    "test/bench/corpus4/daily/daily_09_outlook-mail-avis.pdf",
+    "test/bench/corpus4/daily/daily_10_englisch-payment-advice.pdf",
+    "test/bench/corpus4/daily/daily_11_stadtkasse-zahlungsmitteilung.pdf",
+    "test/bench/corpus4/daily/daily_12_sap-mehrseitig-uebertrag.pdf",
+    "test/bench/corpus4/daily/daily_13_verrechnung-belastung-gutschrift.pdf",
+    "test/bench/corpus4/daily/daily_14_bau-abschlag-einbehalt.pdf",
+    "test/bench/corpus4/daily/daily_15_outlook-korrektur-thread.pdf",
+    "test/bench/corpus4/deduct/deduct_01_skonto_table.pdf",
+    "test/bench/corpus4/deduct/deduct_02_gutschrift_offset.pdf",
+    "test/bench/corpus4/deduct/deduct_03_zentralregulierung_delkredere.pdf",
+    "test/bench/corpus4/deduct/deduct_04_header_summary_box.pdf",
+    "test/bench/corpus4/deduct/deduct_05_sicherheitseinbehalt.pdf",
+    "test/bench/corpus4/deduct/deduct_06_bauabzugsteuer.pdf",
+    "test/bench/corpus4/deduct/deduct_07_withholding_tax_india.pdf",
+    "test/bench/corpus4/deduct/deduct_08_bankspesen_schweiz.pdf",
+    "test/bench/corpus4/deduct/deduct_09_ratenzahlung_rest.pdf",
+    "test/bench/corpus4/deduct/deduct_10_teilzahlung_brief.pdf",
+    "test/bench/corpus4/deduct/deduct_11_uebertrag_3seiten.pdf",
+    "test/bench/corpus4/deduct/deduct_12_skonto_brief.pdf",
+    "test/bench/corpus4/deduct/deduct_13_sap_liste_minus_hinten.pdf",
+    "test/bench/corpus4/deduct/deduct_14_aufrechnung_saldo.pdf",
+    "test/bench/corpus4/deduct/deduct_15_handel_soll_haben.pdf",
+    "test/bench/corpus4/intlquirks/intlquirks_01_en-gb-remittance-eur.pdf",
+    "test/bench/corpus4/intlquirks/intlquirks_02_en-us-wire-usd-courier.pdf",
+    "test/bench/corpus4/intlquirks/intlquirks_03_nl-betalingsadvies-quartz.pdf",
+    "test/bench/corpus4/intlquirks/intlquirks_04_fr-avis-de-paiement-nbsp.pdf",
+    "test/bench/corpus4/intlquirks/intlquirks_05_it-ch-avviso-chf-apostrophe.pdf",
+    "test/bench/corpus4/intlquirks/intlquirks_06_pl-awizo-pln-partial.pdf",
+    "test/bench/corpus4/intlquirks/intlquirks_07_sv-betalningsavisering-sek-rtf.pdf",
+    "test/bench/corpus4/intlquirks/intlquirks_08_de-chrome-perglyph-bold.pdf",
+    "test/bench/corpus4/intlquirks/intlquirks_09_de-word-text-cupsfilter.pdf",
+    "test/bench/corpus4/intlquirks/intlquirks_10_de-quartz-print.pdf",
+    "test/bench/corpus4/intlquirks/intlquirks_11_de-landscape-zahllauf.pdf",
+    "test/bench/corpus4/intlquirks/intlquirks_12_de-two-pages-uebertrag.pdf",
+    "test/bench/corpus4/intlquirks/intlquirks_13_de-scan-ocr-layer.pdf",
+    "test/bench/corpus4/intlquirks/intlquirks_14_de-email-reply-history.pdf",
+    "test/bench/corpus4/intlquirks/intlquirks_15_de-tiny-fonts.pdf",
+    "test/bench/corpus4/lookalike/lookalike_01_zahlungserinnerung.pdf",
+    "test/bench/corpus4/lookalike/lookalike_02_mahnung_verzugszinsen.pdf",
+    "test/bench/corpus4/lookalike/lookalike_03_rechnung_skonto.pdf",
+    "test/bench/corpus4/lookalike/lookalike_04_gutschrift_verrechnung.pdf",
+    "test/bench/corpus4/lookalike/lookalike_05_saldenbestaetigung.pdf",
+    "test/bench/corpus4/lookalike/lookalike_06_offene_posten_debitor.pdf",
+    "test/bench/corpus4/lookalike/lookalike_07_bitte_um_zahlungsavis.pdf",
+    "test/bench/corpus4/lookalike/lookalike_08_lastschrift_vorabankuendigung.pdf",
+    "test/bench/corpus4/lookalike/lookalike_09_ruecklastschrift.pdf",
+    "test/bench/corpus4/lookalike/lookalike_10_bank_kontoauszug.pdf",
+    "test/bench/corpus4/lookalike/lookalike_11_ratenzahlungsvereinbarung.pdf",
+    "test/bench/corpus4/lookalike/lookalike_12_auftragsbestaetigung.pdf",
+    "test/bench/corpus4/lookalike/lookalike_13_lieferavis.pdf",
+    "test/bench/corpus4/lookalike/lookalike_14_entgeltabrechnung.pdf",
+    "test/bench/corpus4/lookalike/lookalike_15_zahlungsaufforderung_abschlag.pdf",
+    "test/bench/corpus4/payers/payers_01_bundeskasse-zahlungsmitteilung.pdf",
+    "test/bench/corpus4/payers/payers_02_finanzamt-ust-erstattung-verrechnung.pdf",
+    "test/bench/corpus4/payers/payers_03_stadtkasse-zahlungsavis-skonto.pdf",
+    "test/bench/corpus4/payers/payers_04_bkk-u1-erstattung-aag.pdf",
+    "test/bench/corpus4/payers/payers_05_bg-arbeitsschutzpraemie.pdf",
+    "test/bench/corpus4/payers/payers_06_versicherer-direktregulierung-kuerzung.pdf",
+    "test/bench/corpus4/payers/payers_07_kfz-haftpflicht-regulierung-quote-vorschuss.pdf",
+    "test/bench/corpus4/payers/payers_08_zentralregulierung-einkaufsverbund.pdf",
+    "test/bench/corpus4/payers/payers_09_ssc-remittance-advice-en.pdf",
+    "test/bench/corpus4/payers/payers_10_ssc-zahlungsavis-sap-courier.pdf",
+    "test/bench/corpus4/payers/payers_11_netzbetreiber-einspeiseverguetung-gutschrift.pdf",
+    "test/bench/corpus4/payers/payers_12_vermieter-kautionsabrechnung.pdf",
+    "test/bench/corpus4/payers/payers_13_marktplatz-auszahlungsuebersicht.pdf",
+    "test/bench/corpus4/payers/payers_14_platform-payout-multicurrency-en.pdf",
+    "test/bench/corpus4/payers/payers_15_landeskasse-zuwendung-schlusszahlung.pdf",
+    "test/bench/corpus5/erp/erp_01_s4-form-skonto.pdf",
+    "test/bench/corpus5/erp/erp_02_datev-avis-letter.pdf",
+    "test/bench/corpus5/erp/erp_03_bc-remittance-gutschrift.pdf",
+    "test/bench/corpus5/erp/erp_04_sage-letter-skonto.pdf",
+    "test/bench/corpus5/erp/erp_05_lexware-single-invoice.pdf",
+    "test/bench/corpus5/erp/erp_06_infor-40lines-uebertrag.pdf",
+    "test/bench/corpus5/erp/erp_07_abas-listprint.pdf",
+    "test/bench/corpus5/erp/erp_08_proalpha-2pages.pdf",
+    "test/bench/corpus5/erp/erp_09_us-remittance-eur.pdf",
+    "test/bench/corpus5/erp/erp_10_uk-remittance-gbp.pdf",
+    "test/bench/corpus5/erp/erp_11_odoo-receipt-partial.pdf",
+    "test/bench/corpus5/erp/erp_12_bank-paymentrun-export.pdf",
+    "test/bench/corpus5/erp/erp_13_swiss-chf.pdf",
+    "test/bench/corpus5/erp/erp_14_sap-spool-2pages.pdf",
+    "test/bench/corpus5/erp/erp_15_d365-bilingual.pdf",
+    "test/bench/corpus5/letters/letters_01_outlook_skonto.pdf",
+    "test/bench/corpus5/letters/letters_02_webmail_hausverwaltung.pdf",
+    "test/bench/corpus5/letters/letters_03_applemail_privat_restzahlung.pdf",
+    "test/bench/corpus5/letters/letters_04_thunderbird_verein_zwei_rechnungen.pdf",
+    "test/bench/corpus5/letters/letters_05_gemeinde_schlussrechnung_einbehalt.pdf",
+    "test/bench/corpus5/letters/letters_06_en_owa_part_payment.pdf",
+    "test/bench/corpus5/letters/letters_07_outlook_reply_gutschrift_verrechnet.pdf",
+    "test/bench/corpus5/letters/letters_08_grosshandel_rueckerstattung_doppelzahlung.pdf",
+    "test/bench/corpus5/letters/letters_09_en_remittance_letter_two_invoices.pdf",
+    "test/bench/corpus5/letters/letters_10_outlook_zahlungserinnerung_lieferant.pdf",
+    "test/bench/corpus5/letters/letters_11_bauherr_brief_maengeleinbehalt.pdf",
+    "test/bench/corpus5/letters/letters_12_applemail_abschlag_signatur.pdf",
+    "test/bench/corpus5/letters/letters_13_genossenschaft_zahlungsmitteilung_maschinell.pdf",
+    "test/bench/corpus5/letters/letters_14_webmail_sammelzahlung.pdf",
+    "test/bench/corpus5/letters/letters_15_plaintext_mail_kurz.pdf",
+    "test/bench/corpus5/nonadvice/nonadvice_01_zahlungserinnerung.pdf",
+    "test/bench/corpus5/nonadvice/nonadvice_02_mahnbescheid.pdf",
+    "test/bench/corpus5/nonadvice/nonadvice_03_saldenbestaetigung_anfrage.pdf",
+    "test/bench/corpus5/nonadvice/nonadvice_04_lieferantenrechnung_zahlbetrag.pdf",
+    "test/bench/corpus5/nonadvice/nonadvice_05_lieferantengutschrift.pdf",
+    "test/bench/corpus5/nonadvice/nonadvice_06_lastschrift_vorabankuendigung.pdf",
+    "test/bench/corpus5/nonadvice/nonadvice_07_ruecklastschrift.pdf",
+    "test/bench/corpus5/nonadvice/nonadvice_08_kreditkartenabrechnung.pdf",
+    "test/bench/corpus5/nonadvice/nonadvice_09_rechnungskorrektur.pdf",
+    "test/bench/corpus5/nonadvice/nonadvice_10_gewerbesteuerbescheid.pdf",
+    "test/bench/corpus5/nonadvice/nonadvice_11_ratenzahlungsvorschlag.pdf",
+    "test/bench/corpus5/nonadvice/nonadvice_12_angebot.pdf",
+    "test/bench/corpus5/nonadvice/nonadvice_13_lieferavis.pdf",
+    "test/bench/corpus5/nonadvice/nonadvice_14_ungeklaerter_zahlungseingang.pdf",
+    "test/bench/corpus5/nonadvice/nonadvice_15_entgeltabrechnung.pdf",
+    "test/bench/corpus5/settle/settle_01_zentralregulierung_delkredere.pdf",
+    "test/bench/corpus5/settle/settle_02_summary_box_header.pdf",
+    "test/bench/corpus5/settle/settle_03_sicherheitseinbehalt.pdf",
+    "test/bench/corpus5/settle/settle_04_bauabzugsteuer.pdf",
+    "test/bench/corpus5/settle/settle_05_verrechnung_gegenforderung.pdf",
+    "test/bench/corpus5/settle/settle_06_ratenzahlung.pdf",
+    "test/bench/corpus5/settle/settle_07_teilzahlung_maengelruege.pdf",
+    "test/bench/corpus5/settle/settle_08_bank_charges_en.pdf",
+    "test/bench/corpus5/settle/settle_09_withholding_tax_en.pdf",
+    "test/bench/corpus5/settle/settle_10_uebertrag_mehrseitig.pdf",
+    "test/bench/corpus5/settle/settle_11_gutschrift_groesser_als_rechnung.pdf",
+    "test/bench/corpus5/settle/settle_12_zentralregulierung_wkz_liste.pdf",
+    "test/bench/corpus5/settle/settle_13_schlusszahlung_abschlaege.pdf",
+    "test/bench/corpus5/settle/settle_14_verrechnungsavis_ohne_zahlung.pdf",
+    "test/bench/corpus5/settle/settle_15_vertragsstrafe_abzug.pdf",
+    "test/bench/corpus5/world/world_01_at_zahlungsavis_skonto.pdf",
+    "test/bench/corpus5/world/world_02_ch_verguetungsanzeige_chf.pdf",
+    "test/bench/corpus5/world/world_03_en_remittance_advice.pdf",
+    "test/bench/corpus5/world/world_04_fr_avis_de_paiement.pdf",
+    "test/bench/corpus5/world/world_05_nl_betalingsspecificatie.pdf",
+    "test/bench/corpus5/world/world_06_no_betalingsavis_nok.pdf",
+    "test/bench/corpus5/world/world_07_hu_atutalasi_ertesito_huf.pdf",
+    "test/bench/corpus5/world/world_08_tr_odeme_bildirimi_eur.pdf",
+    "test/bench/corpus5/world/world_09_de_rotated_landscape.pdf",
+    "test/bench/corpus5/world/world_10_de_scan_ocr_layer.pdf",
+    "test/bench/corpus5/world/world_11_de_formfields_filled.pdf",
+    "test/bench/corpus5/world/world_12_de_chrome_letterspaced.pdf",
+    "test/bench/corpus5/world/world_13_de_encrypted_owner_pw.pdf",
+    "test/bench/corpus5/world/world_14_de_word_cupsfilter.pdf",
+    "test/bench/corpus5/world/world_15_de_two_column.pdf",
+    "test/fixtures/bomb_deflate.pdf",
+    "test/fixtures/rl_big_40pages.pdf",
+    "test/fixtures/rl_nolabel_total.pdf",
+    "test/fixtures/rl_two_totals.pdf",
+    "test/fixtures/scan_image_only.pdf"
+  ],
+  "nonExactCases": [
+    {
+      "file": "test/bench/brainstorm/N11.eml",
+      "sha256": "3d52ab443ece984170ca0646ab055504c62cb3530c803dcc867abd7d2772c4b8",
+      "observations": [
+        "conservative review of expected other mail"
+      ],
+      "verdict": "unclear",
+      "needsReview": true,
+      "reason": "HTML file with a sign-in form - possible phishing (Remittance_Advice_INV-88412.htm)"
+    },
+    {
+      "file": "test/bench/brainstorm/N24.eml",
+      "sha256": "031083a86873187189f1c687922b14aebb00a46a5e1455d567737de650ac182b",
+      "observations": [
+        "conservative review of expected other mail"
+      ],
+      "verdict": "unclear",
+      "needsReview": true,
+      "reason": "advice title 'Gutschriftsanzeige', but no amount found (body)"
+    },
+    {
+      "file": "test/bench/burst/B23.eml",
+      "sha256": "a7a030ec77dd616586a969dbedbe18eda90dbab22ee832447af47dae44076c32",
+      "observations": [
+        "conservative review of expected other mail"
+      ],
+      "verdict": "unclear",
+      "needsReview": true,
+      "reason": "payment wording, but no advice evidence (Quittung_Q-2026-0143.pdf)"
+    },
+    {
+      "file": "test/blind/bodyhold/mails/H001.eml",
+      "sha256": "6a182e7d9b4d1e31154609e3c3f4c8185954085814c23c9bfe811f5c06b2310f",
+      "observations": [
+        "conservative review of expected other mail"
+      ],
+      "verdict": "unclear",
+      "needsReview": true,
+      "reason": "payment wording, but no advice evidence (body)"
+    },
+    {
+      "file": "test/blind/bodyhold/mails/H005.eml",
+      "sha256": "932a1871ff6188853544f23ee49106e3dd20f427e660392428d6797c73311537",
+      "observations": [
+        "conservative review of expected other mail"
+      ],
+      "verdict": "unclear",
+      "needsReview": true,
+      "reason": "payment wording, but no advice evidence (body)"
+    },
+    {
+      "file": "test/blind/bodyhold/mails/H022.eml",
+      "sha256": "0df76cd66790e96ee5e564227a36cae5cb338f9a44c7b22d6e87ffd0a8d13e99",
+      "observations": [
+        "conservative review of expected other mail"
+      ],
+      "verdict": "unclear",
+      "needsReview": true,
+      "reason": "payment wording, but no advice evidence (body)"
+    },
+    {
+      "file": "test/blind/bodyhold/mails/H026.eml",
+      "sha256": "bef721e46b1bdf015ace347c640e4bc0b137946d3252b6af5a24a63243ebecd5",
+      "observations": [
+        "conservative review of expected other mail"
+      ],
+      "verdict": "unclear",
+      "needsReview": true,
+      "reason": "payment wording, but no advice evidence (body)"
+    },
+    {
+      "file": "test/blind/bodyhold/mails/H047.eml",
+      "sha256": "d169a1dfc899ca5ef4ccd0b38c4dc391c4def9798d2d25afb62018ad707935c4",
+      "observations": [
+        "conservative review of expected other mail"
+      ],
+      "verdict": "unclear",
+      "needsReview": true,
+      "reason": "payment wording, but no advice evidence (body)"
+    },
+    {
+      "file": "test/blind/bodyhold/mails/H051.eml",
+      "sha256": "9a7fa3eaef05b937be7d330c95ddf7978ff2db35421d50e9274d8219ce69d86e",
+      "observations": [
+        "conservative review of expected other mail"
+      ],
+      "verdict": "unclear",
+      "needsReview": true,
+      "reason": "payer statement, but 'Überweisung über 1.240,16 € für Ihre Rechnung RE-2026-045...' - not a payment advice? (body)"
+    },
+    {
+      "file": "test/blind/bodyhold/mails/H065.eml",
+      "sha256": "ea883ecd1515660183c57fb99732658a11fc9c5d60dd56bd352df509b44e1fbe",
+      "observations": [
+        "conservative review of expected other mail"
+      ],
+      "verdict": "unclear",
+      "needsReview": true,
+      "reason": "payment wording, but no advice evidence (body)"
+    },
+    {
+      "file": "test/blind/bodyhold/mails/H093.eml",
+      "sha256": "8072e66a8730099fb4fbe946ef2e7a8076e920041ed1a0d4d8df3fb1a9167989",
+      "observations": [
+        "conservative review of expected other mail"
+      ],
+      "verdict": "unclear",
+      "needsReview": true,
+      "reason": "payment wording, but no advice evidence (body)"
+    },
+    {
+      "file": "test/blind/bodyhold/mails/H097.eml",
+      "sha256": "2be41eef4b421b974b05488cca6aff83c2a65ca8392a37ecc261e7351a1adb11",
+      "observations": [
+        "conservative review of expected other mail"
+      ],
+      "verdict": "unclear",
+      "needsReview": true,
+      "reason": "payment wording, but no advice evidence (body)"
+    },
+    {
+      "file": "test/blind/sweep/HT/mails/HT19.eml",
+      "sha256": "16b4e6eced3dd2ef63a8d271bc021216dbfccadcdcc0375943a7123299c1799f",
+      "observations": [
+        "conservative review of expected other mail"
+      ],
+      "verdict": "unclear",
+      "needsReview": true,
+      "reason": "payer statement, but 'Rückbuchung' - not a payment advice? (body)"
+    },
+    {
+      "file": "test/blind/sweep/MX/mails/MX39.eml",
+      "sha256": "ed03bea134ad70594edb4a06acc1e9778e2347dc81a39442d6bb9130e7b84874",
+      "observations": [
+        "conservative review of expected other mail"
+      ],
+      "verdict": "unclear",
+      "needsReview": true,
+      "reason": "payment wording, but no advice evidence (Begleitliste_F110_20261028_NW01.pdf)"
+    },
+    {
+      "file": "test/blind/sweep/PD/mails/PD02.eml",
+      "sha256": "79aba716ea31ff878592d7c91ee57013d774e9dee1c9550a48c860bd90823f5f",
+      "observations": [
+        "conservative review of expected other mail"
+      ],
+      "verdict": "unclear",
+      "needsReview": true,
+      "reason": "payer statement, but 'Antrag auf Ratenzahlung' - not a payment advice? (Ratenvereinbarung_Entwurf.pdf)"
+    },
+    {
+      "file": "test/blind/sweep/XD/mails/XD02.eml",
+      "sha256": "da23578d136698536bb78517e64c04a840b042a8efe2ea2fb9d24bfd00a34055",
+      "observations": [
+        "conservative review of expected other mail"
+      ],
+      "verdict": "unclear",
+      "needsReview": true,
+      "reason": "payment table (payment / deduction columns), but name 'OP' (OP_Nordwerk_27102026.xlsx)"
+    },
+    {
+      "file": "test/blind/sweep/XD/mails/XD05.eml",
+      "sha256": "b4c52144673f3979a59a810411a4850b26dc3e0b5c5b204ae2cbd90180e5d678",
+      "observations": [
+        "conservative review of expected other mail"
+      ],
+      "verdict": "unclear",
+      "needsReview": true,
+      "reason": "advice word in the file name 'Avis_Vorschlag_NW01.xlsx', but no advice found"
+    },
+    {
+      "file": "test/blind/sweep/XD/mails/XD16.eml",
+      "sha256": "e6a7e0cf15677b3166be5c44d014386019d675926c7b2c9fe1d4e6011e1cb566",
+      "observations": [
+        "conservative review of expected other mail"
+      ],
+      "verdict": "unclear",
+      "needsReview": true,
+      "reason": "payment wording, but no advice evidence (Bestellübersicht_Nordwerk.xlsx)"
+    },
+    {
+      "file": "test/blind/sweep/XD/mails/XD32.eml",
+      "sha256": "02b6c8845274d30597bf7b9f4074ea7560be2e8352ef2e794fbe129451659f5d",
+      "observations": [
+        "conservative review of expected other mail"
+      ],
+      "verdict": "unclear",
+      "needsReview": true,
+      "reason": "payment table (payment / deduction columns), but name 'Mahn' (Mahnliste_30102026.xlsx)"
+    },
+    {
+      "file": "test/blind/sweep/XE/mails/XE17.eml",
+      "sha256": "ee221036137a518e240bc7cf95a5a59bb07a98393099d2a0c6db0a9c84283f2c",
+      "observations": [
+        "conservative review of expected other mail"
+      ],
+      "verdict": "unclear",
+      "needsReview": true,
+      "reason": "payment wording, but no advice evidence (Invoice_Status_Nordwerk_30-10-2026.csv)"
+    },
+    {
+      "file": "test/blind/sweep/XE/mails/XE26.eml",
+      "sha256": "72088d7c52e16dbc68102f64064e8d3bf2c083562d70d899291471169474690a",
+      "observations": [
+        "conservative review of expected other mail"
+      ],
+      "verdict": "unclear",
+      "needsReview": true,
+      "reason": "payment execution not confirmed ('PAYMENT PROPOSAL – DRAFT – NOT APPROVED') (Payment Proposal 11-06-2026 (DRAFT).xlsx)"
+    },
+    {
+      "file": "test/blind/sweep2/B2/mails/B220.eml",
+      "sha256": "1d69184a63da206b65d80f83b1921432ad63f2b2b2c5618b012fe963d3e5e5cd",
+      "observations": [
+        "conservative review of expected other mail"
+      ],
+      "verdict": "advice",
+      "needsReview": true,
+      "reason": "advice title 'remittance advice' in body"
+    },
+    {
+      "file": "test/blind/sweep2/B2/mails/B225.eml",
+      "sha256": "55b7208aed180c24d1983499a89e09fee086a4faf7030490e2396a6672b713a7",
+      "observations": [
+        "conservative review of expected other mail"
+      ],
+      "verdict": "unclear",
+      "needsReview": true,
+      "reason": "payment execution not confirmed ('Ihre Rechnungen RE-2026-10811 (2.904,00 EUR) und RE-2026-...') (body)"
+    },
+    {
+      "file": "test/blind/sweep2/B2/mails/B235.eml",
+      "sha256": "b0c27a5ef2ffebb1eb232f4ad3ee74a37d5a58a79a06f38589bb1960255ad9b1",
+      "observations": [
+        "conservative review of expected other mail"
+      ],
+      "verdict": "unclear",
+      "needsReview": true,
+      "reason": "advice word 'remittance' in the mail text, but no advice found"
+    },
+    {
+      "file": "test/blind/sweep2/N2/mails/N229.eml",
+      "sha256": "b65f2ed027af019a5eb3324ffb05edc85c17b951824edbc17f56b1f8e59dd47b",
+      "observations": [
+        "conservative review of expected other mail"
+      ],
+      "verdict": "unclear",
+      "needsReview": true,
+      "reason": "advice title 'payment notification', but payment voided or cancelled ('Payment Voided' in the title) (body)"
+    },
+    {
+      "file": "test/blind/sweep2/P2/mails/P236.eml",
+      "sha256": "86068c3b9d21b345adf479d5ecf011ccf3d1527e10723da8a1096d1b406dafcc",
+      "observations": [
+        "conservative review of expected other mail"
+      ],
+      "verdict": "unclear",
+      "needsReview": true,
+      "reason": "no text layer found (scanned PDF?) (AB-26-3187_unterschrieben.pdf)"
+    },
+    {
+      "file": "test/blind/sweep2/P2/work/det1/mails/P236.eml",
+      "sha256": "86068c3b9d21b345adf479d5ecf011ccf3d1527e10723da8a1096d1b406dafcc",
+      "observations": [
+        "conservative review of expected other mail"
+      ],
+      "verdict": "unclear",
+      "needsReview": true,
+      "reason": "no text layer found (scanned PDF?) (AB-26-3187_unterschrieben.pdf)"
+    },
+    {
+      "file": "test/blind/sweep2/P2/work/det2/mails/P236.eml",
+      "sha256": "86068c3b9d21b345adf479d5ecf011ccf3d1527e10723da8a1096d1b406dafcc",
+      "observations": [
+        "conservative review of expected other mail"
+      ],
+      "verdict": "unclear",
+      "needsReview": true,
+      "reason": "no text layer found (scanned PDF?) (AB-26-3187_unterschrieben.pdf)"
+    },
+    {
+      "file": "test/blind/sweep2/T2/mails/T209.eml",
+      "sha256": "e4e086d23974a227678188268ae1c190ba5f5a81e3e1ca3a7cf2fdcebf47812e",
+      "observations": [
+        "conservative review of expected other mail"
+      ],
+      "verdict": "unclear",
+      "needsReview": true,
+      "reason": "advice word 'Avis' in the subject, but no advice found"
+    },
+    {
+      "file": "test/blind/sweep2/T2/mails/T217.eml",
+      "sha256": "b9427902c54579e40eb22230dd8a9899d92bc94d55fedc71f73e26c7fa47535f",
+      "observations": [
+        "conservative review of expected other mail"
+      ],
+      "verdict": "unclear",
+      "needsReview": true,
+      "reason": "no text layer found (scanned PDF?) (DOC_20261027_6266.pdf)"
+    },
+    {
+      "file": "test/blind/sweep2/T2/mails/T234.eml",
+      "sha256": "1c59b849ed87d5ad4a0ed2f084cb7fdb18ab05cc6bb83bf436ef2845dc9a958c",
+      "observations": [
+        "conservative review of expected other mail"
+      ],
+      "verdict": "unclear",
+      "needsReview": true,
+      "reason": "Word document - cannot be read (Change_of_bank_details_Thornbury.docx)"
+    },
+    {
+      "file": "test/blind/sweep2/X2/mails/X204.eml",
+      "sha256": "9e56dcdc8569509ca92491f50c8989c1069edc628d11da7318545ee8ffed28d9",
+      "observations": [
+        "conservative review of expected other mail"
+      ],
+      "verdict": "advice",
+      "needsReview": true,
+      "reason": "payment table (payment / deduction columns), total computed from the payment column in ScheduledPayments_20261030.xls"
+    },
+    {
+      "file": "test/blind/sweep3/X3/mails/X302.eml",
+      "sha256": "0fc15ae0bfce510f9a44f9101e0006b61cdfc6efd5da08dd2ae6fc7c7767d8dd",
+      "observations": [
+        "conservative review of expected other mail"
+      ],
+      "verdict": "unclear",
+      "needsReview": true,
+      "reason": "tax refund ('Erstattung') - not a customer payment? (Bescheid_USt-VA_2026-09_Nordwerk.pdf)"
+    },
+    {
+      "file": "test/blind/sweep3/X3/mails/X315.eml",
+      "sha256": "bd78143f511ffdd9b7424b780f05dc1b1fe80a3b12ee6b4d6c2d9337667a6300",
+      "observations": [
+        "conservative review of expected other mail"
+      ],
+      "verdict": "unclear",
+      "needsReview": true,
+      "reason": "advice word 'Gutschriftsanzeige' in the subject, but no advice found"
+    },
+    {
+      "file": "test/blind/sweep3/X3/mails/X319.eml",
+      "sha256": "b775b7af6dab80d69cbfece676554fe23ee2ec0ea1c6e3da68d3a21f7685f1ac",
+      "observations": [
+        "conservative review of expected other mail"
+      ],
+      "verdict": "unclear",
+      "needsReview": true,
+      "reason": "refund of a supplier ('erstatten wir Ihnen das') - not a customer payment? (Zahlungsavis_Erstattung_GS-26-0418.pdf)"
+    },
+    {
+      "file": "test/blind/sweep3/X3/mails/X328.eml",
+      "sha256": "6c8942ee0608cc6451395e8e5f37c4e256cfc0ec066f95e41d6e9fe944cccce6",
+      "observations": [
+        "conservative review of expected other mail"
+      ],
+      "verdict": "unclear",
+      "needsReview": true,
+      "reason": "tax refund ('VAT refund') - not a customer payment? (body)"
+    },
+    {
+      "file": "test/blind/sweep3/X3/mails/X332.eml",
+      "sha256": "23d7780fbdfa325252c3e430f059551401b16aaf05861c4bb33fd7a2f699cdaf",
+      "observations": [
+        "conservative review of expected other mail"
+      ],
+      "verdict": "unclear",
+      "needsReview": true,
+      "reason": "advice word 'remittance' in the mail text, but no advice found"
+    },
+    {
+      "file": "test/blind/sweep3/X3/mails/X335.eml",
+      "sha256": "40d777b0a829f7b0d0b037cf850e663914187d0b7cecc03453876bfbad99eaf6",
+      "observations": [
+        "conservative review of expected other mail"
+      ],
+      "verdict": "unclear",
+      "needsReview": true,
+      "reason": "refund of a supplier ('refund duplicate payment') - not a customer payment? (RemittanceAdvice_RF-26-1043.pdf)"
+    },
+    {
+      "file": "test/blind/sweep3/X3/mails/X338.eml",
+      "sha256": "9ae280604f2eeb8f1402bb8fc074fa277fce7128cd4829e91dacb15107e62f0e",
+      "observations": [
+        "conservative review of expected other mail"
+      ],
+      "verdict": "unclear",
+      "needsReview": true,
+      "reason": "payer statement, but 'Zahlungsbedingungen' - not a payment advice? (Lieferanteninformation_Zahlungsverkehr_2027.pdf)"
+    },
+    {
+      "file": "test/blind/sweep3/X3/mails/X339.eml",
+      "sha256": "4838472010fdfd8d171c4790bd1f5c9fbbc6d445101e868c5c3efc00c146d8a8",
+      "observations": [
+        "conservative review of expected other mail"
+      ],
+      "verdict": "unclear",
+      "needsReview": true,
+      "reason": "advice word 'Zahlungsavis' in the subject, but no advice found"
+    },
+    {
+      "file": "test/fixtures/r2b_mail_60_pdfs.eml",
+      "sha256": "fd6e61f1a5d7a81c0a14597081377fa0c79336decfa2a2b09ca745f080494a5c",
+      "observations": [
+        "legacy confidence: high -> low"
+      ],
+      "verdict": "advice",
+      "needsReview": true,
+      "reason": "advice title 'Zahlungsavis' in Zahlungsavis.pdf"
+    },
+    {
+      "file": "test/fixtures/v2_body_sent_part_en.eml",
+      "sha256": "bca2ebea4f0ad1e1f0395ccaaf592d0d4bb07008e2e913ca9e2564b236acdc04",
+      "observations": [
+        "legacy verdict: advice -> unclear"
+      ],
+      "verdict": "unclear",
+      "needsReview": true,
+      "reason": "payment execution not confirmed ('We've sent £1,000.00 today as a part payment and will pay...') (body)"
+    },
+    {
+      "file": "test/fixtures/v2_fix_r7_cover_scan.eml",
+      "sha256": "93ae93470edb9421da50fb47d1cb842ae651008d62cef41fb2905228ead7d259",
+      "observations": [
+        "legacy diagnostic changed: error"
+      ],
+      "verdict": "advice",
+      "needsReview": true,
+      "reason": "advice title 'Zahlungsavis' in body"
+    },
+    {
+      "file": "test/fixtures/v2_sheet_xlsx_and_biff8.eml",
+      "sha256": "f65adc39f0c6b81f971f26c3f8478aeb188facb1e256c630d7f649870d431ac2",
+      "observations": [
+        "legacy confidence: high -> low"
+      ],
+      "verdict": "advice",
+      "needsReview": true,
+      "reason": "advice title 'Zahlungsavis' in Zahlungsavis.xlsx"
+    }
+  ],
+  "selectedCases": [
+    {
+      "file": "test/bench/brainstorm/N16.eml",
+      "sha256": "569d6b4920ae374f4a02838c5b55171403dc118e61582e613dd6559c9e40bc53",
+      "mailbox": {
+        "value": "debitoren@nordwerk.example",
+        "basis": "N16.json facts explicitly name the BCC recipient"
+      },
+      "elapsedMs": 15.6,
+      "result": {
+        "verdict": "other",
+        "confidence": "low",
+        "needsReview": false,
+        "amount": "8.941,00",
+        "amountNumber": 8941,
+        "currency": "EUR",
+        "paymentAmounts": [],
+        "category": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": "",
+        "patchCategory": "",
+        "verdictWhy": "no advice: the recipient's own advice to 'Kessler Stahlbau GmbH' - not a payment to it? (Zahlungsavis_70012_20261029.pdf); copy of an own mail to kessler-stahlbau.example - our own payment, not a payment received (payer statement ('haben wir die folgenden Rechnungen beglichen'), but no amount found) (body)",
+        "error": "uncertain: the recipient's own advice to 'Kessler Stahlbau GmbH' - not a payment to it?",
+        "warnings": "from mail: Zahlungsavis_70012_20261029.pdf",
+        "documents": [
+          "Zahlungsavis_70012_20261029.pdf | pdf | other | 8.941,00 EUR | low | the recipient's own advice to 'Kessler Stahlbau GmbH' - not a payment to it?; uncertain: the recipient's own advice to 'Kessler Stahlbau GmbH' - not a payment to it?",
+          "body | body | other | - | - | copy of an own mail to kessler-stahlbau.example - our own payment, not a payment received (payer statement ('haben wir die folgenden Rechnungen beglichen'), but no amount found); no amount pattern ..."
+        ]
+      },
+      "findings": []
+    },
+    {
+      "file": "test/bench/burst/B02.eml",
+      "sha256": "3f8475ab1aa56b150723522247dcfed30682786cd458ab03738ba81bd310aac5",
+      "mailbox": {
+        "basis": "legacy-compatible call; no independently fixed receiving mailbox for this group"
+      },
+      "elapsedMs": 37720.8,
+      "result": {
+        "verdict": "advice",
+        "confidence": "high",
+        "needsReview": false,
+        "amount": "826.636,07",
+        "amountNumber": 826636.07,
+        "currency": "EUR",
+        "paymentAmounts": [],
+        "category": "Avis",
+        "subjectPrefix": "826.636,07 ",
+        "newSubject": "826.636,07 Ihre Rechnungen Oktober [B02]",
+        "patchSubject": "{\"subject\":\"826.636,07 Ihre Rechnungen Oktober [B02]\"}",
+        "patchCategory": "{\"categories\":[\"Avis\"]}",
+        "verdictWhy": "advice title 'Zahlungsbenachrichtigung' in Dokument_20261030_4711.pdf",
+        "error": "",
+        "warnings": "from mail: Dokument_20261030_4711.pdf",
+        "documents": [
+          "Dokument_20261030_4711.pdf | pdf | advice | 826.636,07 EUR | high | advice title 'Zahlungsbenachrichtigung'",
+          "body | body | other | - | - | no amount, no payment wording; no amount pattern found"
+        ]
+      },
+      "findings": []
+    },
+    {
+      "file": "test/blind/bodyhold/mails/H033.eml",
+      "sha256": "1fada4f1bb8811ad1540ad018aec1c4d4db5e5355374dc042ff46fa20374b272",
+      "mailbox": {
+        "value": "debitoren@nordwerk.example",
+        "basis": "fixed synthetic owner in archived blind generators"
+      },
+      "elapsedMs": 6.9,
+      "result": {
+        "verdict": "other",
+        "confidence": "low",
+        "needsReview": false,
+        "amount": "2.902,84",
+        "amountNumber": 2902.84,
+        "currency": "EUR",
+        "paymentAmounts": [],
+        "category": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": "",
+        "patchCategory": "",
+        "verdictWhy": "no advice: payment announced for later - no advice or attachment (body)",
+        "error": "uncertain: payment announced for later",
+        "warnings": "from mail: body",
+        "documents": [
+          "body | body | other | 2.902,84 EUR | low | payment announced for later - no advice or attachment; uncertain: payment announced for later"
+        ]
+      },
+      "findings": []
+    },
+    {
+      "file": "test/blind/sweep2/T2/mails/T203.eml",
+      "sha256": "24a75177cbff9051b81eff12b1c3708de2826e9b900e8364093ad8338090d5de",
+      "mailbox": {
+        "value": "debitoren@nordwerk.example",
+        "basis": "fixed synthetic owner in archived blind generators"
+      },
+      "elapsedMs": 9,
+      "result": {
+        "verdict": "other",
+        "confidence": "low",
+        "needsReview": false,
+        "amount": "11.647,40",
+        "amountNumber": 11647.4,
+        "currency": "EUR",
+        "paymentAmounts": [],
+        "category": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": "",
+        "patchCategory": "",
+        "verdictWhy": "no advice: 'Zahlungsvorschlag' - not a payment advice? (Zahlungsvorschlag_Lief_70412.xlsx); only mentioned, no amount and no file (payment execution not confirmed ('Bitte beachten Sie: Der Vorschlag ist noch nicht freigegeben')) (body)",
+        "error": "uncertain: 'Zahlungsvorschlag' - not a payment advice?",
+        "warnings": "from mail: Zahlungsvorschlag_Lief_70412.xlsx",
+        "documents": [
+          "Zahlungsvorschlag_Lief_70412.xlsx | xlsx | other | 11.647,40 EUR | low | 'Zahlungsvorschlag' - not a payment advice?; uncertain: 'Zahlungsvorschlag' - not a payment advice?",
+          "body | body | other | - | - | only mentioned, no amount and no file (payment execution not confirmed ('Bitte beachten Sie: Der Vorschlag ist noch nicht freigegeben')); no amount pattern found"
+        ]
+      },
+      "findings": []
+    },
+    {
+      "file": "test/fixtures/sm_two_pdfs_conflict.p7m",
+      "sha256": "b68924b85189af4cbc661c57d8296982285bd6840783cf48d96fee8f3e43939e",
+      "mailbox": {
+        "basis": "legacy-compatible call; no independently fixed receiving mailbox for this group"
+      },
+      "elapsedMs": 3.6,
+      "result": {
+        "verdict": "several",
+        "confidence": "low",
+        "needsReview": true,
+        "amount": "",
+        "amountNumber": 0,
+        "currency": "",
+        "paymentAmounts": [
+          "3.454,00 EUR",
+          "1.250,00 EUR"
+        ],
+        "category": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": "",
+        "patchCategory": "",
+        "verdictWhy": "2 advices with different amounts (Beleg_A.pdf 3.454,00 EUR; Beleg_B.pdf 1.250,00 EUR)",
+        "error": "several PDFs in the mail with different amounts (Beleg_A.pdf 3.454,00 EUR; Beleg_B.pdf 1.250,00 EUR)",
+        "warnings": "2 PDFs checked (Beleg_A.pdf, Beleg_B.pdf)",
+        "documents": [
+          "Beleg_A.pdf | pdf | advice | 3.454,00 EUR | high | advice title 'Zahlungsavis'",
+          "Beleg_B.pdf | pdf | advice | 1.250,00 EUR | high | advice title 'Zahlungsavis'",
+          "body | body | unclear | - | - | advice title 'Zahlungsavis', but no amount found; no amount pattern found"
+        ]
+      },
+      "findings": []
+    }
+  ],
+  "officeChecks": {
+    "typescript": "5.9.3",
+    "models": [
+      "M2/paren",
+      "M2/es5",
+      "M5/paren",
+      "M1/await"
+    ],
+    "completeResultComparisons": 60
+  },
+  "live": {
+    "flowModified": false,
+    "messagesSent": 0,
+    "executed": false,
+    "reason": "Browser control tools were unavailable in this conversation, including after the user reconnected."
+  }
+}

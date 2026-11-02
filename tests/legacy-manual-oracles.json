@@ -1,0 +1,90 @@
+[
+  {
+    "file": "test/bench/burst/C4.eml",
+    "sha256": "18093f7a5c6e451c5373ddac7c94ea63cbfe4126d3fc3c0a367744af17fc4087",
+    "truth": {
+      "kind": "other"
+    },
+    "evidence": "Decoded all 20 PDF attachments independently with pdftotext: every document is titled Rechnung RE-2026-41xx/42xx and gives Rechnungsbetrag. Cover text only announces invoices; no remittance.",
+    "auditMethod": "Independent review of decoded MIME/document content; not copied from parser output"
+  },
+  {
+    "file": "test/bench/burst/C5.eml",
+    "sha256": "facd61ed92dbe55f92a0c7455d119a71b8fdfbd03fd25e37281bf047a0da6f8b",
+    "truth": {
+      "kind": "advice",
+      "amountNumber": 6796.17,
+      "currency": "EUR"
+    },
+    "evidence": "Last attachment Dokument_20.pdf decoded with pdftotext: Zahlungsavis, Summe 7321.39 minus Skonto95.22 minus Abzug430.00 = Ueberweisungsbetrag6796.17 EUR. The previous19 attachments are byte-identical to C4 invoices.",
+    "auditMethod": "Independent review of decoded MIME/document content; not copied from parser output"
+  },
+  {
+    "file": "test/bench/live3/L10.eml",
+    "sha256": "d64aa580019162a89567ac812c9f7c184cca013f2af9f9a4555bcf50e65a3251",
+    "truth": {
+      "kind": "other"
+    },
+    "evidence": "Plain body is an order for20pcs; Remittance advices will come from ap@customer.example only identifies a future sender.",
+    "auditMethod": "Independent review of decoded MIME/document content; not copied from parser output"
+  },
+  {
+    "file": "test/bench/live3/L17.eml",
+    "sha256": "511ad4eb94f909e6bc3309304df9666f4f2062b888905088a5f9a5e19b1dfb41",
+    "truth": {
+      "kind": "other"
+    },
+    "evidence": "Body asks for confirmation of open supplier items. Independently inspected XLSX sharedStrings and sheet XML: Offene Posten, Status offen, Summe offene Posten31902.40; no payment advice.",
+    "auditMethod": "Independent review of decoded MIME/document content; not copied from parser output"
+  },
+  {
+    "file": "test/bench/live3/L18.eml",
+    "sha256": "5e37c1350bf16dda87ba310aaca627603d3a62939e53c078ad3d909f745bb1c3",
+    "truth": {
+      "kind": "other"
+    },
+    "evidence": "Plain body asks whether an advice may be sent by email or post; no advice document or payment amount included.",
+    "auditMethod": "Independent review of decoded MIME/document content; not copied from parser output"
+  },
+  {
+    "file": "test/bench/live3/L19.eml",
+    "sha256": "96058f1d6b14d94b28103240742b35e68866fabf9dfecf0b567e3ee3e7cbc6ad",
+    "truth": {
+      "kind": "unreadable-advice"
+    },
+    "evidence": "Plain body says a new Zahlungsavis is available in supplier portal and must be retrieved. No amount or attachment; current requirement routes such cases to review.",
+    "auditMethod": "Independent review of decoded MIME/document content; not copied from parser output"
+  },
+  {
+    "file": "test/bench/live3/L20.eml",
+    "sha256": "60dd43b85b5f2f49b36ffb7f49ca32f8d2d00220cf1f91114099bbd885753817",
+    "truth": {
+      "kind": "advice",
+      "amountNumber": 12347.8,
+      "currency": "EUR"
+    },
+    "evidence": "Independently inspected XLSX XML: title Zahlungsavis, payerKorvik, recipientNordwerk, currencyEUR, payment rows1874.20+2798.88+1399.83+3834.45-386.75+629.75+2197.44 = Summe12347.80. Old subject amount2601.35 is not current payment.",
+    "auditMethod": "Independent review of decoded MIME/document content; not copied from parser output"
+  },
+  {
+    "file": "test/blind/sweep/MX/work/validate/MX32__p7m_content.eml",
+    "sha256": "6f202afe4b6368fc130cfd29bced64a895f73a407f40fe450d3706dbdaa6b026",
+    "truth": {
+      "kind": "advice",
+      "amountNumber": 5649.69,
+      "currency": "EUR"
+    },
+    "evidence": "Extracted inner MIME of MX32 signed container. Source manifest test/blind/sweep/MX/manifest.json for mails/MX32.eml has independent amount5649.69EUR and describes this embedded remittance PDF.",
+    "auditMethod": "Independent review of decoded MIME/document content; not copied from parser output"
+  },
+  {
+    "file": "test/fixtures/sheets/mail_related.eml",
+    "sha256": "a4a5a384d6f1e87eccd8af9a74f584263a362f0fce643fc926a654474785c1b5",
+    "truth": {
+      "kind": "advice",
+      "amountNumber": 3500
+    },
+    "evidence": "Header subject Zahlungsavis; raw HTML table header Ueberweisungsbetrag, rows1000.00 and2500.00, Summe3500.00. No currency explicitly given; amount is independent, EUR follows legacy default and should not be taken as external currency proof.",
+    "auditMethod": "Independent review of decoded MIME/document content; not copied from parser output"
+  }
+]

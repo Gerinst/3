@@ -5454,7 +5454,6 @@ class Lexer {
   unterminated: boolean;
   tokens: number;
   constructor(s: string, pos: number) {
-    checkRunDeadline();
     this.s = s;
     this.pos = pos;
     this.unterminated = false;
@@ -5489,7 +5488,9 @@ class Lexer {
   }
   parse(depth: number): PObj | null {
     // Parses one object. Keywords are returned as PKw. Returns null at EOF.
-    if ((++this.tokens & 4095) === 0) checkRunDeadline();
+    // Office Scripts may await user-function calls; constructors cannot be async.
+    // Check before the first token, then once per 4096 tokens, instead of calling from the constructor.
+    if ((this.tokens++ & 4095) === 0) checkRunDeadline();
     const s = this.s;
     // Recovery from stray closing delimiters must not recurse at the same depth.
     for (;;) {
@@ -15124,6 +15125,9 @@ const NOT_MADE_WHY = /^(?:payment not made yet|payment announced for later|payme
 const ACCOUNT_STATEMENT = /^account statement \(/;
 // a mail text that only mentions an advice or a payment (no amount); an amount with a currency in any notation
 const MENTION_ONLY = /^(?:advice title '[^']*', but no amount found|advice word '[^']*', but no amount|payment wording, but no amount)$/;
+// An explicitly unissued advice in a provisional payment proposal. Used only by the no-amount/no-possible-advice-file
+// gate below, so an actual or unreadable attached advice still keeps an execution contradiction for human review.
+const FUTURE_ADVICE_ONLY = /\b(?:zahlungsavis|avis)\s+(?:erhalten|bekommen)\s+sie\b[^.!?\n]{0,80}\bnach\s+(?:der\s+)?ausf[üu]e?hrung\b|\b(?:remittance|payment) advice\b[^.!?\n]{0,40}\bwill\s+(?:follow|be sent)\b[^.!?\n]{0,40}\bafter\s+(?:the\s+)?(?:execution|payment)\b/i;
 // lines of a signature or a company footer whose figures are no payment (share capital, register, tax and bank data)
 const SIGNATURE_FIGURES = /stammkapital|grundkapital|gezeichnetes kapital|share capital|capital social|amtsgericht|registergericht|\bhrb?\b|registered (?:in|office|no)|company (?:no|number|reg)|ust-?id|vat (?:no|reg|id)|steuer-?nr|tax id|geschäftsführ|managing director|\biban\b|\bbic\b/i;
 const MONEY_TEXT = /(?:EUR|€|CHF|USD|GBP|£|\$)\s?-?\d|\d\s?(?:EUR|€|CHF|USD|GBP|£|Euro\b)/i;
@@ -15181,7 +15185,7 @@ const PAY_COUNT_HEAD = /^\s*(?:zahlung|auszahlung|überweisung|ueberweisung|zahl
 // a numbered payment heading as a line of its own, without the count ("Auszahlung 1", "Zahlung 2:", "Payment 2"; group 1
 // = number): separate payments when numbered 1, 2, ... one below the other
 const PAY_NUM_HEAD = /^\s*(?:zahlung|auszahlung|überweisung|ueberweisung|payment|payout|remittance|transfer)\s*(?:nr\.?|no\.?|#)?\s*(\d{1,2})\s*:?\s*$/i;
-const PAY_NUMBER = /(?:^|\s{2,}|[–—·|:;,(]\s*)(zahl(?:ungs)?beleg(?:-?(?:nr|nummer))?|ausgleichsbeleg(?:-?(?:nr|nummer))?|zahlungs-?(?:nr|nummer|id)|(?:zahlungs)?avis-?(?:nr|nummer)|(?:payment|remittance|advice|che(?:ck|que))\s*(?:no|nr|number|id|#|doc(?:ument)?)|scheck-?(?:nr|nummer))(?![a-zäöüß])\.?\s*[:#]?\s*([A-Za-z0-9][A-Za-z0-9\/._-]{2,30})/gi;
+const PAY_NUMBER = /(?:^|\s{2,}|[–—·|:;,(]\s*)(zahl(?:ungs)?beleg(?:-?(?:nr|nummer))?|ausgleichsbeleg(?:-?(?:nr|nummer))?|zahlungs-?(?:nr|nummer|id)|(?:zahlungs)?avis[\s-]*(?:nr|nummer)|(?:payment|remittance|advice|che(?:ck|que))\s*(?:no|nr|number|id|#|doc(?:ument)?)|scheck-?(?:nr|nummer))(?![a-zäöüß])\.?\s*[:#]?\s*([A-Za-z0-9][A-Za-z0-9\/._-]{2,30})/gi;
 // a payment block headed by its reference and its value date ("Payment reference PR-2026-10-0405 - value date 28.10.2026",
 // "Zahlungsreferenz ZR-4711 – Valuta 30.10.2026"; group 1 = the reference): one payment of several in the document
 const PAY_REF_DATED = /^\s*(?:payment|zahlungs?)[- ]?(?:reference|ref\.?|referenz)\s*[:#]?\s*([A-Za-z0-9][A-Za-z0-9\/._-]{2,30})(?=[^\n]*(?:value date|valuta|wertstellung))/i;
@@ -17791,6 +17795,17 @@ function mailResult(mail: MailScan, kw: string, subject: string): AvisResult {
   // (an account statement may be the payer's proof of payment: it does not count as something else here)
   let attDocs = 0, attOther = 0;
   for (const d of docs) if (!d.body) { attDocs++; if (d.verdict === "other" && !ACCOUNT_STATEMENT.test(d.why)) attOther++; }
+  // A bare reply announcing a future payment is not an advice. Keep the execution contradiction whenever any file
+  // or picture accompanies it; a supposedly issued advice beside the announcement must still be checked by a person.
+  if (attDocs === 0 && mail.photos === 0 && mail.ignored.length === 0) for (const d of docs) {
+    if (!d.body || d.name !== "body" || d.verdict !== "unclear" || !d.payer || d.strong || d.hint !== ""
+      || d.res.confidence !== "low" || d.why.indexOf("payment execution not confirmed (") !== 0
+      || d.res.error.indexOf("uncertain: payment announced for later") !== 0 || FIRST_PERSON.test(d.positive)
+      || !POSTPONE_COND.test(d.res.text)) continue;
+    const failedOrPending = EXECUTION_NEGATIVE.test(d.res.text) || EXECUTION_FAILED.test(d.res.text)
+      || EXECUTION_PENDING.test(d.res.text) || d.res.text.split("\n").some((line) => EXECUTION_STATUS_FIELD.test(line));
+    if (!failedOrPending) { d.verdict = "other"; d.why = "payment announced for later - no advice or attachment"; }
+  }
   for (const d of docs) {
     if (d.body && d.name === "body" && d.verdict === "unclear" && !d.res.ok && d.why === "payment wording, but no amount" && attDocs > 0 && attOther === attDocs) {
       d.verdict = "other";
@@ -17809,7 +17824,10 @@ function mailResult(mail: MailScan, kw: string, subject: string): AvisResult {
     }
     if (d.res.ok || moneyText(d.res.text) || d.verdict === "advice" || d.verdict === "several") keep = true;
     else if (d.verdict === "unclear") {
-      if (MENTION_ONLY.test(d.why) && !PORTAL_NOTE.test(d.res.text)) mentioned = true;
+      const futureProposal = d.why.indexOf("payment execution not confirmed (") === 0 && !d.payer
+        && PROVISIONAL_PAY.test(d.res.text) && SCHEDULED_PAY.test(d.res.text) && FUTURE_ADVICE_ONLY.test(d.res.text)
+        && !EXECUTION_FAILED.test(d.res.text);
+      if ((MENTION_ONLY.test(d.why) || futureProposal) && !PORTAL_NOTE.test(d.res.text)) mentioned = true;
       else keep = true;
     } else if (d.hint !== "" && !PORTAL_NOTE.test(d.res.text)) mentioned = true;
   }

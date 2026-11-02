@@ -1,0 +1,468 @@
+{
+  "repository": "Gerinst/2testordner",
+  "purpose": "Prepared normal-flow live acceptance selection; no messages sent",
+  "notLiveTested": true,
+  "cases": [
+    {
+      "id": "single-body-pdf",
+      "file": "test/fixtures/v2_body_pdf_same.eml",
+      "oracle": {
+        "file": "test/fixtures/expected.json",
+        "entry": "v2_body_pdf_same.eml",
+        "evidence": {
+          "amount": "3.454,00",
+          "verdict": "advice",
+          "category": "Avise",
+          "confidence": "high",
+          "subjectPrefix": "3.454,00 EUR - "
+        }
+      },
+      "expectedOutcome": "safe",
+      "expectedNewCategory": "Avis",
+      "expectedReview": false,
+      "expectedSubjectPatch": true,
+      "expectedAmounts": [
+        3454.0
+      ],
+      "currencies": [
+        "EUR"
+      ],
+      "fixtureMailbox": null,
+      "liveExecuted": false,
+      "liveSenderRecipientNote": "Fixtures verwenden fiktive Empfänger. Für Liveabnahme bekannte Testadressen verwenden und Originaldaten nur an das vereinbarte Testpostfach richten. Kunden-Avise von externer Testadresse senden; tatsächliche Empfangsadresse als mailboxAddress übergeben."
+    },
+    {
+      "id": "two-safe-pdfs",
+      "file": "test/bench/mailF/mails/F040.eml",
+      "oracle": {
+        "file": "test/bench/mailF/manifest.json",
+        "entry": "mails/F040.eml",
+        "evidence": {
+          "kind": "several",
+          "category": "mehrere Avise",
+          "amounts": [
+            22326.96,
+            2359.12
+          ],
+          "currencies": [
+            "EUR",
+            "EUR"
+          ],
+          "note": "two advice PDFs"
+        }
+      },
+      "expectedOutcome": "safe",
+      "expectedNewCategory": "Avis",
+      "expectedReview": false,
+      "expectedSubjectPatch": true,
+      "expectedAmounts": [
+        22326.96,
+        2359.12
+      ],
+      "currencies": [
+        "EUR",
+        "EUR"
+      ],
+      "fixtureMailbox": "zahlungseingang@nordwerk.example.com",
+      "liveExecuted": false,
+      "liveSenderRecipientNote": "Fixtures verwenden fiktive Empfänger. Für Liveabnahme bekannte Testadressen verwenden und Originaldaten nur an das vereinbarte Testpostfach richten. Kunden-Avise von externer Testadresse senden; tatsächliche Empfangsadresse als mailboxAddress übergeben."
+    },
+    {
+      "id": "two-pdfs-plus-invoice",
+      "file": "test/bench/mailF/mails/F118.eml",
+      "oracle": {
+        "file": "test/bench/mailF/manifest.json",
+        "entry": "mails/F118.eml",
+        "evidence": {
+          "kind": "several",
+          "category": "mehrere Avise",
+          "amounts": [
+            32960.47,
+            148.94
+          ],
+          "currencies": [
+            "EUR",
+            "EUR"
+          ],
+          "note": "two advices + invoice copy"
+        }
+      },
+      "expectedOutcome": "safe",
+      "expectedNewCategory": "Avis",
+      "expectedReview": false,
+      "expectedSubjectPatch": true,
+      "expectedAmounts": [
+        32960.47,
+        148.94
+      ],
+      "currencies": [
+        "EUR",
+        "EUR"
+      ],
+      "fixtureMailbox": "zahlungseingang@nordwerk.example.com",
+      "liveExecuted": false,
+      "liveSenderRecipientNote": "Fixtures verwenden fiktive Empfänger. Für Liveabnahme bekannte Testadressen verwenden und Originaldaten nur an das vereinbarte Testpostfach richten. Kunden-Avise von externer Testadresse senden; tatsächliche Empfangsadresse als mailboxAddress übergeben."
+    },
+    {
+      "id": "paid-partial-installment",
+      "file": "test/bench/mailFE/mails/E049.eml",
+      "oracle": {
+        "file": "test/bench/mailFE/manifest.json",
+        "entry": "mails/E049.eml",
+        "evidence": {
+          "kind": "advice",
+          "category": "Avise",
+          "amountNumber": 4880,
+          "currency": "EUR",
+          "note": "instalment letter: first instalment paid today, two further instalments and invoice total; plus copy of that invoice; partial payment, truth = paid part"
+        }
+      },
+      "expectedOutcome": "safe",
+      "expectedNewCategory": "Avis",
+      "expectedReview": false,
+      "expectedSubjectPatch": true,
+      "expectedAmounts": [
+        4880.0
+      ],
+      "currencies": [
+        "EUR"
+      ],
+      "fixtureMailbox": "zahlungseingang@nordwerk.example.com",
+      "liveExecuted": false,
+      "liveSenderRecipientNote": "Fixtures verwenden fiktive Empfänger. Für Liveabnahme bekannte Testadressen verwenden und Originaldaten nur an das vereinbarte Testpostfach richten. Kunden-Avise von externer Testadresse senden; tatsächliche Empfangsadresse als mailboxAddress übergeben."
+    },
+    {
+      "id": "swiss-advice",
+      "file": "test/blind/sweep3/S3/mails/S320.eml",
+      "oracle": {
+        "file": "test/blind/sweep3/S3/manifest.json",
+        "entry": "mails/S320.eml",
+        "evidence": {
+          "kind": "advice",
+          "category": "Avise",
+          "amountNumber": 28044.65,
+          "currency": "CHF",
+          "note": "Swiss 'Vergütungsanzeige' in CHF with typographic apostrophe thousands separator (’) and decimal point, Skonto on two invoices, credit note; truth = Vergütungsbetrag in CHF. Hard: Swiss number format and term, currency CHF on a German creditor"
+        }
+      },
+      "expectedOutcome": "safe",
+      "expectedNewCategory": "Avis",
+      "expectedReview": false,
+      "expectedSubjectPatch": true,
+      "expectedAmounts": [
+        28044.65
+      ],
+      "currencies": [
+        "CHF"
+      ],
+      "fixtureMailbox": "debitoren@nordwerk.example",
+      "liveExecuted": false,
+      "liveSenderRecipientNote": "Fixtures verwenden fiktive Empfänger. Für Liveabnahme bekannte Testadressen verwenden und Originaldaten nur an das vereinbarte Testpostfach richten. Kunden-Avise von externer Testadresse senden; tatsächliche Empfangsadresse als mailboxAddress übergeben."
+    },
+    {
+      "id": "spreadsheet-uncertain",
+      "file": "test/bench/mailFE/mails/E066.eml",
+      "oracle": {
+        "file": "test/bench/mailFE/manifest.json",
+        "entry": "mails/E066.eml",
+        "evidence": {
+          "kind": "advice",
+          "category": "Avise",
+          "amountNumber": 30841.52,
+          "currency": "EUR",
+          "note": "xlsx; two sheets (Info, Payments)"
+        }
+      },
+      "expectedOutcome": "review",
+      "expectedNewCategory": "",
+      "expectedReview": true,
+      "expectedSubjectPatch": false,
+      "expectedAmounts": [
+        30841.52
+      ],
+      "currencies": [
+        "EUR"
+      ],
+      "fixtureMailbox": "zahlungseingang@nordwerk.example.com",
+      "liveExecuted": false,
+      "expectedFolder": "Posteingang/Archive/Avisbetrag fehlt",
+      "subjectMustRemainUnchanged": true,
+      "note": "Alter Oracle verlangt korrektes Avis/Beträge; aktueller Parser stuft als low/medium ein. Nach heutiger Regel bewusst Review statt historischer Avise-Kategorie.",
+      "liveSenderRecipientNote": "Fixtures verwenden fiktive Empfänger. Für Liveabnahme bekannte Testadressen verwenden und Originaldaten nur an das vereinbarte Testpostfach richten. Kunden-Avise von externer Testadresse senden; tatsächliche Empfangsadresse als mailboxAddress übergeben."
+    },
+    {
+      "id": "multiple-medium",
+      "file": "test/bench/mailFE/mails/E096.eml",
+      "oracle": {
+        "file": "test/bench/mailFE/manifest.json",
+        "entry": "mails/E096.eml",
+        "evidence": {
+          "kind": "several",
+          "category": "mehrere Avise",
+          "amounts": [
+            9408.02,
+            4910.06
+          ],
+          "currencies": [
+            "EUR",
+            "EUR"
+          ],
+          "note": "two different advice documents"
+        }
+      },
+      "expectedOutcome": "review",
+      "expectedNewCategory": "",
+      "expectedReview": true,
+      "expectedSubjectPatch": false,
+      "expectedAmounts": [
+        9408.02,
+        4910.06
+      ],
+      "currencies": [
+        "EUR",
+        "EUR"
+      ],
+      "fixtureMailbox": "zahlungseingang@nordwerk.example.com",
+      "liveExecuted": false,
+      "expectedFolder": "Posteingang/Archive/Avisbetrag fehlt",
+      "subjectMustRemainUnchanged": true,
+      "note": "Alter Oracle verlangt korrektes Avis/Beträge; aktueller Parser stuft als low/medium ein. Nach heutiger Regel bewusst Review statt historischer Avise-Kategorie.",
+      "liveSenderRecipientNote": "Fixtures verwenden fiktive Empfänger. Für Liveabnahme bekannte Testadressen verwenden und Originaldaten nur an das vereinbarte Testpostfach richten. Kunden-Avise von externer Testadresse senden; tatsächliche Empfangsadresse als mailboxAddress übergeben."
+    },
+    {
+      "id": "image-only-scan",
+      "file": "test/bench/mailF/mails/F029.eml",
+      "oracle": {
+        "file": "test/bench/mailF/manifest.json",
+        "entry": "mails/F029.eml",
+        "evidence": {
+          "kind": "unreadable-advice",
+          "category": "Avis prüfen",
+          "amountNumber": 28220.64,
+          "currency": "EUR",
+          "note": "image-only scan, no text layer"
+        }
+      },
+      "expectedOutcome": "review",
+      "expectedNewCategory": "",
+      "expectedReview": true,
+      "expectedSubjectPatch": false,
+      "expectedAmounts": [
+        28220.64
+      ],
+      "currencies": [
+        "EUR"
+      ],
+      "fixtureMailbox": "zahlungseingang@nordwerk.example.com",
+      "liveExecuted": false,
+      "expectedFolder": "Posteingang/Archive/Avisbetrag fehlt",
+      "subjectMustRemainUnchanged": true,
+      "liveSenderRecipientNote": "Fixtures verwenden fiktive Empfänger. Für Liveabnahme bekannte Testadressen verwenden und Originaldaten nur an das vereinbarte Testpostfach richten. Kunden-Avise von externer Testadresse senden; tatsächliche Empfangsadresse als mailboxAddress übergeben."
+    },
+    {
+      "id": "encrypted-mail",
+      "file": "test/fixtures/v2_encrypted.eml",
+      "oracle": {
+        "file": "test/fixtures/expected.json",
+        "entry": "v2_encrypted.eml",
+        "evidence": {
+          "verdict": "unclear",
+          "category": "Avis prüfen",
+          "newSubject": "",
+          "patchSubject": "",
+          "error": "S/MIME encrypted mail - cannot be read",
+          "subjectPrefix": ""
+        }
+      },
+      "expectedOutcome": "review",
+      "expectedNewCategory": "",
+      "expectedReview": true,
+      "expectedSubjectPatch": false,
+      "expectedAmounts": [],
+      "currencies": [],
+      "fixtureMailbox": null,
+      "liveExecuted": false,
+      "expectedFolder": "Posteingang/Archive/Avisbetrag fehlt",
+      "subjectMustRemainUnchanged": true,
+      "liveSenderRecipientNote": "Fixtures verwenden fiktive Empfänger. Für Liveabnahme bekannte Testadressen verwenden und Originaldaten nur an das vereinbarte Testpostfach richten. Kunden-Avise von externer Testadresse senden; tatsächliche Empfangsadresse als mailboxAddress übergeben.",
+      "note": "Der Microsoft-Trigger kann geschützte Mails auslassen. Live prüfen, ob Lauf überhaupt startet; fehlender Lauf zählt als Integrationsbefund, nicht als bestandene Reviewroute."
+    },
+    {
+      "id": "unclear-payment-hint",
+      "file": "test/fixtures/v2_fix_b_subject_amount.eml",
+      "oracle": {
+        "file": "test/fixtures/expected.json",
+        "entry": "v2_fix_b_subject_amount.eml",
+        "evidence": {
+          "verdict": "unclear",
+          "category": "Avis prüfen",
+          "newSubject": "",
+          "patchSubject": "",
+          "mailSubject": "Überweisung",
+          "verdictWhy": "payment word",
+          "subjectPrefix": ""
+        }
+      },
+      "expectedOutcome": "review",
+      "expectedNewCategory": "",
+      "expectedReview": true,
+      "expectedSubjectPatch": false,
+      "expectedAmounts": [],
+      "currencies": [],
+      "fixtureMailbox": null,
+      "liveExecuted": false,
+      "inputMailSubjectOverride": "Überweisung",
+      "expectedFolder": "Posteingang/Archive/Avisbetrag fehlt",
+      "subjectMustRemainUnchanged": true,
+      "liveSenderRecipientNote": "Fixtures verwenden fiktive Empfänger. Für Liveabnahme bekannte Testadressen verwenden und Originaldaten nur an das vereinbarte Testpostfach richten. Kunden-Avise von externer Testadresse senden; tatsächliche Empfangsadresse als mailboxAddress übergeben."
+    },
+    {
+      "id": "complaint-not-payment",
+      "file": "test/bench/mailFE/mails/E115.eml",
+      "oracle": {
+        "file": "test/bench/mailFE/manifest.json",
+        "entry": "mails/E115.eml",
+        "evidence": {
+          "kind": "other",
+          "category": "",
+          "note": "our invoice sent back disputed; duplicate invoice, shared service centre"
+        }
+      },
+      "expectedOutcome": "untouched",
+      "expectedNewCategory": "",
+      "expectedReview": false,
+      "expectedSubjectPatch": false,
+      "expectedAmounts": [],
+      "currencies": [],
+      "fixtureMailbox": "zahlungseingang@nordwerk.example.com",
+      "liveExecuted": false,
+      "subjectMustRemainUnchanged": true,
+      "categoriesMustRemainUnchanged": true,
+      "liveSenderRecipientNote": "Fixtures verwenden fiktive Empfänger. Für Liveabnahme bekannte Testadressen verwenden und Originaldaten nur an das vereinbarte Testpostfach richten. Kunden-Avise von externer Testadresse senden; tatsächliche Empfangsadresse als mailboxAddress übergeben."
+    },
+    {
+      "id": "delivery-not-payment",
+      "file": "test/fixtures/v2_lieferavis_subject.eml",
+      "oracle": {
+        "file": "test/fixtures/expected.json",
+        "entry": "v2_lieferavis_subject.eml",
+        "evidence": {
+          "verdict": "other",
+          "category": "",
+          "newSubject": "",
+          "patchSubject": "",
+          "patchCategory": "",
+          "subjectPrefix": ""
+        }
+      },
+      "expectedOutcome": "untouched",
+      "expectedNewCategory": "",
+      "expectedReview": false,
+      "expectedSubjectPatch": false,
+      "expectedAmounts": [],
+      "currencies": [],
+      "fixtureMailbox": null,
+      "liveExecuted": false,
+      "subjectMustRemainUnchanged": true,
+      "categoriesMustRemainUnchanged": true,
+      "liveSenderRecipientNote": "Fixtures verwenden fiktive Empfänger. Für Liveabnahme bekannte Testadressen verwenden und Originaldaten nur an das vereinbarte Testpostfach richten. Kunden-Avise von externer Testadresse senden; tatsächliche Empfangsadresse als mailboxAddress übergeben."
+    },
+    {
+      "id": "own-outgoing-bcc",
+      "file": "test/bench/brainstorm/N16.eml",
+      "oracle": {
+        "file": "test/bench/brainstorm/N16.json",
+        "entry": "facts/expect",
+        "evidence": {
+          "facts": "Advice of Nordwerk (sender kreditoren@) to Kessler Stahlbau GmbH, Lieferantennummer 70012, Zahllauf 29.10.2026, Wertstellung 30.10.2026: ER-88123 (Ihre Rechnung KS-26-0917, 02.10.2026) 4.500,00 - Skonto 90,00 = 4.410,00; ER-88140 (Ihre Rechnung KS-26-0958, 09.10.2026) 4.623,47 - Skonto 92,47 = 4.531,00; Summe 9.123,47 / 182,47 / 8.941,00; Zahlbetrag 8.941,00 EUR to the supplier's IBAN DE00 1234 5678 0070 0120 15 (Musterbank AG); Nordwerk's own IBAN DE00 1234 5678 9012 3456 78 in the footer. Addressing: To info@kessler-stahlbau.example, no CC, AR mailbox debitoren@nordwerk.example only as BCC (no Bcc header in the delivered copy).",
+          "expect": {
+            "category": "",
+            "amount": null,
+            "currency": null,
+            "level": "n/a"
+          },
+          "trap": "Textbook advice (Zahlungsavis, Skonto, Zahlbetrag 8.941,00 EUR) on Nordwerk letterhead, but Nordwerk is the payer and the supplier the addressee; the AR mailbox only received a BCC copy (not in To/Cc), so only the direction shows that no money comes in."
+        }
+      },
+      "expectedOutcome": "untouched",
+      "expectedNewCategory": "",
+      "expectedReview": false,
+      "expectedSubjectPatch": false,
+      "expectedAmounts": [],
+      "currencies": [],
+      "fixtureMailbox": "debitoren@nordwerk.example",
+      "liveExecuted": false,
+      "subjectMustRemainUnchanged": true,
+      "categoriesMustRemainUnchanged": true,
+      "liveSenderRecipientNote": "Richtung erhalten: Absender in eigener Testpostfach-Domain, To eine kontrollierte externe Testadresse, eigenes Postfach nur BCC. N16.json belegt debitoren@nordwerk.example als fiktives Ziel. Einfaches Weiterleiten von externer Adresse prüft NICHT denselben Fall."
+    },
+    {
+      "id": "already-prefixed",
+      "file": "test/fixtures/v2_subject_reply_same_amount.eml",
+      "oracle": {
+        "file": "test/fixtures/expected.json",
+        "entry": "v2_subject_reply_same_amount.eml",
+        "evidence": {
+          "amount": "12.347,80",
+          "verdict": "advice",
+          "category": "Avise",
+          "mailSubject": "AW: 12.347,80 EUR - Zahlungsavis vom 29.10.2026",
+          "subjectPrefix": "12.347,80 EUR - ",
+          "newSubject": "",
+          "patchSubject": ""
+        }
+      },
+      "expectedOutcome": "safe",
+      "expectedNewCategory": "Avis",
+      "expectedReview": false,
+      "expectedSubjectPatch": false,
+      "expectedAmounts": [
+        12347.8
+      ],
+      "currencies": [
+        "EUR"
+      ],
+      "fixtureMailbox": null,
+      "liveExecuted": false,
+      "inputMailSubjectOverride": "AW: 12.347,80 EUR - Zahlungsavis vom 29.10.2026",
+      "subjectMustRemainUnchanged": true,
+      "note": "Skript mit mailSubject aus historischer Erwartung ausführen; erneut verarbeiteter Betrag darf kein zweites Präfix erzeugen. Vor Liveversand Betreff exakt setzen.",
+      "liveSenderRecipientNote": "Fixtures verwenden fiktive Empfänger. Für Liveabnahme bekannte Testadressen verwenden und Originaldaten nur an das vereinbarte Testpostfach richten. Kunden-Avise von externer Testadresse senden; tatsächliche Empfangsadresse als mailboxAddress übergeben."
+    },
+    {
+      "id": "recoverable-header-existing-categories",
+      "file": "test/fixtures/v2_fix_r2_broken_header.eml",
+      "oracle": {
+        "file": "test/fixtures/expected.json",
+        "entry": "v2_fix_r2_broken_header.eml",
+        "evidence": {
+          "amount": "3.454,00",
+          "verdict": "advice",
+          "category": "Avise",
+          "confidence": "high",
+          "patchCategory": "{\"categories\":[\"Wichtig\",\"Kunde A\",\"Avise\"]}",
+          "subjectPrefix": "3.454,00 EUR - "
+        }
+      },
+      "expectedOutcome": "safe",
+      "expectedNewCategory": "Avis",
+      "expectedReview": false,
+      "expectedSubjectPatch": true,
+      "expectedAmounts": [
+        3454.0
+      ],
+      "currencies": [
+        "EUR"
+      ],
+      "fixtureMailbox": null,
+      "liveExecuted": false,
+      "expectedExistingCategoriesPreserved": [
+        "Wichtig",
+        "Kunde A"
+      ],
+      "note": "In echtem Outlook die bestehenden Kategorien vor Verarbeitung setzen; MIME Keywords allein sind kein Graph-Kategoriennachweis.",
+      "liveSenderRecipientNote": "Fixtures verwenden fiktive Empfänger. Für Liveabnahme bekannte Testadressen verwenden und Originaldaten nur an das vereinbarte Testpostfach richten. Kunden-Avise von externer Testadresse senden; tatsächliche Empfangsadresse als mailboxAddress übergeben."
+    }
+  ],
+  "sourceCommit": "b9ada7d60cdb2ce76dfc06a90834cecce23ab422"
+}

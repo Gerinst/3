@@ -1,6 +1,8 @@
 # Avis-Flow Version 2
 
-**Aktuelle Sicherheitsprüfung (02.11.2026):** Der [Testbericht](docs/TESTBERICHT.md) beschreibt die reproduzierbaren lokalen Tests, behobene Fehler und offene Betriebsrisiken. Der aktuelle Gesamtstand ist noch nicht in Microsoft 365 abgenommen. Plan B ist wegen fehlender zuverlässiger Erkennung eigener Kopien und möglicher Doppelversendungen **nicht für den Produktivbetrieb freigegeben**. `high` ist eine regelbasierte Einstufung, kein Nachweis eines Zahlungseingangs und keine Grundlage für eine ungeprüfte Buchung.
+**Gegenprüfung mit den alten Testdateien:** Der [ergänzende Prüfbericht](docs/GEGENPRUEFUNG-ALTTESTS.md) beschreibt die Prüfung gegen das Archiv `Gerinst/2testordner`, die aus Originalgeneratoren wiederhergestellten Eingaben und die zusätzliche Office-Script-Simulation. Fehlende Dateien, echte Abweichungen und vorsichtshalber zur Prüfung eingeordnete Fälle werden getrennt ausgewiesen. Diese Prüfung belegt keine Live-Ausführung im Microsoft-365-Postfach.
+
+**Sicherheitsprüfung vom 02.11.2026:** Der [bisherige Testbericht](docs/TESTBERICHT.md) beschreibt die reproduzierbaren lokalen Tests, behobene Fehler und offene Betriebsrisiken. Der aktuelle Gesamtstand ist noch nicht in Microsoft 365 abgenommen. Plan B ist wegen fehlender zuverlässiger Erkennung eigener Kopien und möglicher Doppelversendungen **nicht für den Produktivbetrieb freigegeben**. `high` ist eine regelbasierte Einstufung, kein Nachweis eines Zahlungseingangs und keine Grundlage für eine ungeprüfte Buchung.
 
 Erkennt Zahlungsavise in einem freigegebenen Postfach am Inhalt von PDF, Excel/CSV, SAP-Exporten oder Mailtext. Nur als **sicher (`confidence = high`)** eingestufte Avise bekommen zuerst den Zahlbetrag vor den ursprünglichen Betreff und danach die Kategorie **Avis**. Bei mehreren sicheren Avisen stehen alle erkannten einzelnen Zahlbeträge mit ` + ` getrennt davor: `1.200,30 + 5.632,21 + 500,42 Abrechnung Oktober`. Währungskürzel werden nicht ergänzt, die Beträge nicht zu einer Gesamtsumme addiert.
 
@@ -45,6 +47,18 @@ Die folgenden Berichte beschreiben den Stand vom 30./31.10.2026. Damalige Hinwei
 
 ## Lokal prüfen
 
-Mit Node.js 24 oder neuer: `node tests/run-all.cjs`. Die zehn Suiten prüfen echte, künstlich erzeugte Mail- und Dateiinhalte sowie ein ausdrücklich simuliertes Flow-Modell. Ein separater Typcheck ist mit `npx --yes --package typescript tsc --noEmit --target es2020 --skipLibCheck tests/excel-script-stub.d.ts dist/AvisV2.ts` möglich. Umfang und verbleibende Grenzen stehen im [Testbericht](docs/TESTBERICHT.md). Es werden keine Mails versendet und keine Microsoft-365-Verbindungen benötigt. Node.js-Laufzeiten sind keine Office-Script-Laufzeiten.
+Mit Node.js 24 oder neuer: `node tests/run-all.cjs`. Die lokalen Suiten prüfen echte, künstlich erzeugte Mail- und Dateiinhalte sowie ein ausdrücklich simuliertes Flow-Modell; dafür ist keine Paketinstallation nötig.
+
+Für den Typcheck und die zusätzliche Office-Kompatibilitätsprüfung die festgelegte TypeScript-Version 5.9.3 installieren:
+
+```sh
+npm ci
+npm run typecheck
+npm run test:office
+```
+
+Die Office-Simulation vergleicht vollständige Ergebnisse in vier Umwandlungsmodellen und prüft auch, dass der frühere Fehler eines Funktionsaufrufs im Lexer-Konstruktor erkannt wird. Sie ersetzt keinen Lauf in Excel Online. Der Zeitcheck erfolgt jetzt vor dem ersten gelesenen Token und danach weiterhin in Abständen, ohne einen neuen Fehlerbehandlungsblock je Token.
+
+Das separat ausgecheckte Testarchiv lässt sich mit `node tests/legacy-corpus.cjs /pfad/zu/2testordner /tmp/avis-legacy-report.json` gegen den aktuellen Parser prüfen. Quellenstand, Wiederherstellung fehlender Eingaben und Ergebniseinordnung stehen im [ergänzenden Prüfbericht](docs/GEGENPRUEFUNG-ALTTESTS.md); die frühere lokale Testreihe bleibt im [bisherigen Testbericht](docs/TESTBERICHT.md) dokumentiert. Es werden keine Mails versendet und keine Microsoft-365-Verbindungen benötigt. Node.js-Laufzeiten sind keine Office-Script-Laufzeiten.
 
 Version 1 mit Ergebnis-Mails für PDFs: [Gerinst/1](https://github.com/Gerinst/1).

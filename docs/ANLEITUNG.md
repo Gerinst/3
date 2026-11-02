@@ -4,7 +4,9 @@ Diese Anleitung baut den Flow für ein **freigegebenes Postfach** (Exchange Shar
 
 Im Folgenden heißt dieser Zielordner kurz **Prüfordner**. `Archive` endet mit **e**; `Avisbetrag fehlt` besteht aus dem Wort **Avisbetrag**, einem Leerzeichen und **fehlt**. Gemeint ist der Unterordner im freigegebenen Postfach.
 
-Die früheren Klickwege und Live-Tests vom 30./31.10.2026 beziehen sich auf den damaligen Stand. Die aktuelle Sicherheitsprüfung vom 02.11.2026 umfasst lokale Parsertests und simulierte Flow-Abläufe; der Gesamtstand ist **noch nicht in Microsoft 365 abgenommen**. Umfang, gefundene Fehler und verbleibende Risiken stehen im [Testbericht](TESTBERICHT.md). **Plan B ist nicht für den Produktivbetrieb freigegeben.** Der aktuelle Nachbau mit Feldern, Einstellungen und Formeln steht in `dist/avis-flow.html` (herunterladen und im Browser öffnen). Ein GitHub-Update ändert einen bereits laufenden Power-Automate-Flow nicht automatisch.
+Die früheren Klickwege und Live-Tests vom 30./31.10.2026 beziehen sich auf den damaligen Stand. Die erste lokale Sicherheitsprüfung vom 02.11.2026 umfasst Parsertests und simulierte Flow-Abläufe; der Gesamtstand ist **noch nicht in Microsoft 365 abgenommen**. Umfang, gefundene Fehler und verbleibende Risiken stehen im [Testbericht](TESTBERICHT.md). **Plan B ist nicht für den Produktivbetrieb freigegeben.** Der aktuelle Nachbau mit Feldern, Einstellungen und Formeln steht in `dist/avis-flow.html` (herunterladen und im Browser öffnen). Ein GitHub-Update ändert einen bereits laufenden Power-Automate-Flow nicht automatisch.
+
+Die ergänzende [Gegenprüfung mit dem alten Testarchiv](GEGENPRUEFUNG-ALTTESTS.md) verwendet die Eingaben aus `Gerinst/2testordner` und aus dessen Originalgeneratoren wiederhergestellte Dateien. Sie trennt verfügbare von fehlenden Eingaben, fachliche Fehler von geänderten früheren Kategorien und konservative Prüffälle von exakt übereinstimmenden Ergebnissen. Dazu kommt eine lokale Office-Script-Simulation. Auch diese Ergebnisse sind keine Live-Abnahme des angeschlossenen Postfachs.
 
 ## Überblick
 
@@ -253,7 +255,15 @@ Oben **Speichern**. Der Flow bearbeitet neue Mails im ausgewählten **Posteingan
 
 ## Schritt 6: Testen
 
-Zuerst lokal mit Node.js 24 oder neuer `node tests/run-all.cjs` ausführen. Die zehn Testsuiten prüfen künstlich erzeugte Mail- und Dateiinhalte sowie simulierte Flow-Abläufe. Das ersetzt keine Live-Abnahme der eingerichteten Verbindungen, Rechte und Ordner. Der [Testbericht](TESTBERICHT.md) trennt den lokal geprüften Umfang von offenen Integrationsrisiken.
+Zuerst lokal mit Node.js 24 oder neuer `node tests/run-all.cjs` ausführen. Die lokalen Testsuiten prüfen künstlich erzeugte Mail- und Dateiinhalte sowie simulierte Flow-Abläufe; sie benötigen keine Paketinstallation. Für die zusätzlich mitgelieferte Office-Simulation und den Typcheck:
+
+```sh
+npm ci
+npm run typecheck
+npm run test:office
+```
+
+Damit wird TypeScript 5.9.3 aus der festgelegten Paketversion verwendet. Die Office-Simulation prüft vier Umwandlungsmodelle und vollständige Ergebnisse verschiedener Dateitypen. Weder sie noch ein bestandener Typcheck ersetzen eine Live-Abnahme der eingerichteten Verbindungen, Rechte, Ordner und Laufzeiten. Der [bisherige Testbericht](TESTBERICHT.md) und die [Gegenprüfung der alten Testdateien](GEGENPRUEFUNG-ALTTESTS.md) trennen den lokal geprüften Umfang von offenen Integrationsrisiken. Das separat ausgecheckte Archiv kann mit `node tests/legacy-corpus.cjs /pfad/zu/2testordner /tmp/avis-legacy-report.json` erneut geprüft werden; die Wiederherstellung fehlender Eingaben ist im ergänzenden Bericht dokumentiert.
 
 1. Eine sichere Avis-Mail (`high`) mit Datei und eine Mail ohne Avis an das freigegebene Postfach senden. Die Avis-Mail bekommt erst den Betrag, danach `Avis`; die andere bleibt unverändert.
 2. Einen Prüffall senden, zum Beispiel ein Avis als Scan ohne Text. Er muss im vorhandenen Ordner **Posteingang → Archive → Avisbetrag fehlt** ankommen und darf keine neue Kategorie `Avis prüfen` erhalten.
@@ -415,7 +425,11 @@ Die frühere Bündelung der `try/catch`-Fehlerbehandlung bleibt erhalten: Der PD
 
 Zusätzlich werden ungültige PDF-Bildparameter wie null Spalten oder Farbkanäle und nicht sinnvoll durchlaufbare Schriftbreitenbereiche abgefangen. Weitere Budgetprüfungen begrenzen die Verarbeitung von PDF-Zeichenabbildungen, Schriften, Objektströmen, verschachtelten Seiten/Formularen und ZIP-Metadaten. Beschädigte verwendete Zeichenzuordnungen und zyklische PDF-Strukturen dürfen keine teilweise gelesene Zahlung als sicher freigeben. Die Prüfungen stehen in `tests/runtime-budget.cjs` und `tests/safety-runtime.cjs`.
 
-Alle zehn lokalen Suiten gemeinsam starten: `node tests/run-all.cjs`. Sie prüfen auch fehlende Formelwerte in Tabellen, abgeschnittene XML-/RTF-/MSG-/CMS-/EML-Inhalte, widersprüchliche Zahlungsstatus und mehrfache Zahlungen. Die Lastfälle enthalten unter anderem 20 bzw. 31 Anlagen und ein künstlich erzeugtes 72-Seiten-PDF mit 720 Rechnungszeilen. Diese kleinen synthetischen Dateien bilden keine Bild-, Schrift- oder Produktionslast vollständig ab. Laufzeiten aus Node.js lassen sich nicht als Microsoft-365-Laufzeiten angeben; für diesen Stand liegt kein neuer Office-Livebenchmark vor. Details und verbleibende Grenzen stehen im [Testbericht](TESTBERICHT.md).
+Alle lokalen Suiten gemeinsam starten: `node tests/run-all.cjs`. Sie prüfen auch fehlende Formelwerte in Tabellen, abgeschnittene XML-/RTF-/MSG-/CMS-/EML-Inhalte, widersprüchliche Zahlungsstatus und mehrfache Zahlungen. Die Lastfälle enthalten unter anderem 20 bzw. 31 Anlagen und ein künstlich erzeugtes 72-Seiten-PDF mit 720 Rechnungszeilen. Diese kleinen synthetischen Dateien bilden keine Bild-, Schrift- oder Produktionslast vollständig ab.
+
+Die zusätzliche Office-Simulation erkannte einen Funktionsaufruf im Lexer-Konstruktor als nicht mit der modellierten Umwandlung vereinbar. Der Zeitcheck erfolgt deshalb vor dem ersten Token und danach weiterhin alle 4096 Token. `npm run test:office` prüft diesen Fehler gezielt und vergleicht die Ergebnisse verschiedener Dateiformate vor und nach der Umwandlung.
+
+Das alte Testarchiv enthält auch einen aufwendigeren Fall mit 27 PDF-Seiten, 1.103 Rechnungszeilen und 50 Filial-Zwischensummen. Im lokalen Vergleich lieferte die frühere Version nach etwa 35,9 Sekunden und die korrigierte Version nach etwa 28,6 Sekunden den richtigen Betrag von `826.636,07`. Beide führten 38 `try`-Blöcke aus; eine neue Flut solcher Blöcke wurde in diesem Fall nicht festgestellt. Das sind einzelne Node.js-Messungen, keine Excel-Online-Laufzeiten oder allgemeine Geschwindigkeitsgarantie. Dieser Fall gehört in die noch ausstehende Live-Laufzeitprüfung. Details, fehlende Eingaben und verbleibende Grenzen stehen im [ergänzenden Prüfbericht](GEGENPRUEFUNG-ALTTESTS.md).
 
 ## Anhang A: Alle Formeln zum Kopieren
 

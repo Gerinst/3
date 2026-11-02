@@ -1,0 +1,2 @@
+# Preserve the exact archived MIME bytes, including CRLF and quoted-printable whitespace.
+tests/legacy-regressions/*.eml -text -diff

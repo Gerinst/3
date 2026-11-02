@@ -142,6 +142,34 @@ check("same payment reference with conflicting amounts requires review", () => {
   ] }));
 });
 
+// Archived sm_two_pdfs_conflict used the same advice number and invoice rows,
+// changing only the total. A space before "Nr." must not hide that identity.
+const numberedAdvice = (total, id = "4711") =>
+  `Zahlungsavis Nr. ${id} vom 01.10.2026\n` +
+  "RE-2026-0917   1.000,00   20,00   980,00\n" +
+  "RE-2026-0931   2.500,00   26,00   2.474,00\n" +
+  `Zahlbetrag: ${total} EUR`;
+for (const type of ["pdf", "text"]) {
+  check(`${type} same spaced advice number with conflicting totals requires review`, () => {
+    noUpdates(run({ attachments: [
+      attachment(numberedAdvice("3.454,00"), `first.${type}`, type),
+      attachment(numberedAdvice("1.250,00"), `changed.${type}`, type),
+    ] }));
+  });
+}
+check("same spaced advice number and amount is one copy", () => {
+  exactPayments(run({ attachments: [
+    attachment(numberedAdvice("3.454,00"), "first.pdf"),
+    attachment(numberedAdvice("3.454,00") + "\nKopie", "copy.pdf"),
+  ] }), [345400]);
+});
+check("distinct spaced advice numbers preserve equal separate payments", () => {
+  exactPayments(run({ attachments: [
+    attachment(numberedAdvice("3.454,00", "4711"), "first.pdf"),
+    attachment(numberedAdvice("3.454,00", "4712"), "second.pdf"),
+  ] }), [345400, 345400]);
+});
+
 check("explicit extra same amount beside a multi-payment PDF requires review", () => {
   const result = run({ attachments: [attachment(blocks(values))],
     body: "Zusätzlich haben wir heute weitere 1.200,30 EUR an Sie überwiesen." });

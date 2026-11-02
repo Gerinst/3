@@ -1,0 +1,16 @@
+{
+  "name": "avis-flow-checks",
+  "version": "0.0.0",
+  "private": true,
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "test": "node tests/run-all.cjs",
+    "test:office": "node tests/office-compat.cjs",
+    "typecheck": "tsc --noEmit --target es2020 --skipLibCheck tests/excel-script-stub.d.ts dist/AvisV2.ts"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3"
+  }
+}

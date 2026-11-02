@@ -1,0 +1,3625 @@
+{
+  "sourceRepository": "Gerinst/2testordner",
+  "sourceCommit": "b9ada7d60cdb2ce76dfc06a90834cecce23ab422",
+  "originalExpectedSha256": "ae70ff5ea0fc82c00a1aaf763ac56d64c1ee6daa1523c9b800f19c9c4113c351",
+  "generatedRoot": "Separate reconstructed fixture tree; pass its root as fifth legacy-corpus argument",
+  "originalPresent": 253,
+  "reconstructedCount": 685,
+  "availableExpectedCount": 938,
+  "missingCount": 5,
+  "missing": [
+    "rl_nolabel_total.pdf",
+    "scan_image_only.pdf",
+    "rl_big_40pages.pdf",
+    "rl_two_totals.pdf",
+    "bomb_deflate.pdf"
+  ],
+  "reconstructed": [
+    {
+      "file": "rl_std_helvetica.pdf",
+      "bytes": 2155,
+      "sha256": "eb9f8831291a03d5ee1a10e48011b71e4367424380e8e300ffa661a31ca22513"
+    },
+    {
+      "file": "rl_std_uncompressed.pdf",
+      "bytes": 3029,
+      "sha256": "79ea21f05538f4a7277c7884d3926bd8c7309a847398a0d0f1247107b26362c0"
+    },
+    {
+      "file": "rl_ttf_liberation.pdf",
+      "bytes": 41386,
+      "sha256": "4908c5c46acd52233dcbe9de9e040a6d0e3f8cdae6178616ce71cbafee7547da"
+    },
+    {
+      "file": "rl_times_multipage.pdf",
+      "bytes": 3284,
+      "sha256": "79dbe726692dfef1caa7495c5dbb1b5e2690ed00beefa08020e4c686344c5cdc"
+    },
+    {
+      "file": "rl_form_xobject.pdf",
+      "bytes": 2752,
+      "sha256": "b48bf41343d9bb44733ecdb4ff66949978ed1b1c80ceec8ddc90d10138a21d3e"
+    },
+    {
+      "file": "lo_docx.pdf",
+      "bytes": 25800,
+      "sha256": "d882924bdf8920deffa880040f3bf800e4a0955428a1a26317da6a1326122742"
+    },
+    {
+      "file": "qpdf_objstm.pdf",
+      "bytes": 1525,
+      "sha256": "af6eefeb3b3f70018d37d8b630f300980600d9eb4eff1b04895e56f6743bc905"
+    },
+    {
+      "file": "qpdf_linearized.pdf",
+      "bytes": 2387,
+      "sha256": "680111e924a38bd691ee3b0d00ae70f726b520e74ab57be653496a075fe587d1"
+    },
+    {
+      "file": "qpdf_uncompressed.pdf",
+      "bytes": 2903,
+      "sha256": "89658e4f23cab18cd9181029947583c71829076935eb88b9b630a88e87b71c28"
+    },
+    {
+      "file": "qpdf_lo_objstm.pdf",
+      "bytes": 18027,
+      "sha256": "4b0043fdfac30461f6c6e55db525245e1fcf16aa814e3c7c1c177b21f7189c8e"
+    },
+    {
+      "file": "hand_type0_tounicode.pdf",
+      "bytes": 15270,
+      "sha256": "066a8a0913c6bb4b0f8e276c87888583aed7b72c243c8d5eaf34aa2c0a7ba264"
+    },
+    {
+      "file": "hand_type0_no_tounicode.pdf",
+      "bytes": 14814,
+      "sha256": "cc9aa5b0e94c4ecdde516e3a11a76f6487d945f85794d2d9ac3ed191b3c84393"
+    },
+    {
+      "file": "qpdf_encrypted.pdf",
+      "bytes": 2230,
+      "sha256": "a442b083eb1ff28f146498116cf15c7e7dc3ff4778810849d0081c499a558492"
+    },
+    {
+      "file": "chrome_skia.pdf",
+      "bytes": 31321,
+      "sha256": "b4856b20b3baff61ed31969281a7f25d4c89d5503027d230f9e73b82c89f07b6"
+    },
+    {
+      "file": "pdflib_type0_objstm.pdf",
+      "bytes": 17725,
+      "sha256": "4b605e40a7413695baffb1cd2fbf9646f269e2295199d7c33760717527720c63"
+    },
+    {
+      "file": "pdflib_type0_plain.pdf",
+      "bytes": 19958,
+      "sha256": "fdb57a0dda9bbc385fc95364bd1cdd61c1690ba03e58b40ea45b8606c149eb73"
+    },
+    {
+      "file": "filt_lzw.pdf",
+      "bytes": 784,
+      "sha256": "e25c03f19527f684e02220ecadf275ab9b1f4c5e2b51269acd86de343257d246"
+    },
+    {
+      "file": "filt_a85_flate.pdf",
+      "bytes": 816,
+      "sha256": "20ab9ecd387381eaa59594e31f50bd947a121de066ddbef04a4cd65ca8c1eb8f"
+    },
+    {
+      "file": "filt_ahx.pdf",
+      "bytes": 1074,
+      "sha256": "1ac9d0846d39a6edeed0d12d64daabf93f9c5990468ed24267ea2b82703d6a9a"
+    },
+    {
+      "file": "filt_rl.pdf",
+      "bytes": 842,
+      "sha256": "1ce78d687e3e70ee963079ffc6dd3269bd4661fc4f367692de5523c6413db9fd"
+    },
+    {
+      "file": "filt_lzw_flate_chain.pdf",
+      "bytes": 792,
+      "sha256": "04491a0ab683d6f85aac17d7eb3f6597c7e62588cf2c87a94b81a99e31632468"
+    },
+    {
+      "file": "enc_macroman.pdf",
+      "bytes": 703,
+      "sha256": "1b58168c0fbd3aa83550b784de85c1a2dc026b19409414d9b6a95cf65fab558b"
+    },
+    {
+      "file": "tj_emulated_spaces.pdf",
+      "bytes": 716,
+      "sha256": "6cc6883ae4f1bd7d6e525f0d8527c73c271865d2dd004cbfe16a83fc95213bd5"
+    },
+    {
+      "file": "broken_length.pdf",
+      "bytes": 758,
+      "sha256": "cda1a0a33574901c455d8c687093e0c10529d9312ba73b29ffed713d18559b42"
+    },
+    {
+      "file": "broken_xref_junk.pdf",
+      "bytes": 779,
+      "sha256": "b2c48b4ed42ae1d916471b9d881d575c0ecd45e3bf2bc07e9eb4764dc47b791e"
+    },
+    {
+      "file": "incremental_update.pdf",
+      "bytes": 1082,
+      "sha256": "50bedbe1355ca316f914353ddc55bfb4bd20fc6d91bbc5a27c2f03a80f17f544"
+    },
+    {
+      "file": "form_nested_matrix.pdf",
+      "bytes": 1255,
+      "sha256": "b7a61d2f1617ab0970a5474afed3554e3702377f7ce19bad76baecc566845ffa"
+    },
+    {
+      "file": "label_next_line_with_header.pdf",
+      "bytes": 754,
+      "sha256": "28f74d5ca1e0cd99bc2a8c8c496e3fedb30dc5e96ac88be6e34ab5e698b01a84"
+    },
+    {
+      "file": "header_keywords_nolabel_total.pdf",
+      "bytes": 743,
+      "sha256": "a63b458dfdad5142f15fb578ade4561666fcd2eed76e5dddf36cfbf2b58bf153"
+    },
+    {
+      "file": "rl_rotated_text.pdf",
+      "bytes": 1642,
+      "sha256": "72e9d7226e93935f7e575fbca730f6cee74b388300e75d2ab5c3176ee8edccb5"
+    },
+    {
+      "file": "rl_acroform_field.pdf",
+      "bytes": 3765,
+      "sha256": "c1433daa7acbba34c27a97c2e90e337955ab9abdc5d9d0b7d582cdc7c788be2c"
+    },
+    {
+      "file": "scan_with_ocr_layer.pdf",
+      "bytes": 1964,
+      "sha256": "12f6ea811928bdb61ebeee197d7d71ecbe7ebd8b4471f67666ed05c02a34af40"
+    },
+    {
+      "file": "ext_enc_rc4_40.pdf",
+      "bytes": 1524,
+      "sha256": "e6a3435b681a92fe90625d4c589feedf56496d2a59f87fc2d01542ca6a22c282"
+    },
+    {
+      "file": "ext_enc_rc4_128.pdf",
+      "bytes": 1525,
+      "sha256": "4ff5e1e542f3ce70aaf031e51f9ea24121c245acde9dff63eec98692e1acd2bf"
+    },
+    {
+      "file": "ext_enc_aes128.pdf",
+      "bytes": 1721,
+      "sha256": "efe50827b818adff59014fcad600661d6d375ee27fe9fcb875fc5caf13e2e447"
+    },
+    {
+      "file": "ext_enc_aes128_objstm.pdf",
+      "bytes": 2151,
+      "sha256": "f0716887843fc113ca7bb14b094174d9410facae43621408f6bee33a255ba9ee"
+    },
+    {
+      "file": "ext_enc_aes256.pdf",
+      "bytes": 1969,
+      "sha256": "8834989232002cfd07ef6236e6be88ed3c748c971521afa2f5759fb0e4513abe"
+    },
+    {
+      "file": "ext_enc_userpw.pdf",
+      "bytes": 1505,
+      "sha256": "aea8121ee8e6ed1c5b174da1e920f33c26298e965ca1ae1c1af299f9408873f7"
+    },
+    {
+      "file": "ext_enc_pubsec.pdf",
+      "bytes": 1559,
+      "sha256": "5983b0e895fb11eadbc670b9f29974f4751fbb4a63b9fb6c04e31d9c33ffb418"
+    },
+    {
+      "file": "ext_trunc_stream.pdf",
+      "bytes": 1258,
+      "sha256": "6fb6a954a936bcac5a2950f98eef609d8378d2e48a7ff6c1219765992e063d90"
+    },
+    {
+      "file": "ext_trunc_file.pdf",
+      "bytes": 1236,
+      "sha256": "2595a5e36bac4b4c48f08bee8090629492981c8d8e23e92dff1060aef8f8c9d1"
+    },
+    {
+      "file": "ext_unmapped_glyphs.pdf",
+      "bytes": 1357,
+      "sha256": "d8307b9f718d9bc5e0db9c37fa4e10df47bbbf45094bab3aff2d72c245dd7245"
+    },
+    {
+      "file": "ext_ocr_skew.pdf",
+      "bytes": 2861,
+      "sha256": "293cde2055ae937bcffce63bd043728a478ad152adb70c85f3b0976e454acc56"
+    },
+    {
+      "file": "ext_ocr_under_image.pdf",
+      "bytes": 1314,
+      "sha256": "e94b3f316128ba49998ed186eee56632ae798464fbc1283e8250c06d2e90a3cc"
+    },
+    {
+      "file": "ext_ocr_alpha0.pdf",
+      "bytes": 1640,
+      "sha256": "e6c92a6fff4762dabf72ed78df556c6729ac7cb11ea73ea8532f8182d2688a52"
+    },
+    {
+      "file": "ext_bg_image_native.pdf",
+      "bytes": 1466,
+      "sha256": "d3b10fe536e21443962ae1ae2f5a5f7b6520bfea1815f99752d30a5aaf458521"
+    },
+    {
+      "file": "ext_ocg_off.pdf",
+      "bytes": 1408,
+      "sha256": "c9be4fd870544d24029b0be038069a69c17eaebbc58591da2dc1d2eef8625a12"
+    },
+    {
+      "file": "ext_annot_noview.pdf",
+      "bytes": 1249,
+      "sha256": "5939621b14ede5f00c0491d629a4c64ed744be0c2ea4412b5bcc330ff4224e22"
+    },
+    {
+      "file": "ext_dup_offset.pdf",
+      "bytes": 1050,
+      "sha256": "89f1e2a9a9427501ff9fc6678336ef8efc8688f03161bd56c14c6d1ea899288f"
+    },
+    {
+      "file": "ext_type3_flip.pdf",
+      "bytes": 3044,
+      "sha256": "dbb31011becc00f4ca4b9b6190cacc66acb3005eb4b1c89c04d478d21ea93bd5"
+    },
+    {
+      "file": "ext_enc_aes256_r5.pdf",
+      "bytes": 1969,
+      "sha256": "36e1c5d38d629ed8c9ace5c7c9c0cc6e6f891386ebf83685d5f8f30830264444"
+    },
+    {
+      "file": "ext_ocr_producer.pdf",
+      "bytes": 1484,
+      "sha256": "cb6c38ebb686576895662aea5784391daf11b0be8d5fa989a8d1b071ed4fd1b2"
+    },
+    {
+      "file": "ext_off_page.pdf",
+      "bytes": 894,
+      "sha256": "fc702ac325125f7fecaa91d9077c9d10d1ce7db96e0ca4075af2b64a2b2c7640"
+    },
+    {
+      "file": "ext_type0_codespace_1byte.pdf",
+      "bytes": 2022,
+      "sha256": "67f059a3f887598ea99048ca27712d5b7fd260737a7281aaa4cf6031c2f7007a"
+    },
+    {
+      "file": "heur_gross_skonto_zahlbetrag.pdf",
+      "bytes": 2086,
+      "sha256": "af419d837e7f7eae31d75897dfdfde1f8fde020515b884a6bb45d7c7609844b2"
+    },
+    {
+      "file": "heur_two_deductions.pdf",
+      "bytes": 2216,
+      "sha256": "9f936e5337c0d4034cedb998bc3d8ba40eafe878ce3e065d9dcf2d73e482a26a"
+    },
+    {
+      "file": "heur_sap_intro_gross.pdf",
+      "bytes": 2035,
+      "sha256": "ac73c35739645a0c84b051b2a55481901ceb25b5c560cfffc1acafed091c84d3"
+    },
+    {
+      "file": "heur_gutgeschrieben_gesamt.pdf",
+      "bytes": 1683,
+      "sha256": "3d417f3fd7cda0e9744182485c381c7b3264e5053349fc46b1215200b8d9db11"
+    },
+    {
+      "file": "heur_single_invoice_skonto.pdf",
+      "bytes": 1822,
+      "sha256": "f91d40253baaeac7454e650fd1679866e6e7c8f9bdebedb49f5bf9eaa6c6e476"
+    },
+    {
+      "file": "heur_single_invoice_summe.pdf",
+      "bytes": 2036,
+      "sha256": "b27a17258a3235950a52b933f51127d206a6df3643f23d6f2d5ba0573f9f5c6a"
+    },
+    {
+      "file": "heur_sap_intro_table.pdf",
+      "bytes": 2308,
+      "sha256": "c259fa5e615a6df437a468b949840e883e5e23f6e22da8a42e51da1394324aac"
+    },
+    {
+      "file": "heur_two_column_box.pdf",
+      "bytes": 2105,
+      "sha256": "5e2475dd80eee68f84fde4e346d40df8bb0a985c2e2396c06b2a4bc74a418f69"
+    },
+    {
+      "file": "heur_stacked_labels.pdf",
+      "bytes": 1645,
+      "sha256": "1d00b1f02a3b0a1dd213fc23f2f04a3d5042935bed14a3e32913c9f7b7e6609d"
+    },
+    {
+      "file": "heur_skonto_column_right.pdf",
+      "bytes": 2272,
+      "sha256": "58719884203558362f0add1a0050afe8063799772077e5ecea6a56c8d58de5c8"
+    },
+    {
+      "file": "heur_restbetrag_column_right.pdf",
+      "bytes": 2131,
+      "sha256": "ba9a8b80984d99815f03c79401a55de326e94717dc54e4c2b2bb342ba7828d83"
+    },
+    {
+      "file": "heur_invoice_copy.pdf",
+      "bytes": 3094,
+      "sha256": "d53c6fa5695cc357d1c58200a7372d3bc19c294f818099fe46bf83dae8bf99b6"
+    },
+    {
+      "file": "heur_lieferavis.pdf",
+      "bytes": 1969,
+      "sha256": "1b6f815f8c32bb16116a489fcd2a21910c8fe9e46ece6e9cceeb8a96e6d4901d"
+    },
+    {
+      "file": "heur_lastschrift.pdf",
+      "bytes": 1674,
+      "sha256": "f4f9c01306bd332f6c0224ceedc0ed19bfe4654d23de8af447f2497cabd6714f"
+    },
+    {
+      "file": "heur_nnbsp_thousands.pdf",
+      "bytes": 1400,
+      "sha256": "32e058ff057e0327c3b3120b487688b7116bd0c74446b85dbdcd66849c6fe1bc"
+    },
+    {
+      "file": "heur_millions_spaced.pdf",
+      "bytes": 1448,
+      "sha256": "402a8b3889816cf89aede13331025aad80710b9df31e22c8d9eefe73f6843479"
+    },
+    {
+      "file": "heur_invoice_nr_amount.pdf",
+      "bytes": 1190,
+      "sha256": "df8262728aede7294bbe8dba410adec13c7ff4cd28b5882295d998c7e6fb6d67"
+    },
+    {
+      "file": "heur_usd_dates.pdf",
+      "bytes": 1294,
+      "sha256": "51144b7f4af3afad38b3d1a16a86fdc449835a548ca089bbbb3759051cd83040"
+    },
+    {
+      "file": "heur_english_eur.pdf",
+      "bytes": 1951,
+      "sha256": "ac8f1e34be3c8a2c5529f7ee25fd1f806608394423781b12a6ba5179104d0352"
+    },
+    {
+      "file": "heur_grundkapital_footer.pdf",
+      "bytes": 1227,
+      "sha256": "8852806856dc465911e44212df26a11a7eea80ad64cbb8fcd189fe3d4a865481"
+    },
+    {
+      "file": "heur_letter_spaced_label.pdf",
+      "bytes": 2653,
+      "sha256": "a8c011d81c9f7811a8e1c40cd3f8324eacf9bb3f78b70913a8c61098d9c7276e"
+    },
+    {
+      "file": "heur_wrapped_label.pdf",
+      "bytes": 2085,
+      "sha256": "4b80f87afecde077a7ce0c3f8b5e6e669782141d0d40da50f03f4efb55651cf2"
+    },
+    {
+      "file": "heur_currency_pln.pdf",
+      "bytes": 1457,
+      "sha256": "ea6d5296f3d27dd1015c2508d78c28fd5b69913842e0f1ddae44ca89968774bf"
+    },
+    {
+      "file": "heur_unreadable_payment.pdf",
+      "bytes": 1983,
+      "sha256": "04976907a5ba6d6fa53991897c6b08a6c3a398cdd550ac8f5cf36c7ce940c93c"
+    },
+    {
+      "file": "heur_gross_then_skonto.pdf",
+      "bytes": 1986,
+      "sha256": "40604a97edaac14d9a8d7fc5f87925ec1dcdf20dfad341988ff366016503d427"
+    },
+    {
+      "file": "heur_per_invoice_blocks.pdf",
+      "bytes": 2177,
+      "sha256": "81ba39c74bdbd1381c4194dfe18f57d300b866419c13fba17ca2fe90ad2c8247"
+    },
+    {
+      "file": "rv_swiss_chf_header_datum.pdf",
+      "bytes": 2499,
+      "sha256": "78d24bb62192257f47d4918d1b96e0b2bcfa98a9ee514217d32deef20317746f"
+    },
+    {
+      "file": "rv_swiss_fr_notation.pdf",
+      "bytes": 2573,
+      "sha256": "d1881cab8db939a41ce2c3982cf0c91d1fc3d26c301442255b2a051ac1ed9430"
+    },
+    {
+      "file": "rv_two_rows_empty_skonto_cell.pdf",
+      "bytes": 2919,
+      "sha256": "ac2bf253ecc25fd53de49dce45c68bfb34c5c7df40648789379b098007975f03"
+    },
+    {
+      "file": "rv_single_row_paycol.pdf",
+      "bytes": 2727,
+      "sha256": "6ab08de24812abcc3d2f790ae406aca0e3fdc3e65d1078c7b7e9e5dd5c81d9fc"
+    },
+    {
+      "file": "rv_letter_verb_next_line.pdf",
+      "bytes": 6844,
+      "sha256": "ca54a8552e6228d0307de24a0d97a421d97a4dbe4794aa78ced919fb8e81dfbc"
+    },
+    {
+      "file": "rv_letter_verb_next_line_2.pdf",
+      "bytes": 2706,
+      "sha256": "a1d62496c49d351d74c4224cda26756db71ea7584a8bdff6f17a365ab439b5df"
+    },
+    {
+      "file": "rv_letter_skonto_betrag_von.pdf",
+      "bytes": 2797,
+      "sha256": "fa1495c46cac836daf4283f24ef6f068f490483feb1a6cfe7d442b02c0e73e9b"
+    },
+    {
+      "file": "rv_lieferschein_column.pdf",
+      "bytes": 3603,
+      "sha256": "3ff3dc172409d936d7f82096f4666d2b4bf3f91c24f31fa041a75850ba93df2d"
+    },
+    {
+      "file": "rv_anlieferung_deduction.pdf",
+      "bytes": 3061,
+      "sha256": "be86bc218a3fdc19d466384cfd676206356304cfdd340ac30250e910f6f01799"
+    },
+    {
+      "file": "rv_ruecklastschrift_deduction.pdf",
+      "bytes": 2785,
+      "sha256": "febd290cde03a6eed769e5b2a2d769f379e28eb1123bfec70c0b96b3dd004ac4"
+    },
+    {
+      "file": "rv_invoice_blocks_vat_lines.pdf",
+      "bytes": 3497,
+      "sha256": "5d35b2715d14b494717f7618219caa408535ec181b1f5aec11194ea26e2b74c1"
+    },
+    {
+      "file": "rv_avis_abschlag_retention.pdf",
+      "bytes": 3105,
+      "sha256": "1f70bace0826e7da5c154cdc8c325de1557bd6afed11cc4c00032e60c90170fb"
+    },
+    {
+      "file": "rv_doc_zahlungserinnerung.pdf",
+      "bytes": 3109,
+      "sha256": "d9f33e318c306315cbc4d4ba13e9823a6d7a1aaa182a3b47ea0a290a0f15df75"
+    },
+    {
+      "file": "rv_doc_mahnung.pdf",
+      "bytes": 2687,
+      "sha256": "2d85d0b0f399a0f0fe59620282cee70e2499a843e1ee64c44fab4aa218855427"
+    },
+    {
+      "file": "rv_doc_angebot.pdf",
+      "bytes": 2828,
+      "sha256": "75855e2e948973d6901bea421c0faf3c5191cdbc70d9838b86df06df6a17f7a3"
+    },
+    {
+      "file": "rv_doc_abschlagsrechnung.pdf",
+      "bytes": 2905,
+      "sha256": "0c6b7af29b39d7345facbad9841a808c9f009631c67215f71eb8d7439d7236cf"
+    },
+    {
+      "file": "rv_doc_proforma.pdf",
+      "bytes": 2585,
+      "sha256": "590a3b365fc2f6dfc22cd0a038956fa230e82c29dc5b32ce4011b00f3e589dfe"
+    },
+    {
+      "file": "rv_doc_auftragsbestaetigung.pdf",
+      "bytes": 2685,
+      "sha256": "23d095b57d28e8c10139961a81b3cd8f8d81c03b509e83d6eda3e39f504d812e"
+    },
+    {
+      "file": "rv_bank_credit_advice_en.pdf",
+      "bytes": 1843,
+      "sha256": "799a2e954ac9fb12da79ee2cd8ea659f6bff75c2676da9a1bb9069529b445fa8"
+    },
+    {
+      "file": "rv_bank_haben_suffix.pdf",
+      "bytes": 1477,
+      "sha256": "894d2ede42a382d861cd926bd2887f8e5c810fbc891968020f018a5def5e27ba"
+    },
+    {
+      "file": "rv_paid_and_open_bare_sums.pdf",
+      "bytes": 2838,
+      "sha256": "885d7ea80bcca4a46b27af7713c23f48862d8e425abe1a7c5f6d83f3df68b38e"
+    },
+    {
+      "file": "rv_credit_note_table_below.pdf",
+      "bytes": 3546,
+      "sha256": "696c9e952bb924e4558aac3197f2c1aa304424cbd6108ccd82cc04971fedfd2e"
+    },
+    {
+      "file": "rv_netto_ust_brutto_single_row.pdf",
+      "bytes": 1649,
+      "sha256": "2e6a65b49ee66ab007be80ceaa14417ef8e1e07157e9d714446861c87bc157f1"
+    },
+    {
+      "file": "rv_signature_beside_label.pdf",
+      "bytes": 1667,
+      "sha256": "b908a83197296884db198626759230ce9190af0d097c8b9521ea94af092e2f25"
+    },
+    {
+      "file": "rv_total_paid_year_to_date.pdf",
+      "bytes": 1120,
+      "sha256": "ff77d875a5025893adbdbb291b6cd2ec603e65b91a6aa87affa2e12eac2456f0"
+    },
+    {
+      "file": "rv_zero_fee_line.pdf",
+      "bytes": 1316,
+      "sha256": "a3b4df4d82e51102dae6c2df981fa7f4d20c94a8ce523f93b6e990f1e5175d8c"
+    },
+    {
+      "file": "rv_label_avis_number_next_line.pdf",
+      "bytes": 1171,
+      "sha256": "613b47d9e6b9e450815f37dfece27535951c36ae23e2c75ea91b9f41b5346054"
+    },
+    {
+      "file": "rv_label_reference_gross_total.pdf",
+      "bytes": 1438,
+      "sha256": "e3f316a49122790e0d12f0be4296ffb47b91ca00d0ebd7a3b745da95a32d811e"
+    },
+    {
+      "file": "rv_sentence_in_hoehe_von.pdf",
+      "bytes": 1165,
+      "sha256": "1697cf56b713c6326316b969bbd5c5e65fcc5b3eb8fd09717a56d79fd872fd33"
+    },
+    {
+      "file": "rv_garbled_amount.pdf",
+      "bytes": 1110,
+      "sha256": "f8274995f012a70cdec1cfe7380ca63b221f5ebbe7a5bc78ba3d4c82fa4eb520"
+    },
+    {
+      "file": "rv_empty_flate_stream.pdf",
+      "bytes": 1308,
+      "sha256": "3f5f26c5a8a95dafad5c98f9aad4ecdba27969f3b196166560434a4f61880494"
+    },
+    {
+      "file": "rv_native_offset_baselines.pdf",
+      "bytes": 1225,
+      "sha256": "b9c2d9a237ec71006d827cec0cb383c48d5725ce938fb7c96590da55643e6d87"
+    },
+    {
+      "file": "rv_unbalanced_paren.pdf",
+      "bytes": 1150,
+      "sha256": "070a2567c01c985ba9108f1e889434f46bd6d32b63e67ec037dd0681068b23f1"
+    },
+    {
+      "file": "rv_long_garbage_line.pdf",
+      "bytes": 1101,
+      "sha256": "c43041ec3dcfc3f4d3dc8eac6bf9aa0b67475a44be455600689cfc74a6640688"
+    },
+    {
+      "file": "rv_escaped_font_names.pdf",
+      "bytes": 998,
+      "sha256": "5f4a4c747238a498f83a31c8a8a27e2c3a9798a046cd215616b42518de0d9e3d"
+    },
+    {
+      "file": "rv_truetype_hyphen_cmap.pdf",
+      "bytes": 1636,
+      "sha256": "1917e34bf1fc4869e9de2f41ab411925480eca5bc6409f8d35c5a5625e83a202"
+    },
+    {
+      "file": "rv_balance_zu_ihren_gunsten.pdf",
+      "bytes": 1291,
+      "sha256": "ca1162e3918f73e138c9def498c683769ce2855eb5de37162a90707d751b3b46"
+    },
+    {
+      "file": "rv_two_payment_amounts.pdf",
+      "bytes": 1354,
+      "sha256": "303d8c6e6e9f6e6c86fc6eb307598fc6a15fed8e55033dc8a4f7aac7941f60f7"
+    },
+    {
+      "file": "rv_payment_label_then_balance.pdf",
+      "bytes": 1238,
+      "sha256": "b6693bae0153e0aa54996086c4103845e7c4568040dec09f9e1df4d90a6405b9"
+    },
+    {
+      "file": "rv_label_then_table_row.pdf",
+      "bytes": 1119,
+      "sha256": "ef80044315e7daf890c9b7d7973d068139a2af7ac45ef361d87f445f8db883b1"
+    },
+    {
+      "file": "rv_invoice_copy_same_page.pdf",
+      "bytes": 2283,
+      "sha256": "61394b4dea57088b0ccae04014b5f8730aaec7800dbcc18e3afc534b22ef4443"
+    },
+    {
+      "file": "r2_doc_mahnung_avis_request.pdf",
+      "bytes": 2014,
+      "sha256": "2283c00eace6751c76d8e294c3cfc6a844a7e13d8eb1b13b92a4a511dd9a0578"
+    },
+    {
+      "file": "r2_doc_email_request_advice.pdf",
+      "bytes": 1834,
+      "sha256": "497c2eb7f73a35bf9e5fda25b31abf5d32b15de1d31088f49a8d559628129c04"
+    },
+    {
+      "file": "r2_doc_credit_note_supplier.pdf",
+      "bytes": 2021,
+      "sha256": "eaba1725cfecac4f3ddcf192e1be6a5d1cbdbcd732260b68d97e0c92732adc04"
+    },
+    {
+      "file": "r2_doc_stornorechnung.pdf",
+      "bytes": 1900,
+      "sha256": "e80228f17dca19a57d2de61164e645750baeae0b6c9416ea5eccc01980fa2675"
+    },
+    {
+      "file": "r2_doc_inkasso.pdf",
+      "bytes": 1912,
+      "sha256": "97d502937ddc92c26859d8592cebbb8ab4642126271c5d30a0356bcf5a11966e"
+    },
+    {
+      "file": "r2_doc_webshop_shipping.pdf",
+      "bytes": 1727,
+      "sha256": "135ea1ceea4b0643bdb18aa599236f99ddf62548f1c32ec5bde642c50e7a415f"
+    },
+    {
+      "file": "r2_doc_verzollungsavis.pdf",
+      "bytes": 1912,
+      "sha256": "381215a8a03b5d2508eb430e890e0b596e7bc90a8bbbbf887da03d17ae4fd41e"
+    },
+    {
+      "file": "r2_doc_purchase_order_en.pdf",
+      "bytes": 1815,
+      "sha256": "0e42fb2e5d302e9463e18dc5fae112fbbf448881c01e2f1a9a0c7dd0f33c18f6"
+    },
+    {
+      "file": "r2_doc_arrival_notice.pdf",
+      "bytes": 1696,
+      "sha256": "0a2a889a88fe768912d783b66307d871bf2cbdfacac208dd6a188a5705805c31"
+    },
+    {
+      "file": "r2_doc_mahnbescheid.pdf",
+      "bytes": 1665,
+      "sha256": "df15d7c30918789e38b6bba6c828809077f155f344f8815a259f04babe3fab7f"
+    },
+    {
+      "file": "r2_doc_payslip.pdf",
+      "bytes": 1646,
+      "sha256": "b362b78a153aa26756cf1eb81ad00160f0736cfb1ba1510a1e4acf0eff5b84b2"
+    },
+    {
+      "file": "r2_doc_payslip_untitled.pdf",
+      "bytes": 1566,
+      "sha256": "ba41589c277fd2132901075cd8b5eb1d1191f3ed878c8692c6a18b05549dc616"
+    },
+    {
+      "file": "r2_doc_travel_expenses.pdf",
+      "bytes": 1601,
+      "sha256": "d0dcbdf029c36d95687cf28c53e938d27537f7377347be221a314d1757b6ec97"
+    },
+    {
+      "file": "r2_doc_fr_relance.pdf",
+      "bytes": 1534,
+      "sha256": "ce9ae9e6d610b8e536e221ff56354a56bad687a914dec780d093f6bb1bebfbb0"
+    },
+    {
+      "file": "r2_doc_nl_herinnering.pdf",
+      "bytes": 1549,
+      "sha256": "ad3ce4dc2ea9e5b750986b5f60f4cf5873be9d620e3788be8edb85f4bcffaaa1"
+    },
+    {
+      "file": "r2_avis_lieferschein_gutschrift_mahnung.pdf",
+      "bytes": 1988,
+      "sha256": "3a31012b01a7b41805f80ad084b9423944223a39229abde905f825ba8a8777a2"
+    },
+    {
+      "file": "r2_avis_bank_gutschrift.pdf",
+      "bytes": 1586,
+      "sha256": "6424d0026663fd90075045afb55063c9365fb2ca71535cd330ec7ada16a3e6e7"
+    },
+    {
+      "file": "r2_avis_insurance_kostenvoranschlag.pdf",
+      "bytes": 1956,
+      "sha256": "2271781e89ae2f9b1b806c758c9c0da3ef5f0bbc25c4ea3e7b45388f0002ed7d"
+    },
+    {
+      "file": "r2_avis_construction_schlussrechnung.pdf",
+      "bytes": 1969,
+      "sha256": "50052eab050776f01e6ee060c52460a2c083c0cd81253fb84cbb45b91ed27139"
+    },
+    {
+      "file": "r2_lang_nl_betalingsadvies.pdf",
+      "bytes": 1623,
+      "sha256": "019f37b83c58aa0bdfd3428589348609147cfa8b072beb99a70583f7d5c0065c"
+    },
+    {
+      "file": "r2_lang_fr_avis_de_paiement.pdf",
+      "bytes": 1673,
+      "sha256": "df4ed26c83ae659e5898db7ff04e9446fc6c4f95fbd5da658bdba83906fcc0a5"
+    },
+    {
+      "file": "r2_lang_it_avviso_pagamento.pdf",
+      "bytes": 1617,
+      "sha256": "659000789d673810189b54cea4f3973bcf5e7b8abf82196259320d09fab2a14b"
+    },
+    {
+      "file": "r2_lang_es_aviso_de_pago.pdf",
+      "bytes": 1625,
+      "sha256": "3c46d212f6e824a6dd5e1797b294cf87f55196ac8ce9215e8d9b1786a10ab0d4"
+    },
+    {
+      "file": "r2_lang_pt_aviso_pagamento.pdf",
+      "bytes": 1618,
+      "sha256": "643548190c4f0ae6ea3e4527f18d76fa66f4a08fa3c10d7b6242d34f397db6dd"
+    },
+    {
+      "file": "r2_lang_pl_awizo.pdf",
+      "bytes": 1635,
+      "sha256": "ab9b542459f7675373fb2e01b6da91768f357d88c86009e1819acddd47e0e75f"
+    },
+    {
+      "file": "r2_lang_cz_avizo.pdf",
+      "bytes": 1613,
+      "sha256": "40f61e4b5fadae0e011e8992dc56aa753fc47427f124bc5213ac1f156a8a9b41"
+    },
+    {
+      "file": "r2_lang_da_betalingsadvis.pdf",
+      "bytes": 1591,
+      "sha256": "314ce9e14fc1974960f4f553973be66f4ee7aa60235f4ee181db1a05e96449d1"
+    },
+    {
+      "file": "r2_lang_sv_betalningsavisering.pdf",
+      "bytes": 1592,
+      "sha256": "d01399573195a8d65315b2926d507d0cceb39fbb9e33695fc340602e34bceac5"
+    },
+    {
+      "file": "r2_net_zr_summary_box_header.pdf",
+      "bytes": 1957,
+      "sha256": "0573ff43f2be8c64644da2a96d9a14994dbbf57601b3f1d754fde46edc739a86"
+    },
+    {
+      "file": "r2_net_zr_box_weak_label.pdf",
+      "bytes": 1837,
+      "sha256": "dc88b006d2aa4d94bfab2b8ddbe37b855af815fb97f5edf9c3cf17e1ab76f441"
+    },
+    {
+      "file": "r2_net_zr_columns.pdf",
+      "bytes": 2023,
+      "sha256": "dcd846e5ad787b665bb8ad78a4a5c121c33cc5af159a04ded0796c1a420866ac"
+    },
+    {
+      "file": "r2_net_aufrechnung_public.pdf",
+      "bytes": 1937,
+      "sha256": "2409052eb018367af46a6528ddfeb7a12e95c5208cdc548cda1757d203ea43cc"
+    },
+    {
+      "file": "r2_net_aufrechnung_letter.pdf",
+      "bytes": 1960,
+      "sha256": "0f4195074b1ca5ada224ef826ba16936b58e5f01fb16830191a6480217ada8e8"
+    },
+    {
+      "file": "r2_net_second_instalment_table.pdf",
+      "bytes": 1877,
+      "sha256": "018c7e3c409e236379bd8a507b32b0165ad82d76a39cfc534234b1d986a581b1"
+    },
+    {
+      "file": "r2_net_second_instalment_kv.pdf",
+      "bytes": 1845,
+      "sha256": "6171ba02f7aa7cbf59387bca163315c3ff044468ecb3bb16d3cf2228590b2e45"
+    },
+    {
+      "file": "r2_net_second_instalment_letter.pdf",
+      "bytes": 1887,
+      "sha256": "7a6a2242023e33d6772390806d7e4de5764f8307ed1f75da298fbee1bc0e8182"
+    },
+    {
+      "file": "r2_net_credit_block_no_total.pdf",
+      "bytes": 1971,
+      "sha256": "a024426a0deace316b35e7e4e8c1bd09a2927dffebca4636d37ecccf64556182"
+    },
+    {
+      "file": "r2_net_credit_block_with_total.pdf",
+      "bytes": 2007,
+      "sha256": "f63781d11fd92f896728440261eb5a7282711ceed602f890a983a6a0a87caf3a"
+    },
+    {
+      "file": "r2_net_credit_block_first.pdf",
+      "bytes": 1910,
+      "sha256": "7130857599e53e082168f8e0128e272dd9e490fc36d26ba080111f71bf82b1cd"
+    },
+    {
+      "file": "r2_net_mono_paid_open.pdf",
+      "bytes": 1602,
+      "sha256": "df067842001259b4c1a537c98d0f61052a251b7a8c655b314b706afedb205714"
+    },
+    {
+      "file": "r2_ok_bank_transfer_confirmation.pdf",
+      "bytes": 1723,
+      "sha256": "4085230226f6ca86aa8d4b3a58b5c6bfca3e8857902e592ab5ec1c2a616780aa"
+    },
+    {
+      "file": "r2_ok_transfer_purpose_amounts.pdf",
+      "bytes": 1626,
+      "sha256": "1cf78adbc4de479bcd2d8c97baabdfb7f506a3d65b2f7c4919eab1986ffc8b05"
+    },
+    {
+      "file": "r2_ok_check_stub_us.pdf",
+      "bytes": 1670,
+      "sha256": "35ff99d2d2b25d9302a4d326658b4fc9ea7b9aab2b7c28d481e6407d1d3d8866"
+    },
+    {
+      "file": "r2_ok_gutschriftsanzeige_single.pdf",
+      "bytes": 1598,
+      "sha256": "5801b4bf07df7153ffcc960af47d2b572b75bccfca746382481f6a55035e0de7"
+    },
+    {
+      "file": "r2_ok_short_email_one_amount.pdf",
+      "bytes": 1674,
+      "sha256": "2e636c55182c40ece745f321323b2efd2078a44dec5b7b613a5e5a5e1756a297"
+    },
+    {
+      "file": "r2_ok_single_amount_skonto_taken.pdf",
+      "bytes": 1599,
+      "sha256": "d1fa9ba2f6777d29421ccd141964df73fc355308c66e1674e5779a9460ef633b"
+    },
+    {
+      "file": "r2_ok_single_amount_invoice_mail.pdf",
+      "bytes": 1589,
+      "sha256": "9b04068475e258e9498340241ef9b2524303a95a83d2a6bd02b60c896cf1ab75"
+    },
+    {
+      "file": "r2_ok_email_reply_quoted.pdf",
+      "bytes": 1957,
+      "sha256": "0be85fde174a355a3cc769cf12764fa929c3eed91e8153bd28445dcd8eb08175"
+    },
+    {
+      "file": "r2_ok_email_reply_quoted_en.pdf",
+      "bytes": 1782,
+      "sha256": "2e9af4abf17f4efac9e3fe03c7ebd5a43716f2e3282f330f04cd1be006ea2769"
+    },
+    {
+      "file": "r2_ok_multipage_summary_first.pdf",
+      "bytes": 3858,
+      "sha256": "c8a45194df793e7bc7a72ff4bac797cced9233292297c5ad5b89ce52ea231d28"
+    },
+    {
+      "file": "r2_ok_bauabzug_header_rechnung.pdf",
+      "bytes": 2054,
+      "sha256": "88d6cd07425d8e0adfd72c2e7bcac0b2e8965b1b286557ce2b7e987a5b1c4263"
+    },
+    {
+      "file": "r2_doc_bank_transfer_returned.pdf",
+      "bytes": 1576,
+      "sha256": "2ef6e3095de63536cea13754978f21cc44a0a2fd786120928722d9d27a8b15e5"
+    },
+    {
+      "file": "r2_doc_bank_statement_transfers.pdf",
+      "bytes": 1598,
+      "sha256": "ca99119700d301b78f05c51aeb3eaec5e6d350ebb30d53aac87621eab8d8e040"
+    },
+    {
+      "file": "r2_ok_short_email_label_line_above.pdf",
+      "bytes": 1654,
+      "sha256": "6c0cb2a21483df6e162beac65006267d41e767608b1c3c47fc5615ea600575fc"
+    },
+    {
+      "file": "r2_ok_total_before_detail.pdf",
+      "bytes": 2309,
+      "sha256": "44c84baa947f9aee13ad892aeb98e24154dc53185e9981b0a0ae17627bf88ff5"
+    },
+    {
+      "file": "r2_net_single_zahlbetrag_block.pdf",
+      "bytes": 1850,
+      "sha256": "557d920b07e368ac35d2c4ec332074f4fdc5fe6f3da1c561d61334e3c2229652"
+    },
+    {
+      "file": "r2_doc_fr_facture.pdf",
+      "bytes": 1523,
+      "sha256": "5010e890092b1f728a7d215c41f89506f81d8a1f2b60c57ed5e6d38502e00d0f"
+    },
+    {
+      "file": "r2_guard_itemized_payment_items.pdf",
+      "bytes": 1466,
+      "sha256": "261c7a41afb79a70d9cc92bb0ad80a5f70638a41cd2a230b670468930135efeb"
+    },
+    {
+      "file": "r2_guard_integer_amount_payment.pdf",
+      "bytes": 1539,
+      "sha256": "a74a9cfd7067290b529dc734bb03436c0a3bf9e589100aec11a6822ec93c603a"
+    },
+    {
+      "file": "r2_doc_po_bestellung.pdf",
+      "bytes": 1634,
+      "sha256": "2c07aa509a1c234c64ea7ad4a76da1ec16f27e69e6702ae19ae33289da395458"
+    },
+    {
+      "file": "r2_doc_it_fattura.pdf",
+      "bytes": 1516,
+      "sha256": "e477bfa700e991804a24af81acb53d9b384103f2c49d1019b525dc6d3e6a7719"
+    },
+    {
+      "file": "r2_doc_pl_faktura.pdf",
+      "bytes": 1519,
+      "sha256": "1899813ccd57051f7b488bbb192317f43f45a4f05591c5a2dae556f226f2623d"
+    },
+    {
+      "file": "r2_net_zr_box_two_lines.pdf",
+      "bytes": 1633,
+      "sha256": "66ce44151e5bb0f8e653e991b854c334ea2086d2f9748dfe39949fa53a8e3b07"
+    },
+    {
+      "file": "r2_net_zr_box_unknown_labels.pdf",
+      "bytes": 1625,
+      "sha256": "822cb80631bdf77f2453e2b01ac2b7c8681e72a4639572d49d24b5806e80872a"
+    },
+    {
+      "file": "r2_ok_abschlag_zahlungsfreigabe.pdf",
+      "bytes": 1550,
+      "sha256": "d3d85c2985289dbf7fed3f2532c47423cb06e848960e67deaac579dbf4e48c3a"
+    },
+    {
+      "file": "r2_guard_transfer_with_fee.pdf",
+      "bytes": 1563,
+      "sha256": "070d2e5166aa888ca894d00073d17fa5fb8d17960f9e2af83da9737afb09ee6c"
+    },
+    {
+      "file": "r2_guard_bank_statement_untitled.pdf",
+      "bytes": 1585,
+      "sha256": "8406f3e5b56b647123647d8adfc1584c3e0782a6cf982c3bfb00e061ef7cc213"
+    },
+    {
+      "file": "r2_ok_rechnung_section_word.pdf",
+      "bytes": 1478,
+      "sha256": "3f526f68ea91d01e9e86cc8ac2088dbf6ef38d811f51b8a3e84522954129b829"
+    },
+    {
+      "file": "sm_clear_headers.p7m",
+      "bytes": 4926,
+      "sha256": "352567b70856b5dd13f664cb1653f71691833058518ffa3fe9a9b866e7497ea0"
+    },
+    {
+      "file": "sm_clear_noheaders.p7m",
+      "bytes": 4441,
+      "sha256": "d8d2a94a8192efe88adea07ffe7412179ad3a521f0068c7ce0ab9b354cee5346"
+    },
+    {
+      "file": "sm_opaque_der.p7m",
+      "bytes": 3594,
+      "sha256": "05463dea8b1c3957a9067a05565c48a6212d7f4df3ef4dc4acca2482750a1acf"
+    },
+    {
+      "file": "sm_opaque_ber_chunked.p7m",
+      "bytes": 3608,
+      "sha256": "27bb04b68dea797f364592bf1b287a59639ee3f77c2261bda6ad8c439ce0fb53"
+    },
+    {
+      "file": "sm_opaque_ber_stream.p7m",
+      "bytes": 3598,
+      "sha256": "ddf0462ef119ea000cc5875a5d0a168d91df0126c8c508f3e0414f0dff10967b"
+    },
+    {
+      "file": "sm_opaque_base64.p7m",
+      "bytes": 4920,
+      "sha256": "a5b8fb2d7b0bb7a8e2e91cdea6f2caef204d0016102caf9a44c68cecff661cd9"
+    },
+    {
+      "file": "sm_opaque_pem.p7m",
+      "bytes": 4964,
+      "sha256": "8a5fdfda0d12bb569939828d1e36a13ed01d9f86a2fd31a62028b4dcdc163f07"
+    },
+    {
+      "file": "sm_opaque_in_clear.p7m",
+      "bytes": 7657,
+      "sha256": "927b26935de272728fabc995c7b3e3849244a0bfe1442ed4faf1ba2d2e8f7eaf"
+    },
+    {
+      "file": "sm_signed_compressed.p7m",
+      "bytes": 3393,
+      "sha256": "bd8354fccfc54b16c8de298f701ba06aec55895291d0bac146ca4fb2d45d4c90"
+    },
+    {
+      "file": "sm_two_pdfs_avis_name.p7m",
+      "bytes": 5562,
+      "sha256": "6d8fca42c8434f949bda030f5792ef0986dcf6a751925d6f7f8ba516fd1a05b2"
+    },
+    {
+      "file": "sm_two_pdfs_best.p7m",
+      "bytes": 5475,
+      "sha256": "b23e328a8b6ff8d5ab5e30831086d6b4d2d269a71976bf1277a60ee575392de8"
+    },
+    {
+      "file": "sm_two_pdfs_conflict.p7m",
+      "bytes": 5521,
+      "sha256": "b68924b85189af4cbc661c57d8296982285bd6840783cf48d96fee8f3e43939e"
+    },
+    {
+      "file": "sm_nested_forward.p7m",
+      "bytes": 5232,
+      "sha256": "8f1edbeef2abb6d024296717508814143257679089ab0657bde2528207efdbdb"
+    },
+    {
+      "file": "sm_quoted_printable.p7m",
+      "bytes": 4321,
+      "sha256": "67aaf1a33d5036c8ae02de6dac4ba4b159d2d9396934870656c65d5c9e01462a"
+    },
+    {
+      "file": "sm_encrypted.p7m",
+      "bytes": 2486,
+      "sha256": "dfc7435b2efdede07a7f5b46b7eef71fd8be4a706c981e075caffb9ed2d7cbe8"
+    },
+    {
+      "file": "sm_message.rpmsg",
+      "bytes": 4023,
+      "sha256": "2c838753740bfe25ee7479b61291efe83584d8073d8a63979f17a16d110cc6ff"
+    },
+    {
+      "file": "sm_signed_no_pdf.p7m",
+      "bytes": 3314,
+      "sha256": "3af68d38a66d231e37c9cb052926f8a88a60909392b5662714c3cc99b50c1a19"
+    },
+    {
+      "file": "sm_plain_text.p7m",
+      "bytes": 50,
+      "sha256": "e0792333fc01ebc119277a5a97a1fe278d98a853a3cd3f0b932c2f5981c7430e"
+    },
+    {
+      "file": "sm_large_opaque_ber.p7m",
+      "bytes": 2058411,
+      "sha256": "5517592621edf128a30f0e73a0346862b4f97eb4f278103dd326afa1854a5aff"
+    },
+    {
+      "file": "sig_box_beside_total.pdf",
+      "bytes": 18492,
+      "sha256": "41ac32d640df398749164335ecea405de9a545ff1eeb393e952fe6e478712469"
+    },
+    {
+      "file": "sig_box_parent_field.pdf",
+      "bytes": 18564,
+      "sha256": "69300b56e4afa55ea4bc49491ccc00a856cc2e4d202129d11f7535d9b1f1a47a"
+    },
+    {
+      "file": "sig_signed_far.pdf",
+      "bytes": 18511,
+      "sha256": "6b2e5d3198a0975194a6ccdabd0cb09c434bc1e19fd41e956c646bb9f837f4ef"
+    },
+    {
+      "file": "sig_changed_after_signing.pdf",
+      "bytes": 18864,
+      "sha256": "f4e210cedad68948a5bb70842fc837ad29ba419200205afad6122e07482b0a7e"
+    },
+    {
+      "file": "sig_annotation_after_signing.pdf",
+      "bytes": 19177,
+      "sha256": "cc32045255fe2ef6a5cacb850c324f4a41f46252ea8d945660ac9573b29202f7"
+    },
+    {
+      "file": "sig_dss_after_signing.pdf",
+      "bytes": 19643,
+      "sha256": "23fff9843baa23d0175f06aad41b1d7cfef2ba2a36b2bc2b09ceb2f2be142bcd"
+    },
+    {
+      "file": "sig_resaved_unchanged.pdf",
+      "bytes": 19026,
+      "sha256": "26d29942bf581581de37d75819354580baa13bf4d16f9b6258606aedaafb3702"
+    },
+    {
+      "file": "sig_encrypted_payload.pdf",
+      "bytes": 5228,
+      "sha256": "e2cf1c67d29ff3fc0ad89ef3b3b6affde77ec2e83b7565a060d42b42c7f3a1aa"
+    },
+    {
+      "file": "r2b_fx_it_estratto_conto.pdf",
+      "bytes": 1580,
+      "sha256": "fedf90a52cbe5302d73a4ee6c26572650d4872440bbd800860fa7471500cc846"
+    },
+    {
+      "file": "r2b_fx_pl_wyciag.pdf",
+      "bytes": 1612,
+      "sha256": "9a0fe893a7ee5711e213b2a8381ef547c31699bcc4ccf11f0a1c41693218e612"
+    },
+    {
+      "file": "r2b_fx_fr_bulletin_paie.pdf",
+      "bytes": 1607,
+      "sha256": "dde3dc50b4374097671d152b5c82ae4fec6837afd67cbad1b1559389b2644f71"
+    },
+    {
+      "file": "r2b_fx_es_nomina.pdf",
+      "bytes": 1531,
+      "sha256": "33677d751e8560f079711bc61726ef219b609ea128bf7d7c87dbd257801114c9"
+    },
+    {
+      "file": "r2b_fx_nl_ingebrekestelling.pdf",
+      "bytes": 1565,
+      "sha256": "f5a0d52dd515dd49e5384c8d03c5437977b583f35d7d811a9009b4774cc6809c"
+    },
+    {
+      "file": "r2b_fx_it_pagopa_avviso.pdf",
+      "bytes": 1669,
+      "sha256": "816332f9c764f2648bfc1c238ef94e38b19e4423d8272d2ce0c35e01e5906c9b"
+    },
+    {
+      "file": "r2b_fx_pt_aviso_pagamento_imposto.pdf",
+      "bytes": 1588,
+      "sha256": "4ab5145d9e0aa0a10b7a9e01b5663798c858d75e53eee6f789aa8c464e1eed3d"
+    },
+    {
+      "file": "r2b_fx_es_aviso_pago_pendiente.pdf",
+      "bytes": 1519,
+      "sha256": "73b515affb0eab5d732454717b75407bdb55fec355c360a607f4224967b390ac"
+    },
+    {
+      "file": "r2b_fx_es_aviso_cargo_cuenta.pdf",
+      "bytes": 1545,
+      "sha256": "969c8d55e804ab2c6ce7930db5900db6cfdea6d71139d50d064d267792c203b0"
+    },
+    {
+      "file": "r2b_avis_footer_rueckfragen.pdf",
+      "bytes": 1946,
+      "sha256": "4e2c3f5273884577c4bc8b8e905279e9a90f0852b32a99d8f05c8958e490ae76"
+    },
+    {
+      "file": "r2b_avis_footer_kein_avis_per_post.pdf",
+      "bytes": 1945,
+      "sha256": "6d3d040978ea6214d8f000186a6b568ff04b3abb06aa41d0e54e3b72f407fceb"
+    },
+    {
+      "file": "r2b_avis_en_queries_footer.pdf",
+      "bytes": 1638,
+      "sha256": "c6c6bfd32e3927e3f5011a8e2ace99c6277d91aff101369bfb97b3e1fb7c3c03"
+    },
+    {
+      "file": "r2b_doc_payee_asks_remittance_en.pdf",
+      "bytes": 1733,
+      "sha256": "bf62dd35f36eb5e6055d06ed774ce05b2886ecae71f9dcd162406e9b0e138533"
+    },
+    {
+      "file": "r2b_letter_subject_rechnung_nr.pdf",
+      "bytes": 1885,
+      "sha256": "31121b21248bfe69e245d34ca77ef3ef7aa6296444b25a3f4e0891aa3f23aa52"
+    },
+    {
+      "file": "r2b_letter_subject_rechnung_short.pdf",
+      "bytes": 1827,
+      "sha256": "5cf60fc914acf803cfddf921dc22c7ce44c36b9f6398528acc7a61d2ec5c1451"
+    },
+    {
+      "file": "r2b_letter_vat_recap_paid.pdf",
+      "bytes": 1880,
+      "sha256": "0b5e8236f867924cd7119aa25a86fcd45e775f688767bf0bf4c51823ed25a0b2"
+    },
+    {
+      "file": "r2b_avis_duplikat_stamp.pdf",
+      "bytes": 1902,
+      "sha256": "66db1867a97aa2fbd1fd28dfa1a47e5b2b30d7cb1dbe284055b783c6b352c166"
+    },
+    {
+      "file": "r2b_doc_order_paid_note.pdf",
+      "bytes": 1911,
+      "sha256": "c965b747c13b6934577376fe5af255e7983667d55322688354a00dcae5943837"
+    },
+    {
+      "file": "r2b_doc_invoice_credit_offset.pdf",
+      "bytes": 1929,
+      "sha256": "e8d6e1706dd3c5df5de3ddf9fc576e946be30a10ce6c85a8032eeaeff8f064a7"
+    },
+    {
+      "file": "r2b_avis_exchange_rate.pdf",
+      "bytes": 1850,
+      "sha256": "d0a4293012bf78e46fb561dc64467cbe229c810a6a40abc858f44e5ac89eb9d4"
+    },
+    {
+      "file": "r2b_letter_info_lieferschein_nr.pdf",
+      "bytes": 1829,
+      "sha256": "82bcb65901b10fa6d17122e325ba6f8199ef2d4a5520a517cee703490059a437"
+    },
+    {
+      "file": "r2b_email_subject_lieferschein.pdf",
+      "bytes": 1641,
+      "sha256": "a00382b2e28555a0f53e844f957ed2771ab15401c4b2a5b3f45e5abbd11b4c22"
+    },
+    {
+      "file": "r2b_letter_zahlung_3_abschlagsrechnung.pdf",
+      "bytes": 1891,
+      "sha256": "fade104a36e2538b68a3f7db7d7547f9b2a172d1f48aa3a3f4a636c1f5ffb361"
+    },
+    {
+      "file": "r2b_avis_short_title_lieferschein_column.pdf",
+      "bytes": 1908,
+      "sha256": "a3fd6ea18f9c28314922ea9ee481f3b1c9228befced0ca18c611ae98568b7fe4"
+    },
+    {
+      "file": "r2b_doc_email_supplier_lieferschein.pdf",
+      "bytes": 1615,
+      "sha256": "992cf78dab18a9de453ffc98c871d75932add79a32943e2476457a917fe0f383"
+    },
+    {
+      "file": "r2b_doc_abschlagsrechnung_title.pdf",
+      "bytes": 1876,
+      "sha256": "ba33c9201106289af7b308543c952818bbb1a86b818800223996cbe23ce93619"
+    },
+    {
+      "file": "r3_g1_headbox_fee_vat.pdf",
+      "bytes": 2214,
+      "sha256": "1be07cff02b06033a1bf0faf74031f903d99fcd569125062f8498c21d11bf647"
+    },
+    {
+      "file": "r3_g1_guard_headbox_unexplained.pdf",
+      "bytes": 2214,
+      "sha256": "13c73ad75eb9e731c5dac0332f23f6e82525020520c26e4ea284fd8abf39c36e"
+    },
+    {
+      "file": "r3_g1_guard_headbox_no_deductions.pdf",
+      "bytes": 2139,
+      "sha256": "3780b8ca379f3e90aa92c23c597146d458f5f4f22116f42e2e6331ba853e4635"
+    },
+    {
+      "file": "r3_g1_two_page_settlement.pdf",
+      "bytes": 2994,
+      "sha256": "288302f9e70613e9226ff2a38e02bbbc4860315faeefe03646338e5e93d84d05"
+    },
+    {
+      "file": "r3_g1_guard_two_page_unexplained.pdf",
+      "bytes": 2811,
+      "sha256": "b8e3836ed0369a628e711b5f2b25e75f1bdb9544e1b1c79bbed817122eba9f9e"
+    },
+    {
+      "file": "r3_g1_payout_deductions_before.pdf",
+      "bytes": 1979,
+      "sha256": "b097d5f7ed6e0a57500fbccecc5c69fbd3ed6cc73fe58f05d348331298ea24c9"
+    },
+    {
+      "file": "r3_g1_en_payment_amount_head.pdf",
+      "bytes": 1704,
+      "sha256": "a250610e6db3bcce14f0bca62d5e876cef1f19147fbfd66de5de2f7a01e6f623"
+    },
+    {
+      "file": "r3_g1_credit_amount_head.pdf",
+      "bytes": 1965,
+      "sha256": "b6fa3ac44a279560d88dcd28b9e71dfd5ea70188560976963e1ea08f941b1d85"
+    },
+    {
+      "file": "r3_g2_letter_rate_restbetrag_wrap.pdf",
+      "bytes": 1934,
+      "sha256": "33420c177cc7721ebd3385e7acec110f3bd1179ec6fe71ac8336705ce1c238fb"
+    },
+    {
+      "file": "r3_g2_avis_zuvor_teilzahlung.pdf",
+      "bytes": 1887,
+      "sha256": "b9986a225500bb567ac7d39fe74e89d8c628866533862de5f7ecd82187228859"
+    },
+    {
+      "file": "r3_g2_avis_same_line_schon.pdf",
+      "bytes": 1844,
+      "sha256": "2431fb82fc98ceb6e829e05f20f640f46e5aa21333fc481eeb9c07d3975b0182"
+    },
+    {
+      "file": "r3_g2_en_already_paid_remaining.pdf",
+      "bytes": 1538,
+      "sha256": "9022f6ee6b6f6a5b2b9363bcbc48b5423519442b157a5ae1aee522eae17242ec"
+    },
+    {
+      "file": "r3_g2_guard_payee_reminder.pdf",
+      "bytes": 1899,
+      "sha256": "5baf110704f6519b65820409c934ece19a658735877f6e4789dc59f766b1098e"
+    },
+    {
+      "file": "r3_g2_guard_invoice_prior_rate.pdf",
+      "bytes": 1918,
+      "sha256": "eadeffd77d8409dee0b5e62fc86d321d2ad01090e27bfb27b480febc80de4d0c"
+    },
+    {
+      "file": "r3_g2_guard_two_payments_unclear.pdf",
+      "bytes": 1838,
+      "sha256": "7a6364c8fce28400dd5ac61521b139b4a9a1d5842b6d0188ed065c84852258b2"
+    },
+    {
+      "file": "r3_g3_title_bitte_um_zahlungsavis.pdf",
+      "bytes": 2124,
+      "sha256": "d484e41da40e208d85f32914c44527274eb0e920989b45d0b71550af41732cd8"
+    },
+    {
+      "file": "r3_g3_title_anforderung.pdf",
+      "bytes": 2022,
+      "sha256": "17c3554f6763794ab0d6ec8721a29e8d028b7e98c02d100824f8b822681c4304"
+    },
+    {
+      "file": "r3_g3_email_zahlungsavis_fehlt.pdf",
+      "bytes": 1779,
+      "sha256": "3fadb84436fa8156588811074c0f7e02873ac27109b80c3123580b67b2de30f2"
+    },
+    {
+      "file": "r3_g3_en_request_remittance.pdf",
+      "bytes": 1682,
+      "sha256": "94860fbd38052bd26f3fcf9c052b68f3b7517d9e2498fe0f3514532797f49338"
+    },
+    {
+      "file": "r3_g3_payee_unallocated_no_avis_word.pdf",
+      "bytes": 2035,
+      "sha256": "998493899fe4386059eea4373d383500ba8eda830440fcf8e41b1a94ced72f0b"
+    },
+    {
+      "file": "r3_g3_guard_dunning_send_avis.pdf",
+      "bytes": 1844,
+      "sha256": "658820799e95c366a417943871340661e42d2972b0450383a969dd1146fc55b6"
+    },
+    {
+      "file": "r3_g3_ctrl_avis_footer_bzw_date.pdf",
+      "bytes": 1998,
+      "sha256": "c3dde8938cb764c109c9080bd195de1ea449e3815932a4a38ce7d632e632d784"
+    },
+    {
+      "file": "r3_g3_ctrl_avis_credit_received.pdf",
+      "bytes": 1977,
+      "sha256": "bd76a1fa17313e67597ac1ff0a23e94cb35aafbc71f3a88d8aaae215da815c97"
+    },
+    {
+      "file": "r3_g4_avis_ihr_zeichen_mahnung.pdf",
+      "bytes": 2011,
+      "sha256": "bd70faee65faf66afd6e81c947b18067c7f3f8cbe1a66421c2a4ae08b57a559f"
+    },
+    {
+      "file": "r3_g4_aag_refund_dept_address.pdf",
+      "bytes": 1955,
+      "sha256": "ffbad210c45feb2a1bf5cc37fb33ef9eef11049ac18ee1428a929f6eb1f582f5"
+    },
+    {
+      "file": "r3_g4_letter_subject_ihre_zahlungserinnerung.pdf",
+      "bytes": 1856,
+      "sha256": "a62ec87094fc88f1b243fbc76765968ed453d39d33049058396f5f57fb979601"
+    },
+    {
+      "file": "r3_g4_erstattung_bezug_fields.pdf",
+      "bytes": 1925,
+      "sha256": "bc2b1f75a3acfc78169af75bd334ac43e74b2694dc8ce3e99dc3b19d31360d1e"
+    },
+    {
+      "file": "r3_g4_avis_address_dept_lohn.pdf",
+      "bytes": 1852,
+      "sha256": "2c1d0f0b491316e6a0bf69596ec7b7f28ef1e1b52dc6fc0ca144304802a49e58"
+    },
+    {
+      "file": "r3_g4_guard_dunning_ihr_zeichen.pdf",
+      "bytes": 1909,
+      "sha256": "2bd66d5b27b705a794de385ccbdb040f2dd8e92bb758b60decdf990abaa20bbc"
+    },
+    {
+      "file": "r3_g4_guard_payslip_dept.pdf",
+      "bytes": 1845,
+      "sha256": "2f89df8f69e0c1d22a28f2eb09d46a3e03c6d8e728c8ad8f92db195bb360a86d"
+    },
+    {
+      "file": "r3_g4_guard_invoice_bezug.pdf",
+      "bytes": 1850,
+      "sha256": "ad3e4e30695cf7a0ce985122d8dcfc78bad35169576f8bb10baa2be9d2cbd224"
+    },
+    {
+      "file": "r3_g1_headbox_subtotal_between.pdf",
+      "bytes": 2223,
+      "sha256": "13ebbd241d7c77f34f2da3b18cc6be79a05c0d60beffcb8190c0e0b6fff2c1e2"
+    },
+    {
+      "file": "r3_g1_headbox_aligned_wrapped.pdf",
+      "bytes": 2220,
+      "sha256": "b5d9da7610d3c193213f82ec90dc77373de7444029dfa0b0abde146601ed3128"
+    },
+    {
+      "file": "r3_g3_ctrl_reply_with_advice.pdf",
+      "bytes": 1836,
+      "sha256": "df125c1207dbebe31fcbd7d2ec97d327d0faedf1817ad0463ae6f962cf8bca3a"
+    },
+    {
+      "file": "r3_g2_guard_second_payment_sentence.pdf",
+      "bytes": 1899,
+      "sha256": "ca033b3d1d5521d4d420f759ee8c070b126b0e29568e53840d98cf2f4d8857d4"
+    },
+    {
+      "file": "r3_g3_payee_receipt_confirmation.pdf",
+      "bytes": 1873,
+      "sha256": "10631147b32980d8114cec88725c9dc5f33ea283db8dccafc1bcf82e4ecf7abb"
+    },
+    {
+      "file": "r3_g3_guard_reminder_avis_missing.pdf",
+      "bytes": 1893,
+      "sha256": "6caa12068cf55f09e0e01d2ed03e6269d206b61f7de0d7b78d7ce62ac2f95c30"
+    },
+    {
+      "file": "r3b_g1_intermediate_zahlbetrag_ueberweisung.pdf",
+      "bytes": 1890,
+      "sha256": "42963dd8f1c66d9f5f890b2c3d9dd835ae35dc6139a0364f1973955ab1383024"
+    },
+    {
+      "file": "r3b_g1_summe_zahlbetrag_credit_then_ueberweisung.pdf",
+      "bytes": 1927,
+      "sha256": "c2d445750ed398a6b1f822ec66e1e7d093b2af93aac9f4e07a0ffb3687553752"
+    },
+    {
+      "file": "r3b_g1_erstattungsbetrag_selbstbeteiligung.pdf",
+      "bytes": 1905,
+      "sha256": "1ae702db4d69cf3b9518a5e5990ee5c1742c8d7cbad3347faa5b23089cbb594f"
+    },
+    {
+      "file": "r3b_g1_gutschriftsbetrag_deducted_gesamtzahlung.pdf",
+      "bytes": 1906,
+      "sha256": "90bd8996d8ba741a1e44bd411ac4daad40b7172b99e4cff91d3e9e883c4c4e06"
+    },
+    {
+      "file": "r3b_g1_head_zahlbetrag_dotslash_deductions.pdf",
+      "bytes": 1961,
+      "sha256": "7dd04c71752cb10cee9dd69c3d3d8b6ed05a07bf07ab4b67d26e1010937a0f8b"
+    },
+    {
+      "file": "r3b_g1_en_amount_paid_less_wht_charges.pdf",
+      "bytes": 1655,
+      "sha256": "9d0b2c2a4efe8bb7614eae5de376ac5f8c0834d615705bb31955d32d2d8882e9"
+    },
+    {
+      "file": "r3b_g1_head_box_payout_and_deductions_right.pdf",
+      "bytes": 1966,
+      "sha256": "d7e67d2c1f819eeb3fcb6856c72df8c7d8845d9db4db79eabdb7961fae572b15"
+    },
+    {
+      "file": "r3b_g1_two_page_fee_vat_gutschriftsbetrag.pdf",
+      "bytes": 2371,
+      "sha256": "bda87506f0f46a56cf4f44815d316465c9d07f47797549e3618a8402db8bf57a"
+    },
+    {
+      "file": "r3b_g1_zahlbetrag_sentence_kuerzung_pct.pdf",
+      "bytes": 1896,
+      "sha256": "9380641c8a3e390fdc24bb537a8b837342cc7605c44298c503fbe884cd4de992"
+    },
+    {
+      "file": "r3b_g1_en_payment_amount_then_net_remitted.pdf",
+      "bytes": 1510,
+      "sha256": "c4d37e3716c8bd4669cbaa4af72e4164bacc2d5338f0da5a8300c0e87315910d"
+    },
+    {
+      "file": "r3b_g1_zahlbetrag_row_then_delkredere_gutschrift.pdf",
+      "bytes": 1937,
+      "sha256": "bdb7d6904eb42efd1c3b2df8f90befcfaf589cba43f115f20e4fad4bf8165bb6"
+    },
+    {
+      "file": "r3b_g1_head_transfer_equals_pay_total.pdf",
+      "bytes": 1989,
+      "sha256": "f484fa874d9134651d253120bc5c27032d1f8dd3f2a54519352715468a28e1f1"
+    },
+    {
+      "file": "r3b_g1n_head_transfer_unexplained_many_deductions.pdf",
+      "bytes": 2044,
+      "sha256": "df0cdedbb46ed770a5791cd0426f8d12dac6aa5cd9730b0682ace9a6dc6ee785"
+    },
+    {
+      "file": "r3b_g1n_utility_bill_zahlbetrag_debit.pdf",
+      "bytes": 1909,
+      "sha256": "5dea99ba571c962009f422058f581bbc00f1b89875e566fd41442346b9d77aa8"
+    },
+    {
+      "file": "r3b_g1n_head_transfer_half_explained.pdf",
+      "bytes": 1893,
+      "sha256": "b63e30176c7bdc66384fecc78b8b361656e07ee5ac1bbcddb7ee368317e34cbe"
+    },
+    {
+      "file": "r3b_g1n_payee_credit_note_gutschriftsbetrag.pdf",
+      "bytes": 1840,
+      "sha256": "affba6e3723a7f6deebe07d9564869004cb2bb30ab74a323b2513b066bb72a22"
+    },
+    {
+      "file": "r3b_g2_bereits_angewiesen_future_other.pdf",
+      "bytes": 1897,
+      "sha256": "1dce6614dc86d638846b3239b11e812f019004628dbea05de295aeeb8c781255"
+    },
+    {
+      "file": "r3b_g2_today_table_plus_future_invoice.pdf",
+      "bytes": 1937,
+      "sha256": "312ab74d733911cfb743d379b940a6d4a9f845f7e947fe264fa9cd7f263cfc79"
+    },
+    {
+      "file": "r3b_g2_zuvor_besprochen_next_week.pdf",
+      "bytes": 1876,
+      "sha256": "f31d274c09f0c67880abd31fa46391ed41f14b85f313a3109cb12b9fdcab4568"
+    },
+    {
+      "file": "r3b_g2_passive_prior_rest_today.pdf",
+      "bytes": 1871,
+      "sha256": "38f3f52773adcbe3a58c8b460e5d6a2441ded2661abfea1565292539ede800ef"
+    },
+    {
+      "file": "r3b_g2_en_previously_remaining_amount.pdf",
+      "bytes": 1546,
+      "sha256": "506bbd468cf2971ec3f10274f26bcd4e28ce8460ee4e43b75ddec05f000fdee9"
+    },
+    {
+      "file": "r3b_g2_equal_instalments.pdf",
+      "bytes": 1855,
+      "sha256": "404017e40da8de8b8837768c88985101fbef00c46d36d1828fa2220d0e2afda7"
+    },
+    {
+      "file": "r3b_g2_cut_sentence_das_sind.pdf",
+      "bytes": 1840,
+      "sha256": "00686904327d01b374ca7582e6f7316ee3f853656d1285c53f5c135fcb8f7e2d"
+    },
+    {
+      "file": "r3b_g2_three_sentences_sum.pdf",
+      "bytes": 1848,
+      "sha256": "29a2218ae1f0152f04d4eade60e93075fa0d36b82ed134c55bdf024fb01dbd34"
+    },
+    {
+      "file": "r3b_g2_en_earlier_email_charges.pdf",
+      "bytes": 1553,
+      "sha256": "0a2abff595a3cf19b29841dce619960050dc49d0f1dbbe382050374234bfaff7"
+    },
+    {
+      "file": "r3b_g2_skonto_same_sentence.pdf",
+      "bytes": 1828,
+      "sha256": "32bf24ebef1244542e182811a165a28df6fac74943b09b31f25482301504f9d8"
+    },
+    {
+      "file": "r3b_g2_today_and_rest_in_november.pdf",
+      "bytes": 1841,
+      "sha256": "6216717de60256f6198992fda1e09ad0ee7cfbf1b19c25cf0c25f20976b42b33"
+    },
+    {
+      "file": "r3b_g2_schon_gezahlt_transfer_label.pdf",
+      "bytes": 1887,
+      "sha256": "5ba7152de5e4343f1779b3bbc334e82f85593775e1ba9f8bc05b04c369d7d0df"
+    },
+    {
+      "file": "r3b_g2n_payee_wir_bitten_rest_heute.pdf",
+      "bytes": 1859,
+      "sha256": "65961a7018a2c28c313c772528da0c46606db1dddd568d9ac2ecbe19004addca"
+    },
+    {
+      "file": "r3b_g2n_two_dates_no_total.pdf",
+      "bytes": 1818,
+      "sha256": "f0c678e0bdd86275057d04bd6b53e234a974ce98bf5505403ee44dd59e8e7f11"
+    },
+    {
+      "file": "r3b_g2n_ich_bitte_rest.pdf",
+      "bytes": 1666,
+      "sha256": "571a72b8c8ded912df77a441170a505141e67522a93326b34c953f72d7a1fc45"
+    },
+    {
+      "file": "r3b_g2n_future_instalments_only.pdf",
+      "bytes": 1872,
+      "sha256": "a7924bc4dde7f791b821afcea413b0b88b2e357becf3479de4cd73f7554823af"
+    },
+    {
+      "file": "r3b_g3_reply_ihrer_bitte_um_zusendung.pdf",
+      "bytes": 1739,
+      "sha256": "3335a38f50ee8d84491a21eadad00407be30b4c0f7a719062c2c4dd3e6c45000"
+    },
+    {
+      "file": "r3b_g3_en_reply_request_for_remittance.pdf",
+      "bytes": 1614,
+      "sha256": "065821b4093670bc989e39bb1917ddf7346d0991a563048c89e087bc4e288aa2"
+    },
+    {
+      "file": "r3b_g3_subject_antwort_prefix.pdf",
+      "bytes": 1712,
+      "sha256": "1f4b9728e6c987e7135b35d532e256fa9c10440facd48f0be780433d25dfcfa2"
+    },
+    {
+      "file": "r3b_g3_subject_wg_prefix.pdf",
+      "bytes": 1699,
+      "sha256": "0136bb35710f1b11f88bc603ba86d0d40416b1d7f0971088cba390b0fbc38b77"
+    },
+    {
+      "file": "r3b_g3_payer_invoice_bei_uns_eingegangen.pdf",
+      "bytes": 1887,
+      "sha256": "c95429a2b896c009569a3858591f2aa412ddb273f0d2df351d7994db8c7455e7"
+    },
+    {
+      "file": "r3b_g3_payer_refund_auf_unserem_konto.pdf",
+      "bytes": 1883,
+      "sha256": "384ef9e10e63b28740072822bf17dac9ebd157f28dd7e186cd556e4aa0b2320c"
+    },
+    {
+      "file": "r3b_g3_advice_summe_offene_posten.pdf",
+      "bytes": 1894,
+      "sha256": "2a6aed0483b038f300485e8b96276a1a158de4bd567951b9edafa00d6240e601"
+    },
+    {
+      "file": "r3b_g3_en_total_open_items.pdf",
+      "bytes": 1576,
+      "sha256": "e940c469430059a25ab4554fc4f220ee5d67a36be42c5084701e144e691dba6d"
+    },
+    {
+      "file": "r3b_g3_en_footer_not_received_remittance.pdf",
+      "bytes": 1618,
+      "sha256": "f72a1c7acfdbd022c3c66976a1e515b217c2deef9ebf7822bc605f470fccaf73"
+    },
+    {
+      "file": "r3b_g3_avis_bitten_um_zusendung_gutschrift.pdf",
+      "bytes": 1945,
+      "sha256": "cbc5cfadddbe6184d534828ef5275f1888346cee30d5973c8c0650c5835c3e44"
+    },
+    {
+      "file": "r3b_g3_anforderung_reply_letter.pdf",
+      "bytes": 1847,
+      "sha256": "4b53f02e36f4d6463818e9eec12ed3d7047393b4ba3ab6c5063db63e45201797"
+    },
+    {
+      "file": "r3b_g3_avis_footer_bzw_zum_zahlungsavis.pdf",
+      "bytes": 1977,
+      "sha256": "670fcab91af392a02154198dd0d1343433894328f199a97e8ed3b10f0a8c427f"
+    },
+    {
+      "file": "r3b_g3_avis_footer_date_zum_zahlungsavis.pdf",
+      "bytes": 1980,
+      "sha256": "19b15642cb62279ee9caf2b0591fa894536517a2344d51a7c9f68b527e3aed6f"
+    },
+    {
+      "file": "r3b_g3n_payee_subject_starts_with_avis.pdf",
+      "bytes": 1708,
+      "sha256": "5ce93ed0cf73bd2871b544e42b3c9935762f00d1fcb6dbd97826e8a29ebd2075"
+    },
+    {
+      "file": "r3b_g3n_payee_received_numbers_missing.pdf",
+      "bytes": 1829,
+      "sha256": "38e65e84eb4425f659761b987fb8fbe83233d703f5385d015a6e78d91fbdabf2"
+    },
+    {
+      "file": "r3b_g3n_en_payee_received_unable_to_match.pdf",
+      "bytes": 1559,
+      "sha256": "e3b1621b8502683ac1af4ec2f8e9cba11e2b1bbe6a3e99583d717de142a97a24"
+    },
+    {
+      "file": "r3b_g3n_open_items_list_after_payment.pdf",
+      "bytes": 1911,
+      "sha256": "cf02b012c5cffdb9fbb84eef8961371f91e956410beddbfebc102036239aa77c"
+    },
+    {
+      "file": "r3b_g3n_payee_bitten_um_uebersendung.pdf",
+      "bytes": 1630,
+      "sha256": "aa8c46d3f909e1ba8505924bc51c6af103a88a64d270489ac7fef2c2b0e79cc4"
+    },
+    {
+      "file": "r3b_g3n_en_payee_no_remittance_advice.pdf",
+      "bytes": 1539,
+      "sha256": "77e229fee811c19b3f7ddd41cd5ad7f8f8d171dfe8a23ebf6c88a23b6bdfe84f"
+    },
+    {
+      "file": "r3b_g4_ref_combined_field_mahnung.pdf",
+      "bytes": 1816,
+      "sha256": "62f2133597b6dd7e383b8abb7ccc6bec4baf39b28c3e6af49912ac09bf0d4f37"
+    },
+    {
+      "file": "r3b_g4_bezug_lieferschein_payer.pdf",
+      "bytes": 1788,
+      "sha256": "28aac235bbfdb3dcbb6d2ee8d9916db4f47955299ba2c2820b7fbc40f9604a58"
+    },
+    {
+      "file": "r3b_g4_en_title_with_department.pdf",
+      "bytes": 1540,
+      "sha256": "1568f4857a01c579e6a11d36b4bfdefa6580680a67f56cfd132050a8948adf87"
+    },
+    {
+      "file": "r3b_g4_title_above_address.pdf",
+      "bytes": 1740,
+      "sha256": "e93ff8dd63c77a6bc217b5012d8659a1604924e9900d81b337259802e35bffdc"
+    },
+    {
+      "file": "r3b_g4_ihre_2_mahnung_body.pdf",
+      "bytes": 1839,
+      "sha256": "83c0b6d3c4b784882864d05e437bcfe07a19794b7ad266bfec988322ed4fa589"
+    },
+    {
+      "file": "r3b_g4_en_your_payment_reminder.pdf",
+      "bytes": 1513,
+      "sha256": "70c5ce5e98f2ba5fcae25011da64a88cdc71956e0b78f0a27edfbf1aeec17b82"
+    },
+    {
+      "file": "r3b_g4n_dispute_ihre_mahnung.pdf",
+      "bytes": 1897,
+      "sha256": "cb47ac3720e9f00288c06e4bf133457c7361e44ad660335d9a2a3d28121d1c20"
+    },
+    {
+      "file": "r3b_g4n_promise_ihre_zahlungserinnerung.pdf",
+      "bytes": 1835,
+      "sha256": "2611390146c033f9508c53a38a650f46e75b9f2e165b18e195d186d95805ee50"
+    },
+    {
+      "file": "r3b_g4n_statement_with_department.pdf",
+      "bytes": 1581,
+      "sha256": "5759eb02b18c53a52ab935cd69202625cc860460d038ce2b910231253307e83c"
+    },
+    {
+      "file": "r3b_g4n_zahlungsaufforderung_rechtsabteilung.pdf",
+      "bytes": 1851,
+      "sha256": "deee207597b376f73edcf9444e2c5d91f38c852bcb27e7e616853abe7cd0f1e3"
+    },
+    {
+      "file": "r3b_g4n_invoice_title_above_address.pdf",
+      "bytes": 1741,
+      "sha256": "cd6cc83ffcc769cfdfc99a24b96b926567ae4157121e4da531beb895427a5d98"
+    },
+    {
+      "file": "r3b_g4n_dunning_title_after_ref_cell.pdf",
+      "bytes": 1798,
+      "sha256": "c3b498b7ddbedba54a8e88a5cd06576af8861c0400f8bcade8b1304c3a5d31b9"
+    },
+    {
+      "file": "r3b_g2_lead_prose_into_deduction_line.pdf",
+      "bytes": 1874,
+      "sha256": "f90f238f59181e0ada8d06acdab336769d61c5bdf8ed6e207e0ca02cd1877a64"
+    },
+    {
+      "file": "r3b_g2_rest_future_first_person.pdf",
+      "bytes": 1890,
+      "sha256": "ceeaab1a4af031197d6d9ed12aea9865bfe171d693f16a1859a82980a7a6d529"
+    },
+    {
+      "file": "r3b_g2_future_clause_and_prior_other.pdf",
+      "bytes": 1892,
+      "sha256": "ca960279312b4dd2fad21cef7ce0ac5da83c80350971924c4e66f2543d533f40"
+    },
+    {
+      "file": "r3b_g2_rest_not_yet_paid.pdf",
+      "bytes": 1849,
+      "sha256": "3cca2f1dbbad9af9c78c3653d539bca2dce934747cc5ae3ccf146b42b0a533d9"
+    },
+    {
+      "file": "r3b_g4n_inkassoabteilung_colon_title.pdf",
+      "bytes": 1847,
+      "sha256": "b3b90e2e5a3846516c7456ea42cdce9949bc4930fda7300a63fcc1daa014706f"
+    },
+    {
+      "file": "r3b_g3n_payee_ihre_anfrage_then_request.pdf",
+      "bytes": 1660,
+      "sha256": "ced8c655fbe529a629f0a617d20f620d3e79c45768f9c687bd6c77bf2906bef0"
+    },
+    {
+      "file": "r3b_g3n_payee_received_with_erstattung.pdf",
+      "bytes": 1871,
+      "sha256": "ca8a54eb45d4881eabe9aeb078f44ac0c501688693d41793c8907b2f824685a4"
+    },
+    {
+      "file": "r3b_g4_ihre_mahnung_payer_done.pdf",
+      "bytes": 1818,
+      "sha256": "5eb8a38bb356f42226a0cb1512af5571e3cf4367bc99a647964016d188459f7c"
+    },
+    {
+      "file": "r3b_g4_en_department_first_remittance.pdf",
+      "bytes": 1532,
+      "sha256": "8c0db06f8fc74be7930c0b5cbd114bb056740a3bbe7d42588f5fba1fa713b5a9"
+    },
+    {
+      "file": "r3b_g3n_en_payee_your_request_please_send.pdf",
+      "bytes": 1628,
+      "sha256": "e6c28dfbbdf90da72980f47a6a1ba33d257479561a77dc295f1c611fa5e4d335"
+    },
+    {
+      "file": "r3b_g3n_payee_zu_ihrer_anfrage_bitte_senden.pdf",
+      "bytes": 1631,
+      "sha256": "9bab938b9c859455544ebb73ea27bfe2e469edc35d000df6755ef6d78f43b6ce"
+    },
+    {
+      "file": "r3b_g3_en_payer_to_your_account_cannot_allocate.pdf",
+      "bytes": 1554,
+      "sha256": "613a76c1a684daf73d93c3dce6b5fd47df1c3ed3180962cc97083f1c2ab35806"
+    },
+    {
+      "file": "r3b_g3_en_payer_to_your_account_should_unable.pdf",
+      "bytes": 1550,
+      "sha256": "f2dc0d30bcd91898d15a7ff5e4b595173f994402e4badc2f59d2f7afc1bcf45b"
+    },
+    {
+      "file": "r3b_g3_en_payer_footer_could_not_identify.pdf",
+      "bytes": 1533,
+      "sha256": "9aa3851852b2bba84fdb6f8118d94b49b4115578c6df34033558fbb7accb5632"
+    },
+    {
+      "file": "r3b_g3n_en_payee_we_cannot_allocate.pdf",
+      "bytes": 1532,
+      "sha256": "ce926a429b93df7d6ebf6ee169e3e0c3261ca30bed4a5e69d1c0def29cafc1c4"
+    },
+    {
+      "file": "r3b_g2_heute_skonto_somit_two_amounts.pdf",
+      "bytes": 1847,
+      "sha256": "bed12867f2008787ef7da74e31d67b50cccc8a523e02b2482f7ff73718f2f2b1"
+    },
+    {
+      "file": "r3b_g2_hiermit_two_invoices_insgesamt.pdf",
+      "bytes": 1831,
+      "sha256": "3e89e8dc04087e8df46707209fcced660901a905880a590d52408188d87b3cde"
+    },
+    {
+      "file": "r4_k1_also_one_sentence.pdf",
+      "bytes": 1868,
+      "sha256": "d5db38360ea4684ad3116fab01a88c77f977b010394df7fd59f857049c602bf2"
+    },
+    {
+      "file": "r4_k1_equals_operator_prose.pdf",
+      "bytes": 1896,
+      "sha256": "6a8ba0c61b6f3f27385b32a42320fc767465152d751c481b736b0701b121f46e"
+    },
+    {
+      "file": "r4_k1_somit_mit_wrapped.pdf",
+      "bytes": 1891,
+      "sha256": "446dc597c0a7f863385e0f5f1211d71efa2e95b68518effebdfff99ad02666fa"
+    },
+    {
+      "file": "r4_k1_das_sind_after_sentence.pdf",
+      "bytes": 1866,
+      "sha256": "7ca49602eda93d0d323a01c45798e4356fa2753b89db652674d1a7f116d464ef"
+    },
+    {
+      "file": "r4_k1_en_less_ie.pdf",
+      "bytes": 1572,
+      "sha256": "18c7976b22a78878d561948cc538ccea10d1c93179ec84c75fe1904ab5a53010"
+    },
+    {
+      "file": "r4_k1_en_net_first_that_is.pdf",
+      "bytes": 1585,
+      "sha256": "a4368e6be4eca4f27d62f0708c6ce64fb4056d3a20bc5cce3762fb96970972a2"
+    },
+    {
+      "file": "r4_k1_minus_gutschrift_ergibt.pdf",
+      "bytes": 1882,
+      "sha256": "310e93939dde299de29482f42fd369416df1d8ea6780a81ba7db93ddd9ea86ef"
+    },
+    {
+      "file": "r4_k1_macht_abzgl_amount.pdf",
+      "bytes": 1868,
+      "sha256": "f6ef3e63954e9c02c933923283d9799e7ae98e6a5d08d8f9dc2ce1f7ca22f920"
+    },
+    {
+      "file": "r4_k1_mail_betrag_von_wrapped.pdf",
+      "bytes": 1681,
+      "sha256": "0bf3ddca356a94c450b9f167d78f42fddf0553fa58fd355cea937c8f12ad911e"
+    },
+    {
+      "file": "r4_k1_sum_two_invoices_pct.pdf",
+      "bytes": 1885,
+      "sha256": "660a6f97719d93d1635e24a0c97f55049c67efb764eff7895c09bff90a00f3c2"
+    },
+    {
+      "file": "r4_k1_en_two_sentences_credited.pdf",
+      "bytes": 1623,
+      "sha256": "3cd67604d5848b193774d547b52412df3fc1e88ff8cf21553e0fcf25288ed573"
+    },
+    {
+      "file": "r4_k1n_pct_does_not_fit.pdf",
+      "bytes": 1867,
+      "sha256": "975c8169ca19bf98d2881fa05e3d5617076994c91a2bb1e8cc9615da8fdea802"
+    },
+    {
+      "file": "r4_k1n_no_pct_two_amounts.pdf",
+      "bytes": 1855,
+      "sha256": "36b11ddbc13338b4613e1f24492f153ebf0a6f51f8ce413a4a2c00acef2b5ea8"
+    },
+    {
+      "file": "r4_k1n_invoice_skonto_terms.pdf",
+      "bytes": 1887,
+      "sha256": "e505e53446c41fbd93a605567e8a8f97d3845c241a1ec7599a6b81b96a254782"
+    },
+    {
+      "file": "r4_k1n_terms_letter_no_title.pdf",
+      "bytes": 1872,
+      "sha256": "90bcd4033f8768bbaa1ff24aceecc449d9ec1a02ef8fea4f4d1201e40c16f299"
+    },
+    {
+      "file": "r4_k1n_future_with_skonto.pdf",
+      "bytes": 1877,
+      "sha256": "0da90ddd94d62815f246287042b325d0fa1add48f3bbb8f87b420230eba7fb55"
+    },
+    {
+      "file": "r4_k1n_en_discount_does_not_fit.pdf",
+      "bytes": 1572,
+      "sha256": "de5bfcb74169039b45c71da09b01abb10e51a151b1885a798160ab13df3081b4"
+    },
+    {
+      "file": "r4_k1n_payee_received_net.pdf",
+      "bytes": 1880,
+      "sha256": "e93d1998d2fc381cf2cd875d19932c683732449d8dfbef8289a66ef48b79a800"
+    },
+    {
+      "file": "r4_k1n_deduction_amount_does_not_fit.pdf",
+      "bytes": 1888,
+      "sha256": "c1f20ef0677165d7256983a22d82ff4049713f38c88b212edbb4bb41f36ed823"
+    },
+    {
+      "file": "r4_k2_bank_gutschrift_betrag_plus.pdf",
+      "bytes": 1769,
+      "sha256": "ec0ddaf3f7d4551329080447cb09bb035e869d358ad3c0be31bed9722ecdd202"
+    },
+    {
+      "file": "r4_k2_bank_credit_advice_en.pdf",
+      "bytes": 1728,
+      "sha256": "f206007970b13f903965ff6ae37e33c2982a24afc94c0617e3a67258d87f99e3"
+    },
+    {
+      "file": "r4_k2_bank_eingangsanzeige_haben.pdf",
+      "bytes": 1704,
+      "sha256": "56244214c80e9bfaf441a577c20a21b8ca01ac3968f802ef831caea7bcfdec0e"
+    },
+    {
+      "file": "r4_k2n_bank_lastschrift_belastung.pdf",
+      "bytes": 1725,
+      "sha256": "141a6191c66e3854ed6ca99deb973c518d7ec7815a0ac14120d8a91e8fbc5f60"
+    },
+    {
+      "file": "r4_k2n_bank_two_credits_no_total.pdf",
+      "bytes": 1742,
+      "sha256": "b128018f41a7ca6ac1beb7afcd9d5c7903e5473c40eb654ba72ff7e0b3d6954d"
+    },
+    {
+      "file": "r4_k2_letter_skonto_mit_dem_betrag.pdf",
+      "bytes": 1916,
+      "sha256": "8213f87668eb3750d9f9f92719d1d30611857fad372dd2d480232aa11773c3e3"
+    },
+    {
+      "file": "r4_k2_letter_en_settled_transfer.pdf",
+      "bytes": 1666,
+      "sha256": "a0cdd9377f3ec83996ca48bfe7bf2e10c6ba7bdb077faa2d09b842b8e6e8e81f"
+    },
+    {
+      "file": "r4_k2_teilzahlung_dass_wir_lieferschein.pdf",
+      "bytes": 2026,
+      "sha256": "41322e446251834cd9da033d14c0bf5b8437a6b26b3c19dfdd39e000aee97c97"
+    },
+    {
+      "file": "r4_k2_heute_ueberweisen_lieferschein_ref.pdf",
+      "bytes": 1888,
+      "sha256": "6058268816446e66bb4088d7e482e6c6beb6139fa50ba3b0900760e1ed92f34b"
+    },
+    {
+      "file": "r4_k2n_lieferschein_cover_letter.pdf",
+      "bytes": 1859,
+      "sha256": "4ce8910afb41395733f1e306f8c90d977e420e90be4c3f8665dc3dee3ddcfc1e"
+    },
+    {
+      "file": "r4_k2n_payee_ob_sie_ueberwiesen_haben.pdf",
+      "bytes": 1853,
+      "sha256": "755e920c0b39a92a8bf98dbe480224910b52fdac646468b5ac7aee241db75304"
+    },
+    {
+      "file": "r4_k2_skonto_beglichen_valuta.pdf",
+      "bytes": 1931,
+      "sha256": "eefe895249629276cb151879cbfc27fe9869791096fd7acec215ff0c4a61c0e5"
+    },
+    {
+      "file": "r4_k2_skonto_bezahlt_dann_ueberwiesen.pdf",
+      "bytes": 1902,
+      "sha256": "8e22f345535243387689ce633ee8a84bbc0d4fa829fc34704c77265ba17af417"
+    },
+    {
+      "file": "r4_k2n_skonto_two_sentences_mismatch.pdf",
+      "bytes": 1931,
+      "sha256": "ea06be625bab33ed54b220c62cb8ce0732cecc2cd9713c0aa6fb23d3d77c4296"
+    },
+    {
+      "file": "r4_k2_pl_potwierdzenie_przelewu.pdf",
+      "bytes": 1892,
+      "sha256": "99bc6e086f0b10f6e7239ca0f907982cbd8276f08842ea1b718f7410b6a4aacf"
+    },
+    {
+      "file": "r4_k2_pl_awizo_zaplacilismy.pdf",
+      "bytes": 1823,
+      "sha256": "0a93f6f8f098fe44344aef36a2203e450eb0975d355586c421c43cf8448b7232"
+    },
+    {
+      "file": "r4_k2n_pl_faktura_vat.pdf",
+      "bytes": 1750,
+      "sha256": "4d46d77135ba6eece912fcf65ff2707bc85b85150c1037609de7b0024a629498"
+    },
+    {
+      "file": "r4_k2n_pl_awizo_prosimy.pdf",
+      "bytes": 1671,
+      "sha256": "b4caa8e54115da5ec66f32c53821f4b5cb2c4850b12183a35a9f8ece236022b4"
+    },
+    {
+      "file": "r4_k2_payout_summary_net.pdf",
+      "bytes": 1649,
+      "sha256": "31dd363734e26a19f72f15922374e5e3530f063ddff2f00558626dac68fa406e"
+    },
+    {
+      "file": "r4_k2_disbursement_report.pdf",
+      "bytes": 1647,
+      "sha256": "212ad67eeaad1b626dbede38f59f905398dfc8943ca830f4dc5b3b91d480134c"
+    },
+    {
+      "file": "r4_k2n_payout_pending.pdf",
+      "bytes": 1588,
+      "sha256": "63c2f0edfe284fc57980b909682abf05c236572f36dcaf6333b97dddf05b58d7"
+    },
+    {
+      "file": "r4_k2_finanzamt_auszahlungsbetrag_verrechnung.pdf",
+      "bytes": 1883,
+      "sha256": "85e6c0a1a5c32213b162d031e683d1cb02c49724c78e85123edaee1a556ddbec"
+    },
+    {
+      "file": "r4_k2_gemeinde_erstattung_aufrechnung.pdf",
+      "bytes": 1760,
+      "sha256": "139926c0d4036a7f5b3ced4edbd9867a9df78490a494619f83599abb498e3f83"
+    },
+    {
+      "file": "r4_k2n_finanzamt_voll_verrechnet.pdf",
+      "bytes": 1758,
+      "sha256": "e1ac06a8101875a6af759ef3c6481e4492e81df50992381dc35f16d1a7aaf8cb"
+    },
+    {
+      "file": "r4_k2n_finanzamt_nachzahlung.pdf",
+      "bytes": 1714,
+      "sha256": "732af4ffeb14a29b31233c2d80ca056c9ff402fec1a0006b3a66bf0a64e4303b"
+    },
+    {
+      "file": "r4_k4_today_credit_clause_prior_other.pdf",
+      "bytes": 1927,
+      "sha256": "b7179db6ba8519fc1ddeaf56aa3f9b22c22c5bee1a54a4c93a18e854a8eaa0d0"
+    },
+    {
+      "file": "r4_k4_valuta_clause_and_later_other.pdf",
+      "bytes": 1906,
+      "sha256": "900d85deb20366808f40341550b17aaa81cfe74aa8556f74d4e1c6c76e016dce"
+    },
+    {
+      "file": "r4_k3_en_paid_today_rest_next_month.pdf",
+      "bytes": 1592,
+      "sha256": "3e6ed5465f9c76c02e80b7dc112b5dcc3be92663bbdeeeabb8f7d4adc870bd03"
+    },
+    {
+      "file": "r4_k3_passive_today_rest_im_dezember.pdf",
+      "bytes": 1882,
+      "sha256": "fbbed644b866cf0da7d77688ac1ed76e81642e722ee5f732a166354fbeec140a"
+    },
+    {
+      "file": "r4_k3_en_discount_noun_after.pdf",
+      "bytes": 1548,
+      "sha256": "ad94698a972ee6b74fbc7ea726582c5737087fa152119bbdb25c970110794f63"
+    },
+    {
+      "file": "r4_k4n_passive_dates_only.pdf",
+      "bytes": 1864,
+      "sha256": "892d1088645626b1b46c3477b0a53212beef0f61c8c3a202a804068c349feada"
+    },
+    {
+      "file": "r4_k4n_not_paid_yet_only.pdf",
+      "bytes": 1857,
+      "sha256": "110f2665a6f29795e688f3338eef8996ef8c7f362e3045c13ad1530bc1cacbdf"
+    },
+    {
+      "file": "r4_k4n_request_ref_gap_fehlt.pdf",
+      "bytes": 1649,
+      "sha256": "73dc7054db5e0119dbac5bc54c92a8508a868c07a4c83410009dfb13125339bb"
+    },
+    {
+      "file": "r4_k3n_sum_sentence_does_not_add_up.pdf",
+      "bytes": 1858,
+      "sha256": "8cec62f0bdacbd228d3c7bc5751bb99c7d4f9a285110971c88c044bfedb87223"
+    },
+    {
+      "file": "r4_k3n_three_sentences_not_sum.pdf",
+      "bytes": 1850,
+      "sha256": "6e0afd6e8c3ee5513b3f3c8f2ec2137ca332dd832e1fef7fc7a80a14476d46ae"
+    },
+    {
+      "file": "r4_k3n_netting_total_row_mismatch.pdf",
+      "bytes": 1922,
+      "sha256": "75be8f47b35ddf03517609117198fbe1d1fd1c4b4f7e53ed90b9da5a3ad0ca44"
+    },
+    {
+      "file": "r4_k3n_net_remitted_mismatch.pdf",
+      "bytes": 1509,
+      "sha256": "2fc279cfbff1f0fad27e3f938890b4cbec1613bedb3803b7c889594aa7a17d37"
+    },
+    {
+      "file": "r4_k3n_gutschriftsbetrag_gesamtzahlung_mismatch.pdf",
+      "bytes": 1905,
+      "sha256": "a36b4bf472f597bd43ab696357751d0341cb670750f943eaf28c4271c47feed4"
+    },
+    {
+      "file": "r4_k3n_payee_skonto_noun_after.pdf",
+      "bytes": 1880,
+      "sha256": "034f5111ee6de2c64320531ba143a5727d030c7f79bead753744baf50fe9d8b9"
+    },
+    {
+      "file": "r4_k1_nach_abzug_noun_after.pdf",
+      "bytes": 1868,
+      "sha256": "73d8e7269a1d4ae4b24c954adfe674dcc24613a51711eaae839bc177af8c2721"
+    },
+    {
+      "file": "r4_k3_gesamtzahlung_von_sentence.pdf",
+      "bytes": 1867,
+      "sha256": "dcba884efb3824719dc035726831c39089ae4a22b5991a8de1f6bdda8b940199"
+    },
+    {
+      "file": "r4_k3n_sum_total_word_mismatch.pdf",
+      "bytes": 1831,
+      "sha256": "fbb40fd67f6f067b8c17cb4eb934ed0ae899798119b9625492b15beee34dad72"
+    },
+    {
+      "file": "r4_k3n_future_month_unlabelled.pdf",
+      "bytes": 1822,
+      "sha256": "02d4adc6f8f8a7dc06623681953cb331fc4d9fed64d3beb9d3c98c9983d8faa6"
+    },
+    {
+      "file": "r4_k3n_payee_teilzahlung_erwarten_rest.pdf",
+      "bytes": 1850,
+      "sha256": "298b1b4e20482a79d871640999365f95c9e228003fc61309ed981335aa7f0ad4"
+    },
+    {
+      "file": "r4_k2n_bank_zinsgutschrift.pdf",
+      "bytes": 1660,
+      "sha256": "7741b33e21f3c0c665f12d9374ccda9643f9b39db5542f0f56cd77db7d64948b"
+    },
+    {
+      "file": "r4_k2n_payout_on_hold.pdf",
+      "bytes": 1506,
+      "sha256": "f8f506aea9ed95f96cded980d899428c28f1d12136ea066953cc2f9d855e3a04"
+    },
+    {
+      "file": "r4_k3_sum_den_betrag_von.pdf",
+      "bytes": 1856,
+      "sha256": "3a7fedbbcd2b952b5c1fa832bee968445b43e70304776f65294c5de06f0e5a5b"
+    },
+    {
+      "file": "r4_k3_en_sum_single_transfer.pdf",
+      "bytes": 1583,
+      "sha256": "e9772836acc8d540e478b95b279d0e1ac25413c5e1c7a61b7370eb5cff700624"
+    },
+    {
+      "file": "r4_k1_kuerzen_und_ueberweisen.pdf",
+      "bytes": 1847,
+      "sha256": "f0367b7e6e5086b948b3666c7969b0ae6d563be67340f944ef88a43435fad3e4"
+    },
+    {
+      "file": "r4_k1_mit_abzug_begleichen.pdf",
+      "bytes": 1859,
+      "sha256": "91d5f448e1ee74c7c99b42d95d3258137056d3a64150d7e13ddab20be8974d25"
+    },
+    {
+      "file": "r4_k1n_kuerzen_mismatch.pdf",
+      "bytes": 1844,
+      "sha256": "4ff99541edbbdd29af3528487d227bdff766e715a7c4c3d572d729082b4d31de"
+    },
+    {
+      "file": "r4_k1n_mit_abzug_nach_pruefung.pdf",
+      "bytes": 1868,
+      "sha256": "194ffaf484fa3ce1caa55fe53d563f77d3f01f7f129776f4b2ee86d073cc0f18"
+    },
+    {
+      "file": "r4_k2_bank_credit_verwendungszweck_amounts.pdf",
+      "bytes": 1684,
+      "sha256": "e3c6c5ef361c218c302c0784b5b9e235061a19608f6c91912613fd830dd84a47"
+    },
+    {
+      "file": "r4_k2n_bank_rueckueberweisung.pdf",
+      "bytes": 1696,
+      "sha256": "414ed7bbbb78e3993f8274c792dcb13401469b0c5150fc01be66f587325f37eb"
+    },
+    {
+      "file": "r4_k2_teilzahlung_geleistet_lieferschein.pdf",
+      "bytes": 1894,
+      "sha256": "8f1cd247a1afbbef99e679048c41da0a8656dcbd68661f964979c283ab157ec6"
+    },
+    {
+      "file": "r4_k2_title_lieferschein_teilzahlung.pdf",
+      "bytes": 1853,
+      "sha256": "68ddbb8365b4e15b94d8fe96bf68860a5e94faefab439a476499ccdd92766838"
+    },
+    {
+      "file": "r4_k2n_title_lieferschein_bar_zahlung.pdf",
+      "bytes": 1820,
+      "sha256": "5166848e38b795d796cdff87696c15a70ffd4458167edf1c121d68b1549f6e3f"
+    },
+    {
+      "file": "r4_k2_pl_bank_potwierdzenie_zrealizowany.pdf",
+      "bytes": 1585,
+      "sha256": "1d9b494a59911daa46163eea6ef3ef1d881fa98875e9e1a8078ed26dfa9f01c6"
+    },
+    {
+      "file": "r4_k2n_payout_scheduled.pdf",
+      "bytes": 1512,
+      "sha256": "738fc1a5e150b626d8c6c9f0d30f24a251f3a737f20d1f263c5ad7dfe088f230"
+    },
+    {
+      "file": "r4_k4n_wird_nach_klaerung_ueberwiesen.pdf",
+      "bytes": 1833,
+      "sha256": "d2e84975fe5514d8035569d1cfdc29de4c58d391a748e2e163c71bae9959b536"
+    },
+    {
+      "file": "r4_k4n_avis_liegt_uns_aber_nicht_vor.pdf",
+      "bytes": 1633,
+      "sha256": "79e92d6594f14025e9228bf05ca2d44691affb6eb5d55a243691e72a4733edd1"
+    },
+    {
+      "file": "r4b_a01_beruecksichtigung_skonto_ausgeglichen.pdf",
+      "bytes": 1875,
+      "sha256": "da57a3ca38c56a60f946855daa07c07ce86cc9b4a4e68dd65b994336a4657421"
+    },
+    {
+      "file": "r4b_a02_verbleibt_zahlbetrag.pdf",
+      "bytes": 1893,
+      "sha256": "57afa13a0ba6dda52490ebdd2fafc3b568350658213c8697b8facc992990dafc"
+    },
+    {
+      "file": "r4b_a03_paren_skonto_equals.pdf",
+      "bytes": 1871,
+      "sha256": "8afc55b20cb4076bd45199ead4ab8b4eee0a1fb7d173efffdf66e8ba80800618"
+    },
+    {
+      "file": "r4b_a04_dotslash_equals_prose.pdf",
+      "bytes": 1865,
+      "sha256": "756814ea1ee892487565a2cc8b95f7865e2429bfae11027d3f450e3dabc178fb"
+    },
+    {
+      "file": "r4b_a05_two_and_half_pct.pdf",
+      "bytes": 1867,
+      "sha256": "6dd8a3a822fbda564fa20a1b45e723b73a102ed21f4eaaf1bef967e64975a379"
+    },
+    {
+      "file": "r4b_a06_net_first_dies_entspricht.pdf",
+      "bytes": 1869,
+      "sha256": "cc8c136c3ffbe51698a18dccffce98e7fc403958148698deeaf7b7b97260ebb4"
+    },
+    {
+      "file": "r4b_a07_two_invoices_one_skonto.pdf",
+      "bytes": 1894,
+      "sha256": "70f132e53bc9d351347793043ea3a51aa231f0b767e400bf208139c3796ac1e6"
+    },
+    {
+      "file": "r4b_a08_full_amount_statt_net.pdf",
+      "bytes": 1891,
+      "sha256": "4768c53caa570c83f353d8be9d07f2d33d73f3879aa26319b71317e84630208b"
+    },
+    {
+      "file": "r4b_a09_rate_after_credit_two_sentences.pdf",
+      "bytes": 1902,
+      "sha256": "e9621df081504b6ad63aa659399bc9c3c2f1c1f25348d3935849894727467917"
+    },
+    {
+      "file": "r4b_a10_rate_after_credit_one_sentence.pdf",
+      "bytes": 1891,
+      "sha256": "7a72e5e34cee9bc87124648853d3f9d8a3cf55db56ac29c8054950cd3740119d"
+    },
+    {
+      "file": "r4b_a11_einbehalt_verbleiben_rate.pdf",
+      "bytes": 1896,
+      "sha256": "ec9f72b7ee632542cfa5cb26ce8eee6ec7e51fd4375ebf359ea1dedc0334f9db"
+    },
+    {
+      "file": "r4b_a12_gutschrift_and_skonto_rest.pdf",
+      "bytes": 1896,
+      "sha256": "dbf91d2eeb6a8e983e2183b481f04f12c4197d20c69de37ceea6db97ab9606b1"
+    },
+    {
+      "file": "r4b_a13_instead_of_en.pdf",
+      "bytes": 1600,
+      "sha256": "10dc469987ad61c8c288328fbb2a5f535e370ba18b8dd7913bb3abd0b6c9652b"
+    },
+    {
+      "file": "r4b_a14_partial_after_credit_en.pdf",
+      "bytes": 1598,
+      "sha256": "3286a3e5777b012fd6b8b6bb8574f31d553d31cbbfdf8aee05819fad717b9ec1"
+    },
+    {
+      "file": "r4b_a15_only_first_invoice_paid.pdf",
+      "bytes": 1868,
+      "sha256": "851684317e9e68f9020fd9fd98e68bb73455fbe01d308f860c9c500944df90e3"
+    },
+    {
+      "file": "r4b_b01_remitted_being_less_settlement.pdf",
+      "bytes": 1605,
+      "sha256": "042b2e9f5f71cbe547da0d65c84391471156baab56356acff3d5273b82b8f543"
+    },
+    {
+      "file": "r4b_b02_payment_has_been_made_after_deduction.pdf",
+      "bytes": 1598,
+      "sha256": "4ac6a434351992452712bbf9a71559e4a4de75965cf11c60f0891ac8006682e7"
+    },
+    {
+      "file": "r4b_b03_net_of_discount.pdf",
+      "bytes": 1560,
+      "sha256": "b1021c7a5e3b401174c4b2c5c8a6720fd5ec7718d4bc34d6026edd8ea1205027"
+    },
+    {
+      "file": "r4b_c01_gutschriftsbeleg_rechnungsabschluss.pdf",
+      "bytes": 1880,
+      "sha256": "8ae4e70a5a4992f2153a653517c933b3a8b75065ce577c38ae78cbc05ee58b26"
+    },
+    {
+      "file": "r4b_c02_gutschrift_betrag_haben_suffix.pdf",
+      "bytes": 1645,
+      "sha256": "0978d4ebce790c03951fb3f7a3c4075832c98d1b4109d3db879daf2f6bfe6618"
+    },
+    {
+      "file": "r4b_c03_credit_confirmation_reversal_clause.pdf",
+      "bytes": 1745,
+      "sha256": "e9af9e3ff424c86bf9e160c98db613fd44c1b77b4eccb76be9c56890de8265ad"
+    },
+    {
+      "file": "r4b_c04_eingangsbenachrichtigung_umsatz.pdf",
+      "bytes": 1696,
+      "sha256": "e1c001563641f8c1b2a33c91080acd3724f8f16701cca83bc998bafd39629824"
+    },
+    {
+      "file": "r4b_c05_gutschriftsanzeige_rueckbuchung_vorbehalt.pdf",
+      "bytes": 1722,
+      "sha256": "bd83782c9dc5aa3ee66d36ec9cd9048b51bedc0078ff9868d5e9c962e27ede27"
+    },
+    {
+      "file": "r4b_c06_betrag_eur_paren_skonto_ref.pdf",
+      "bytes": 1678,
+      "sha256": "186a3e5a6063cb99564cec0d4fad31f85b453f9798f3c30dd47c03842b321c08"
+    },
+    {
+      "file": "r4b_d01_auszahlungsbeleg_marktplatz.pdf",
+      "bytes": 1626,
+      "sha256": "ae19f050c95dc44e94f690e9d9c403afbfe25eb262b5d351d84db84053df5b48"
+    },
+    {
+      "file": "r4b_d02_payout_report_total_payout.pdf",
+      "bytes": 1573,
+      "sha256": "51ff47c2eab3142ecec5a1717b7938d2a8c45fbb32f0de994c22e9e3f2210226"
+    },
+    {
+      "file": "r4b_d03_factoring_auszahlung.pdf",
+      "bytes": 1610,
+      "sha256": "4160ad52a97bf43a3e7cd4c173e40808fbd78b285c7e482e46181773398c9059"
+    },
+    {
+      "file": "r4b_d04_payout_sentence_period_range.pdf",
+      "bytes": 1558,
+      "sha256": "c955dcc06ae4a1df823e913fb7b49b0acd0c713a3d15d754c83b2901bea39ddd"
+    },
+    {
+      "file": "r4b_e01_pl_bank_potwierdzenie_wykonania.pdf",
+      "bytes": 1594,
+      "sha256": "f332b2a61b197641acd904e8c2c96749fdec860f6b5a39b5a0b9feb8646ec00b"
+    },
+    {
+      "file": "r4b_e02_pl_dokonalismy_przelewu_rest_zero.pdf",
+      "bytes": 1690,
+      "sha256": "0d1ac5b1efcfdabd6cd7abdc9b4ecb4d2af44136f42568ebfad7ab1e19ff2afb"
+    },
+    {
+      "file": "r4b_e03_pl_table_do_zaplaty_zaplacono.pdf",
+      "bytes": 1788,
+      "sha256": "e5cc8c2723be253692a2e52c5da383e8e827b3cd7d99ee6b03368965cea715b9"
+    },
+    {
+      "file": "r4b_e04_cz_avizo_uhradili.pdf",
+      "bytes": 1553,
+      "sha256": "2056c12c67eb0a9893c729a445d519c09be5879b3033778395f851ba0d69eda3"
+    },
+    {
+      "file": "r4b_e05_nl_betalingsadvies.pdf",
+      "bytes": 1567,
+      "sha256": "59488c4c431b64ca008998c07a3c0dadf53601775139ddfb8b654143e4ef5f8a"
+    },
+    {
+      "file": "r4b_e06_fr_avis_escompte.pdf",
+      "bytes": 1610,
+      "sha256": "150e95822e6faac27d9acb5b7975ffb8505bb1f6ec8a4e62641acb6aafc7dbd3"
+    },
+    {
+      "file": "r4b_e07_it_avviso_sconto.pdf",
+      "bytes": 1595,
+      "sha256": "9207a495ce9f35c5f6a8f2d8365717f4835a1f85b292856ec34ddd26e80d0140"
+    },
+    {
+      "file": "r4b_f01_title_lieferscheine_zahlung.pdf",
+      "bytes": 1859,
+      "sha256": "3a711f946068483be92cc45e1cd8aba4df6c93e3e993da42f295436684b82e79"
+    },
+    {
+      "file": "r4b_f02_strittig_unstrittiger_teil.pdf",
+      "bytes": 1880,
+      "sha256": "6a187b467dae4a71037e7d7d62a749a8d60ba31fae36bf3ae33c06463cd58593"
+    },
+    {
+      "file": "r4b_f03_abschlag_lieferschein_table.pdf",
+      "bytes": 1974,
+      "sha256": "f9224a1f48e378be8fd005274334d3be5609a4b56574e9b74fb802cb4cbc90f8"
+    },
+    {
+      "file": "r4b_f04_im_oktober_geliefert.pdf",
+      "bytes": 1846,
+      "sha256": "1caded0f5cbed7a974b3c04a5441a3effa8b29a5ff1bb7758ff689493c655532"
+    },
+    {
+      "file": "r4b_g01_fa_ust_erstattung.pdf",
+      "bytes": 1696,
+      "sha256": "1bf438cfe5593b58d166033183ca5a5f11e8a225e86d7bb0fa76bb9eecf4d265"
+    },
+    {
+      "file": "r4b_g02_krankenkasse_u1_erstattung.pdf",
+      "bytes": 1686,
+      "sha256": "bbfb62737fd7cc6ceaaefb858393e33ebc588a6f3f062b299e36d67ab56b9a17"
+    },
+    {
+      "file": "r4b_g03_hza_entlastung_verrechnet.pdf",
+      "bytes": 1693,
+      "sha256": "79cb83da45582caa57a0f05be11bb41405b33b7d0ac83e4064570c40bccdc440"
+    },
+    {
+      "file": "r4b_g04_aa_kurzarbeitergeld_auszahlung.pdf",
+      "bytes": 1666,
+      "sha256": "35424e6f2658288fbf0cfa3f87af256313e1c01456b14f6de550ee2333388f45"
+    },
+    {
+      "file": "r4b_h01_leistungszeitraum_naechster_monat.pdf",
+      "bytes": 1858,
+      "sha256": "19dff6fb6d87762f939ab9902a32e1e3d93ec4800ad4be2d6fd73b369ad10ef0"
+    },
+    {
+      "file": "r4b_h02_en_services_in_september.pdf",
+      "bytes": 1562,
+      "sha256": "d5a39c83b420db034a2763927b8c0fe6f40a82e3d12d7335a2062a34a1ac2ac1"
+    },
+    {
+      "file": "r4b_h03_vorzeitig_faellig_am.pdf",
+      "bytes": 1842,
+      "sha256": "18dbc69d9f563d47b551017bd87cd1ee37d2002b6ace1e30815cb324db1b24d4"
+    },
+    {
+      "file": "r4b_h04_differenz_erwarten_wir_gutschrift.pdf",
+      "bytes": 1886,
+      "sha256": "de518dfa679cf7d58a2ddb999f9c0222a31dc1e0f3550df80ae96f204d175baa"
+    },
+    {
+      "file": "r4b_h05_en_your_payment_reminder_received.pdf",
+      "bytes": 1597,
+      "sha256": "fd087e900d2cabe7c5bab958deac8425750f5bc004ee5d56e3f814ae11b18a38"
+    },
+    {
+      "file": "r4b_h06_en_payment_request_received.pdf",
+      "bytes": 1588,
+      "sha256": "255636eb724118fbaa689c03debcdedfd16d25b9a1dfd14f1e6cc2b8a62d980e"
+    },
+    {
+      "file": "r4b_h07_gebuehren_noun_after.pdf",
+      "bytes": 1871,
+      "sha256": "1c0f53f2ce482ac7dce2c60ff1d64e51b0315249f27ee57055e111e1c5047cf0"
+    },
+    {
+      "file": "r4b_n01_mail_wenn_sie_ueberweisen_skonto.pdf",
+      "bytes": 1666,
+      "sha256": "7a5a4c800c916ba9efbac6753dbfa8a8be8ebbeed387ad723c53ff11e830e2af"
+    },
+    {
+      "file": "r4b_n02_bei_ueberweisung_bis_ueberweisungsbetrag.pdf",
+      "bytes": 1890,
+      "sha256": "df5dececd74dec7fe56729840bada91a5f9c47827af65598cb9271b7abc935a4"
+    },
+    {
+      "file": "r4b_n03_en_if_settled_by.pdf",
+      "bytes": 1612,
+      "sha256": "5a950e0db8c9342a2d76e67886917223241a03ae2633bd4d473f8510ad91f337"
+    },
+    {
+      "file": "r4b_n04_abrechnung_wartung_somit.pdf",
+      "bytes": 1873,
+      "sha256": "1c290881e8d40b8e33732d6b22dbabdd4717917b0b17361bb01b762ddbe4408e"
+    },
+    {
+      "file": "r4b_n05_sie_koennen_ueberweisen_also.pdf",
+      "bytes": 1884,
+      "sha256": "9da4690c691f9a79fcc3691445e300ad8da79b014dee1c0ebe62a73ab5f41f3f"
+    },
+    {
+      "file": "r4b_n10_kontoabstimmung_skonto_beglichen.pdf",
+      "bytes": 1947,
+      "sha256": "9edf2588f5d384039cfcf6db3c7aa1c47eb081d044a7e335cacfedba98f51ea8"
+    },
+    {
+      "file": "r4b_n11_pl_przypomnienie_zaplacono.pdf",
+      "bytes": 1722,
+      "sha256": "2b95861d01d90c3680ab698d768e52c89ebe22f038130c8ac96e04bed8ef3ef3"
+    },
+    {
+      "file": "r4b_n12_en_records_show_you_paid.pdf",
+      "bytes": 1647,
+      "sha256": "11cb5875ba725038520291f0460e54461768ab4ddb541d8fe710bf1bdc84c622"
+    },
+    {
+      "file": "r4b_n13_offene_posten_teilzahlung_verbucht.pdf",
+      "bytes": 1873,
+      "sha256": "8022aa787914bf628f7d2643ffec6aab9620e2ffb07283ae78036c8c9a494694"
+    },
+    {
+      "file": "r4b_n20_belastungsanzeige_leasing.pdf",
+      "bytes": 1695,
+      "sha256": "73bb5bee04bc11ee67296e458f70d2559dd4f2ea8bbdfa8b13a96de397ceb466"
+    },
+    {
+      "file": "r4b_n21_en_debit_advice.pdf",
+      "bytes": 1659,
+      "sha256": "8ed9f9830b571fac14dce68b8d3571ca37d4955e1265d429a9c96e9cab109ac7"
+    },
+    {
+      "file": "r4b_n22_belastung_entgelte.pdf",
+      "bytes": 1639,
+      "sha256": "56270297893775971d3f382a8c450b6bce6ea84edcf96b8b5a18bebf23612df4"
+    },
+    {
+      "file": "r4b_n30_umsatzuebersicht_two_credits.pdf",
+      "bytes": 1732,
+      "sha256": "8df304ae22ffda5021c09f0799e07384da6b8e4967ec210f07de8764dac91a7b"
+    },
+    {
+      "file": "r4b_n31_gutschriftsanzeige_betrag_twice.pdf",
+      "bytes": 1708,
+      "sha256": "abece67792c31d583db87b3c59ed88fab61c44a20545e30d425291fd174df42f"
+    },
+    {
+      "file": "r4b_n32_en_account_activity_credits.pdf",
+      "bytes": 1614,
+      "sha256": "a1e536f79313bf5a734fb33d7a070301c5803f99a5d12b5bd59a3fd7a5b939c8"
+    },
+    {
+      "file": "r4b_n40_auszahlungsvorschau_voraussichtlich.pdf",
+      "bytes": 1570,
+      "sha256": "5d1f53ac7f265b554f53aed0642072f109b0d5cb15b8716b4b5283e30930a24b"
+    },
+    {
+      "file": "r4b_n41_en_expected_payout.pdf",
+      "bytes": 1540,
+      "sha256": "d955acf93675a600bb8f87abba3bbb73fb47cb3ee189ebbdefcf8acbd17c488c"
+    },
+    {
+      "file": "r4b_n42_en_amount_to_be_paid_out.pdf",
+      "bytes": 1524,
+      "sha256": "7ec437ab9142da175428646adfba455586c55aff7f7fd2e02c9890bb2c65dc33"
+    },
+    {
+      "file": "r4b_n43_auszahlung_erfolgt_am_spaeter.pdf",
+      "bytes": 1579,
+      "sha256": "26ac2eb84ba9f0a04d9239d46e6cfb0b2b562d4ab30d5752cfb1c93af29cb0b6"
+    },
+    {
+      "file": "r4b_n44_vorlaeufige_abrechnung.pdf",
+      "bytes": 1545,
+      "sha256": "a624a97f877eb5e54874174d0c9ff90275e76e15060ab9ad5fabbcbbebd5307e"
+    },
+    {
+      "file": "r4b_n50_net_first_paren_pct_mismatch.pdf",
+      "bytes": 1846,
+      "sha256": "226541cf5b2380fedce7d7df3d85c83e6646f6f05975eba94f2d9cc14e9e2c0e"
+    },
+    {
+      "file": "r4b_n51_en_has_been_made_mismatch.pdf",
+      "bytes": 1591,
+      "sha256": "e647a497b70a2c78e47ca492776ffe38c5331b0ede000c9461af7ab7e586fa04"
+    },
+    {
+      "file": "r4b_n52_dotslash_gutschrift_mismatch.pdf",
+      "bytes": 1859,
+      "sha256": "58c48ad6a814549f28b68fe30036f1ccecda7aa05d14faf661403e84597815f1"
+    },
+    {
+      "file": "r4b_n53_two_invoices_pct_mismatch.pdf",
+      "bytes": 1866,
+      "sha256": "021455c9da621005bc07a657c3f32dbf81be371cfe3b1774088ee44aa0e4aca9"
+    },
+    {
+      "file": "r4b_n54_en_net_of_mismatch.pdf",
+      "bytes": 1561,
+      "sha256": "18d16d007bb0d789dee338ff7811702d86bdefe45450736fc39aa714c1f025ef"
+    },
+    {
+      "file": "r4b_n60_hiermit_teilen_nach_abnahme.pdf",
+      "bytes": 1873,
+      "sha256": "0ae783dfe5461caedc5ce067b467d46fcc4645d7eb9351d8fe5ad61bbdf91f02"
+    },
+    {
+      "file": "r4b_n61_heute_mitteilen_datum_spaeter.pdf",
+      "bytes": 1849,
+      "sha256": "613dc32a9d830c714d8584b16b90788419072f52a1a8a5fa04a72c2a6fd81112"
+    },
+    {
+      "file": "r4b_n62_en_will_be_made_after_arrive.pdf",
+      "bytes": 1559,
+      "sha256": "19c9ea16bd2b8f63bd320f6f341adccec99f1530cffc0d6910b7db15415e361f"
+    },
+    {
+      "file": "r4b_n63_wird_nach_wareneingang_erfolgen.pdf",
+      "bytes": 1832,
+      "sha256": "f4ea16ffe0a9a56c7f2d0186e14c06d9aa4a4302c1ab2011bc93e21ee45cd121"
+    },
+    {
+      "file": "r4b_n64_ist_vorgesehen_datum.pdf",
+      "bytes": 1831,
+      "sha256": "8c12621c8b46078ca469413b9d4c486da13b86a7b6f0c3bc8c22d3e99f508d05"
+    },
+    {
+      "file": "r4b_n65_en_scheduled_for.pdf",
+      "bytes": 1548,
+      "sha256": "9b4b25333c28399e8aa8584ebdc6c4c7cb059452340401b1d96f1e12d223b4e6"
+    },
+    {
+      "file": "r4b_n66_beabsichtigen_nach_freigabe.pdf",
+      "bytes": 1850,
+      "sha256": "aeaffb7e18cf8fa5c7e43db0adb8e321292420c55b3681fcd6bc3044e7c18d08"
+    },
+    {
+      "file": "r4b_n67_sobald_korrigierte_rechnung.pdf",
+      "bytes": 1842,
+      "sha256": "1e68fec69bc071eb94c30a1849c94434180d62a15da30b3b48d85a6f156af1a6"
+    },
+    {
+      "file": "r4b_n68_zahlungsvorschlag_nicht_ausgefuehrt.pdf",
+      "bytes": 1947,
+      "sha256": "483f2c3479d4c8924ee5c17f76fbba0b854a8060bde0d57b4564efe8546c4dbf"
+    },
+    {
+      "file": "r4b_n69_ueberweisung_wird_ausgefuehrt_datum.pdf",
+      "bytes": 1835,
+      "sha256": "348e4c5c2e173a7b919bb5428925f171ddcdaf15a0fcefd7f6c1d6db7ce01a67"
+    },
+    {
+      "file": "r4b_n70_haben_freigegeben_ausfuehrung_spaeter.pdf",
+      "bytes": 1841,
+      "sha256": "374bdae242662e7314a71a3877bf563bbb943d75f3fa0a2fb79cb8af10817ae2"
+    },
+    {
+      "file": "r4b_n80_bestaetigung_zahlungseingang.pdf",
+      "bytes": 1836,
+      "sha256": "0a2462b2e36758902e0c5d2d4cd72f48b5bb2f171da1bc07955c23399926fc14"
+    },
+    {
+      "file": "r4b_n81_ueberweisung_dankend_erhalten.pdf",
+      "bytes": 1808,
+      "sha256": "0d6417f9ae29be889a0716b831414196fec3f0739efe7f2a5287d68d9e6066dd"
+    },
+    {
+      "file": "r4b_n82_en_thank_you_for_payment.pdf",
+      "bytes": 1564,
+      "sha256": "d97888e5fc4f0785480ccc415d0cbc786edee56d7b78144660378e99e721105e"
+    },
+    {
+      "file": "r4b_n83_sie_haben_mit_skonto_beglichen.pdf",
+      "bytes": 1854,
+      "sha256": "380295daee1830fd15672bfdf268507e047ddec7f22517e8855d99fbe37d62b7"
+    },
+    {
+      "file": "r4b_n84_lieferschein_wann_sie_bezahlt_haben.pdf",
+      "bytes": 1868,
+      "sha256": "9f6974d0137b7d736555801d6bcd757a98ae411519d5e83e76af6cabffd6d1b6"
+    },
+    {
+      "file": "r4b_n85_en_confirm_receipt_less_discount.pdf",
+      "bytes": 1581,
+      "sha256": "e0bb7ea0d57962cec73b2a40af769b52aee443184985adee6a3597ea1cc35658"
+    },
+    {
+      "file": "r4b_n86_payee_sie_haben_ueberwiesen_skonto_ok.pdf",
+      "bytes": 1866,
+      "sha256": "2da2b12da2c36c1222ff3381da2d39bab65b60b7ce0999467b09ede2759b17a5"
+    },
+    {
+      "file": "r4b_q01_das_ist_gekuerzt_um.pdf",
+      "bytes": 1866,
+      "sha256": "0ef5aa38df4850af484a9b76e4a19b885bfaf40fc380217899d6d9c8e56229ef"
+    },
+    {
+      "file": "r4b_q02_um_skonto_gekuerzt_und.pdf",
+      "bytes": 1851,
+      "sha256": "4085a34effa95ef21237bee74bdfd5f5b779d15ef8ce28b8071b26b3f4945e78"
+    },
+    {
+      "file": "r4b_q03_en_representing_less.pdf",
+      "bytes": 1614,
+      "sha256": "595b593b7eafbdb5843136ee19a082ca6c843c2216cfaf4059f19e86626d7084"
+    },
+    {
+      "file": "r4b_q04_nicht_net_full_amount.pdf",
+      "bytes": 1889,
+      "sha256": "2829488cfeb53125526cef424cb622971974dbd9c0544988c08b63b6408e2991"
+    },
+    {
+      "file": "r4b_q05_davon_anzahlung.pdf",
+      "bytes": 1870,
+      "sha256": "2d99a6527fc07fe0dd8c7e4939055b42d52599cd1331447b8ad8811410e30d58"
+    },
+    {
+      "file": "r4b_q06_en_first_instalment.pdf",
+      "bytes": 1591,
+      "sha256": "9a0fd8f9491619d9b967ebf785fe5ff53b59b39e371c8504390b8eae21a5d1af"
+    },
+    {
+      "file": "r4b_q07_bank_kontoabschluss_boilerplate.pdf",
+      "bytes": 1693,
+      "sha256": "651f544648317830cafe3047f08d960be4bc6b63cce978a4a489f6538c0d3f4f"
+    },
+    {
+      "file": "r4b_q08_en_credit_advice_may_be_reversed.pdf",
+      "bytes": 1674,
+      "sha256": "86b067e5bf3bccb4c3ab75b6ec95c9d04de96329db98fbcaee6dd5a767e98bc8"
+    },
+    {
+      "file": "r4b_q09_settlement_statement_net.pdf",
+      "bytes": 1545,
+      "sha256": "2a05b2ca1b95ad846f022364a73c67ff6e9d7acbdbb27a862e4eae66f988090f"
+    },
+    {
+      "file": "r4b_q10_fa_in_kuerze.pdf",
+      "bytes": 1577,
+      "sha256": "bca2374b83f9417557c2d481cffcf3f6bf6320a07c63fcca6b9e52420f89425d"
+    },
+    {
+      "file": "r4b_q11_pl_zrealizowalismy_reszta_zero.pdf",
+      "bytes": 1552,
+      "sha256": "b0e4712387ec8b8b3d96c7a35c57db5633c543c7da687895a8263a1694f6c268"
+    },
+    {
+      "file": "r4b_q12_leistungen_im_november_heute.pdf",
+      "bytes": 1855,
+      "sha256": "a65d515f1651a65cc12c8e72754267c81ef673885fcaf950fd2efd1bf6d147f8"
+    },
+    {
+      "file": "r4b_q13_provision_oktober_valuta.pdf",
+      "bytes": 1847,
+      "sha256": "0510f12a1cf622c106d7594556782c4f26aa01e97cfcfb6522c562b5b71f751e"
+    },
+    {
+      "file": "r4b_q14_en_further_to_reminder_paid.pdf",
+      "bytes": 1565,
+      "sha256": "49b48e59145ed9847767b83af3e7d34ee99aaeec2820e2b4642405e8d405ff7a"
+    },
+    {
+      "file": "r4b_q15_differenz_ihre_gutschrift.pdf",
+      "bytes": 1854,
+      "sha256": "2d584004c5c49d6ae63ec5b75e825af821dc13fd9330a9f9ba4fff14fb366277"
+    },
+    {
+      "file": "r4b_s01_wenn_sie_fragen_haben.pdf",
+      "bytes": 1852,
+      "sha256": "99cee884fd489f4c58c8af7f284ec35a3dff91b8519f195d22e010e22acfe4ca"
+    },
+    {
+      "file": "r4b_s03_sie_haben_gemahnt_wir_bezahlt.pdf",
+      "bytes": 1837,
+      "sha256": "16b6f1df5a7c5330093f50c15164e3313b1ae9d7c6349b65d7b1d3e801d3ebff"
+    },
+    {
+      "file": "r4b_s04_da_sie_gutschrift_gesandt.pdf",
+      "bytes": 1831,
+      "sha256": "db247caa048249ca55ffc40f9bf5a3e8d6c307d4e026def084f71be888ba6456"
+    },
+    {
+      "file": "r4b_s05_rest_noch_offen_payer.pdf",
+      "bytes": 1847,
+      "sha256": "67e5cb10ece34273080dfa0bcb8bdf65705d578cec6158b9ef0772bf9d8f1982"
+    },
+    {
+      "file": "r4b_s06_en_you_may_contact.pdf",
+      "bytes": 1567,
+      "sha256": "c580c47ffaee789b81187e6e677436e457d098e3f7275c6c4cc143b554c3b55e"
+    },
+    {
+      "file": "r4b_s07_hiermit_bestaetigen_ueberweisung.pdf",
+      "bytes": 1833,
+      "sha256": "5039da64508c3c84764e0ab2a2e9a26fdabf9fa71d870e2c21132844885af61d"
+    },
+    {
+      "file": "r4b_s10_en_period_advance_today.pdf",
+      "bytes": 1557,
+      "sha256": "8733aac83c457f63dd240498afec2616d33bec92cd849dc4670ad3ca96eb6700"
+    },
+    {
+      "file": "r4b_s11_payout_expected_arrival_note.pdf",
+      "bytes": 1575,
+      "sha256": "a3a0b1083396a5dd192b66d9d7d31fb7c0b8b29e871c84f2928a186c54e2c3af"
+    },
+    {
+      "file": "r4b_s12_voraussichtlich_gutgeschrieben.pdf",
+      "bytes": 1850,
+      "sha256": "d97c6a67740990153e81b27addfc49885cc41f3e6f0298934e931af2c84fbb4d"
+    },
+    {
+      "file": "r4b_r01_sie_koennen_begleichen_wenn.pdf",
+      "bytes": 1873,
+      "sha256": "b1835823fb9eb837e91a96e0de4e332e6c4372158f5521c30471aea8c624415d"
+    },
+    {
+      "file": "r4b_r02_en_you_can_transfer_instead.pdf",
+      "bytes": 1607,
+      "sha256": "736b489aa81225353f4cebbab827b4fbb97a39636de5ea91e28fcb0e108ee36d"
+    },
+    {
+      "file": "r4b_r03_mail_zahlungsbedingungen.pdf",
+      "bytes": 1677,
+      "sha256": "946ab1005b7620e9cee58514f27d786ecbfe53e7653734a736459468f04cdab8"
+    },
+    {
+      "file": "r4b_r04_sie_hatten_bezahlt_skonto.pdf",
+      "bytes": 1864,
+      "sha256": "cac9d71037b47ea3ceb8f2f6693daa1308525ee68c9eea70c2bce58797d8096a"
+    },
+    {
+      "file": "r4b_r05_en_you_transferred_deducted.pdf",
+      "bytes": 1587,
+      "sha256": "58c73483177f04e51e5afba832536eee999b7d886ebd51ac3fcce60fef082ee1"
+    },
+    {
+      "file": "r4b_r06_wir_haben_ihre_zahlung_erhalten.pdf",
+      "bytes": 1844,
+      "sha256": "ac93e02ea18d132f856b4c93a884686acfde105b2101ff72b2bbf0fd482bbe83"
+    },
+    {
+      "file": "r4b_r07_en_we_have_received_remittance.pdf",
+      "bytes": 1556,
+      "sha256": "909a54759cb6d632e997f42c3afeab891a2ec2b7a2ac8083d3fceb5d949f0383"
+    },
+    {
+      "file": "r4b_r08_freundliche_erinnerung.pdf",
+      "bytes": 1850,
+      "sha256": "c2cd2d60b2b6ef8073fddaea9f1c3547f6174479198391feb08c56984d13aaaf"
+    },
+    {
+      "file": "r4b_r09_kontoinformation_three_credits.pdf",
+      "bytes": 1648,
+      "sha256": "e5f45dcf671097557ea9627df47029c94fedd911e19cb0dddaf6a454bf6b4600"
+    },
+    {
+      "file": "r4b_r10_en_next_payout_scheduled_sentence.pdf",
+      "bytes": 1484,
+      "sha256": "8d0f3254c203742ad5ed17b2b4f6e759ff8dc028571dea6ec9337d5bb875c6bd"
+    },
+    {
+      "file": "r4b_r11_guthaben_wird_am_ausgezahlt.pdf",
+      "bytes": 1508,
+      "sha256": "e4a8962aab5cb34eef54714654071a1982aa2beaa3ee261cb918df8b5938b68a"
+    },
+    {
+      "file": "r4b_r12_mit_beglichen_mismatch.pdf",
+      "bytes": 1832,
+      "sha256": "ddf18cd4efe5ab9e852e8d0c15a6cefbd576a5eb8aceacd45250b89588dad334"
+    },
+    {
+      "file": "r4b_r13_en_being_less_mismatch.pdf",
+      "bytes": 1557,
+      "sha256": "a7b17cdec87bf86f5ba5a34b31507f874470f562751f1ef605d72aca6e5c2160"
+    },
+    {
+      "file": "r4b_r14_kw_erfolgen_wird.pdf",
+      "bytes": 1855,
+      "sha256": "d3a0ed04201c753a11ae3dc55c13977f762ee473af294077f9bfdd8a9c13c7ee"
+    },
+    {
+      "file": "r4b_r15_nach_pruefung_freigeben.pdf",
+      "bytes": 1833,
+      "sha256": "2b47677fbc7af6a5be3161d7391ba6490e48ab8f515c1cb7f04fa1ae57144e36"
+    },
+    {
+      "file": "r4b_r16_en_intend_end_of_november.pdf",
+      "bytes": 1551,
+      "sha256": "8d9af52f71fbb1392a4dde085f9bd6b41aad7260393cf8014017ba654ecebcd8"
+    },
+    {
+      "file": "r4b_r17_naechster_zahllauf_datum.pdf",
+      "bytes": 1838,
+      "sha256": "a6b3ddd3d0495b6dbbe068531089b2fff4b01c3f8ee2cc3515efa8e82aa60b32"
+    },
+    {
+      "file": "r4b_r19_en_supplier_debit_note.pdf",
+      "bytes": 1574,
+      "sha256": "d7ccc5a82db814889a0777357f05b295c2c3fb13d1ac249f66f6c5f920327334"
+    },
+    {
+      "file": "r4b_r21_abschlag_auf_unserem_konto.pdf",
+      "bytes": 1813,
+      "sha256": "8184e1fa69b724b01571309f88f230cca573621fd487aa6aa6b9882e8a511fd6"
+    },
+    {
+      "file": "r4b_t01_ueberweisen_am_15_dezember.pdf",
+      "bytes": 1835,
+      "sha256": "d9c6790dd2493cd45f6a1288576a6b5b60e9b9f1182cde4de3be156b5e9a071a"
+    },
+    {
+      "file": "r4b_t02_en_will_transfer_on_15_december.pdf",
+      "bytes": 1540,
+      "sha256": "41ababb92fc77f121615d3b41ebae9238f552dfe420e4a286db98b74d06834c2"
+    },
+    {
+      "file": "r4b_t02b_zum_30_november_begleichen.pdf",
+      "bytes": 1826,
+      "sha256": "e1c78b7b926e3e43be467f95669d0fa5fd3cf5f3efe6c609d0b061afb7f3ecc1"
+    },
+    {
+      "file": "r4b_t03_am_15_oktober_ueberwiesen.pdf",
+      "bytes": 1818,
+      "sha256": "f0e40c9d27e94d02a01d9775624b96b3573659b4cf7403a431900d4df2542d32"
+    },
+    {
+      "file": "r4b_t04_erste_rate_am_1_oktober_heute_zweite.pdf",
+      "bytes": 1851,
+      "sha256": "528731962d7e0cd4acd01c84e55371c64c7f9fcc475681d24dcae79f5a0b7fee"
+    },
+    {
+      "file": "r4b_t05_summe_abzuege_zahlbetrag.pdf",
+      "bytes": 1797,
+      "sha256": "b6c7210e21bfe2292e1f4cdd6d14a52535d7ad145e0404e7b5c43c1076d3e6db"
+    },
+    {
+      "file": "r4b_t07_total_row_delkredere_fits.pdf",
+      "bytes": 1914,
+      "sha256": "8d3de0fc81f010535b705b20c46c3f555f340950c426a88468ab42e8fe7a9b34"
+    },
+    {
+      "file": "r4b_t08_abzueglich_anzahlung_ueberweisungsbetrag.pdf",
+      "bytes": 1819,
+      "sha256": "90c610325b50b4350edfdd4070202930dfb44a377c45e1ab5e4000a8de2a0907"
+    },
+    {
+      "file": "r4b_t14_en_total_remitted_to_date.pdf",
+      "bytes": 1502,
+      "sha256": "55e9cc8e783042899aa76227a0d02035720f918a16b55109257e2f77e366dadb"
+    },
+    {
+      "file": "r4b_t14b_gesamtzahlung_bisher.pdf",
+      "bytes": 1810,
+      "sha256": "f0f5c419d91827401227d5b46f465175bc376351642be0aaf8d197710389e848"
+    },
+    {
+      "file": "r4b_u01_restbetrag_thousands_erwarten_wir.pdf",
+      "bytes": 1839,
+      "sha256": "8bb68267d3ff80b2c67cbe5b406c2df8b39818d74353162384669bd6398ea8d3"
+    },
+    {
+      "file": "r4b_u02_restbetrag_small_erwarten_wir.pdf",
+      "bytes": 1837,
+      "sha256": "03ea2a6dc253945ff61e1dccfc40e704b9b0b08ca4aeddb941bd20716dbdd879"
+    },
+    {
+      "file": "r4b_u03_koennen_sie_amount_in_gap.pdf",
+      "bytes": 1857,
+      "sha256": "ee5786ad287320b9babc1290fc840c8130ed8efc014e187c7a8aa3e1f8ecacd5"
+    },
+    {
+      "file": "r4b_u04_payer_differenz_thousands_gutschrift.pdf",
+      "bytes": 1857,
+      "sha256": "2bcaa3ba343d4aff703027925cc0a9c88cbf5b3ee19106813a6a54e1f619b889"
+    },
+    {
+      "file": "r4b_d07p_table_row.pdf",
+      "bytes": 1847,
+      "sha256": "147d1330a096d07b82a99217de729a78470c0f8e926ee2e55378c4a4165a549e"
+    },
+    {
+      "file": "r4b_d07p_en_credit_amount.pdf",
+      "bytes": 1912,
+      "sha256": "83e57223863f4da2f6940e7f73abd82688e7402f0b06b67e2f27efc678c0be94"
+    },
+    {
+      "file": "r4b_d07p_kontogutschrift.pdf",
+      "bytes": 1705,
+      "sha256": "b6f960118991fc94f599cae90933f8fbaed436e5695ed5033d23ee381418fe87"
+    },
+    {
+      "file": "r4b_d07p_ch_chf.pdf",
+      "bytes": 1859,
+      "sha256": "f143c7e47014a05a68269eaa0a8bd551afb4cea862d1e427aec1c2261a75e6fb"
+    },
+    {
+      "file": "r4b_d07p_two_column_fields.pdf",
+      "bytes": 3171,
+      "sha256": "795ee058aa56f3f5474b52247907d98b682ce55b20e0ad4e611c60736bfa0437"
+    },
+    {
+      "file": "r4b_d07p_umsatz_haben.pdf",
+      "bytes": 1707,
+      "sha256": "27cfdd7b2d7571e1cf5422e8f5897a1bae58ee90e2a15b4240fa9c54801d102a"
+    },
+    {
+      "file": "r4b_d07n_wiedergutschrift_lastschrift.pdf",
+      "bytes": 1757,
+      "sha256": "0c57caee49433a30a1b0ebb9a0555d8c8630a4e18c5a2aa03b2517ed78f30b67"
+    },
+    {
+      "file": "r4b_d07n_ertragsgutschrift.pdf",
+      "bytes": 1707,
+      "sha256": "49144c20fbc9906b706141906cd3339d25e367f9642c08baa8858ff02516e717"
+    },
+    {
+      "file": "r4b_d07n_charges_credit_differs.pdf",
+      "bytes": 1771,
+      "sha256": "207ff1a0f5792884befe3d6d7cebcdb544a809e58aec9aecb4388bce77d8d4ec"
+    },
+    {
+      "file": "r4b_d07n_entgelterstattung_bank.pdf",
+      "bytes": 1693,
+      "sha256": "5f5a21499405d53f76b86bc3f30b699c913e641c9d837d92dbdf4268357f7cb8"
+    },
+    {
+      "file": "r4b_d08p_nach_abzug_einen_betrag.pdf",
+      "bytes": 2481,
+      "sha256": "f525cceb1b82a84657397fd9c9c42ce39751ff29e6a276020fff6d151635e5eb"
+    },
+    {
+      "file": "r4b_d08p_net_first_dies_entspricht.pdf",
+      "bytes": 1846,
+      "sha256": "ac3a7ba44922960ddb6baf9b05fc1e9ffd4bb87b57861f04f0cd4b63136c34bf"
+    },
+    {
+      "file": "r4b_d08p_skonto_amount_before_noun.pdf",
+      "bytes": 2095,
+      "sha256": "b7c4a69bdcf2b852eb7dea3237f06449b76ffb78e2c2bb800e3d6af39b7f627c"
+    },
+    {
+      "file": "r4b_d08p_eur_prefix_narrow.pdf",
+      "bytes": 1930,
+      "sha256": "a13528b0525a5fc275425a4d6a4f80661b67656d86076ff3894dfcd72cddb3f8"
+    },
+    {
+      "file": "r4b_d08p_two_invoices_insgesamt.pdf",
+      "bytes": 2312,
+      "sha256": "bafbb5fe6323443742a7c76c20fd373a322dc04efc966ca4d4c3387142ffa54a"
+    },
+    {
+      "file": "r4b_d08p_mail_dash_equals.pdf",
+      "bytes": 1618,
+      "sha256": "b2450ca25f2c3f9d99072864311a9b5d127357a7c72154a22cc90bd5370c36f2"
+    },
+    {
+      "file": "r4b_d08p_en_after_deducting.pdf",
+      "bytes": 1683,
+      "sha256": "f4cce00e1df1db67df98733e6cc9b1aca19fc951e8753f6b0e195c8e3b626b32"
+    },
+    {
+      "file": "r4b_d08n_announced_after_document.pdf",
+      "bytes": 1883,
+      "sha256": "acd356d18088a6e0f7db8010781edd3eb129a40d674cadb2a236e8a610b6be38"
+    },
+    {
+      "file": "r4b_d08n_payee_skonto_too_late.pdf",
+      "bytes": 2492,
+      "sha256": "4adda39ee9af087ca37a439e4b18f5002d7d34594c227b075fcaee781781ea3a"
+    },
+    {
+      "file": "r4b_d08n_skonto_and_credit_note.pdf",
+      "bytes": 1884,
+      "sha256": "cda7257823659cd375ce752880f467679fce763f4f1726aa26207aff29cbc7a0"
+    },
+    {
+      "file": "r4b_d08n_arithmetic_wrong.pdf",
+      "bytes": 1859,
+      "sha256": "77c7977c7e7b483dbd8d2f15d4f54c41ef424b18a85fb62b905e0349cd60c6ab"
+    },
+    {
+      "file": "r4b_d10p_wir_ueberweisen_ihnen_heute.pdf",
+      "bytes": 2052,
+      "sha256": "b1adf75407e4f51d487a13e54c3dd56c951bfb92e2e04e24a4815171fa30012d"
+    },
+    {
+      "file": "r4b_d10p_passive_wurde_ueberwiesen.pdf",
+      "bytes": 2274,
+      "sha256": "4970532cdafe3188565a0e229ecc90f7570edea1e0c2ca1595fb9723ede7f426"
+    },
+    {
+      "file": "r4b_d10p_leisten_wir_abschlag.pdf",
+      "bytes": 1932,
+      "sha256": "254e8a26662a89a759dd961688fb5cb16d97b922bbb164ffd00342a269b389de"
+    },
+    {
+      "file": "r4b_d10p_zahlung_ist_erfolgt.pdf",
+      "bytes": 2617,
+      "sha256": "8be834fdcbdfb70a3ae88e0c4e4b5d3b9f6d969afd74f92f9074db6bd2593f90"
+    },
+    {
+      "file": "r4b_d10p_dass_wir_ueberwiesen_haben_glyph.pdf",
+      "bytes": 5112,
+      "sha256": "f437f972555aaf35097a33d2d66b1f435e9f908978fff98c75b250a4ae51dd0c"
+    },
+    {
+      "file": "r4b_d10p_en_today_we_transferred.pdf",
+      "bytes": 1764,
+      "sha256": "f0397b8210e13aed0040165e642d94c1d5c7047931a2dfc4ad02bfde9ff80ef4"
+    },
+    {
+      "file": "r4b_d10n_announced_next_week.pdf",
+      "bytes": 1968,
+      "sha256": "0ae541aed3cf7c58c04973d8132a072ba2aafed652d1b05b74478787c83c4877"
+    },
+    {
+      "file": "r4b_d10n_payee_rest_expected.pdf",
+      "bytes": 1990,
+      "sha256": "386004279d5e375a36385055e22fa26db2e9d352ba35210ef3b6e2f827773810"
+    },
+    {
+      "file": "r4b_d10n_rest_paid_today.pdf",
+      "bytes": 2019,
+      "sha256": "7daf975d519667e1901b1d256c663c43f25b93923edfff445b32f753b981b386"
+    },
+    {
+      "file": "r4b_d10n_not_paid_yet.pdf",
+      "bytes": 1913,
+      "sha256": "562b426abbbbb19f20e93d2eb13e70228ba2acb85f79c42a6469670c1abc57e5"
+    },
+    {
+      "file": "r4b_d12p_ueberwiesen_wurden.pdf",
+      "bytes": 1850,
+      "sha256": "05c42148a3af910cddee177836dad5e252d776d702802c3fadeb1e32708d0570"
+    },
+    {
+      "file": "r4b_d12p_net_first_damit_ausgeglichen.pdf",
+      "bytes": 2249,
+      "sha256": "5e05314de464d46d8682521198d56f2c6e1ab246a12f2bf30ee82a7192cebbb8"
+    },
+    {
+      "file": "r4b_d12p_gutschrift_ueber_bank_credit.pdf",
+      "bytes": 1890,
+      "sha256": "68293bab45a752e27e545f274cdcc7e3b057604466c5722ac6d4feb477d3bd06"
+    },
+    {
+      "file": "r4b_d12p_en_will_reach.pdf",
+      "bytes": 1908,
+      "sha256": "80c6066d8dfe9232491e7ca597a68e6d60b16ee7c670ff754ab6cad60f69f7a6"
+    },
+    {
+      "file": "r4b_d12p_noun_after_geht_zu.pdf",
+      "bytes": 1862,
+      "sha256": "11f433bf7ee996dec02110630e5cdc6dfc80bb0c1bb843438a4f9aec1f723885"
+    },
+    {
+      "file": "r4b_d12p_three_sentences.pdf",
+      "bytes": 5297,
+      "sha256": "66fd78b3bd7d892a1b13e2c8dd7b5ea85cb69432b7155be24f6a8320fb007608"
+    },
+    {
+      "file": "r4b_d12n_conditional_later.pdf",
+      "bytes": 1878,
+      "sha256": "f7332c2230eb9f62ed5905e10dd27a3265e56f9b11729f3c477c34419e595e50"
+    },
+    {
+      "file": "r4b_d12n_pct_contradicts.pdf",
+      "bytes": 1878,
+      "sha256": "2ff52a6072808a5d5083c29207c82d059fe78be18a7217a8c95e3dd7b83292b9"
+    },
+    {
+      "file": "r4b_d12n_skonto_and_bank_fee.pdf",
+      "bytes": 1886,
+      "sha256": "1c8879599ea38f8df2972d3c49d4d22d01fed6beef9331dcbd4dc31fe3afda18"
+    },
+    {
+      "file": "r4b_d12n_payee_unserem_konto.pdf",
+      "bytes": 2490,
+      "sha256": "40999706f0535413c4d111774b9558eb17cd841c52256108d4930cc5064ac6b9"
+    },
+    {
+      "file": "r4b_q06p_zlecilismy_do_zaplaty_pozostalo.pdf",
+      "bytes": 1890,
+      "sha256": "34f297a05e5695ed90f1762e7eb54b413d3edae57f928b8d16ac4d5a48a937ea"
+    },
+    {
+      "file": "r4b_q06p_prose_przekazalismy.pdf",
+      "bytes": 2083,
+      "sha256": "489fed3640d7982b95a41e7fbdc7ab6c3b85d341e0894c8d4936b12e4664ac55"
+    },
+    {
+      "file": "r4b_q06p_fr_reste_a_payer.pdf",
+      "bytes": 1863,
+      "sha256": "d76cd043f04bfb85f25a24b324dd82eb1a033242e023b67d3f114b846b9d37ff"
+    },
+    {
+      "file": "r4b_q06p_wartosc_przelewu_saldo.pdf",
+      "bytes": 3744,
+      "sha256": "431cd61aae78821f5083595cd5acba666ba4ba479dc675ce6b1d589218a32cc6"
+    },
+    {
+      "file": "r4b_q06p_eur_pozostaje.pdf",
+      "bytes": 1969,
+      "sha256": "9fb81b1ee993f2f6fe0401763cc1aca226837cac6a1dfb4840e4fabd16a0815c"
+    },
+    {
+      "file": "r4b_q06p_cz_zbyva_uhradit.pdf",
+      "bytes": 1774,
+      "sha256": "a813b72870052ddb6f04aa975496085ae2aeebafd29e97eceed7729453c74924"
+    },
+    {
+      "file": "r4b_q06n_payee_otrzymalismy.pdf",
+      "bytes": 1773,
+      "sha256": "61fc2fd238bcbcc9c34feb08e07150a094b1e591c51d2df9e76e61c4fef5aaae"
+    },
+    {
+      "file": "r4b_q06n_korekta_kwota_przelewu.pdf",
+      "bytes": 1956,
+      "sha256": "5ea7b85a5460699f6abfd4245a1581e777ea72cf5b5103dc5b9a0a2e2ffb0228"
+    },
+    {
+      "file": "r4b_q06n_wezwanie_po_wplacie.pdf",
+      "bytes": 1750,
+      "sha256": "7e9f8c24b257d1240ab55305271144d18c7b5fedb965081e68e3cdbfff2ab4d0"
+    },
+    {
+      "file": "r4b_p14p_net_settlement_amount.pdf",
+      "bytes": 1681,
+      "sha256": "f175e4012e12091dab16c6d2efb327e65182b8cb3a8221df709658b3deaafcb1"
+    },
+    {
+      "file": "r4b_p14p_payout_total_transfer_to_bank.pdf",
+      "bytes": 1727,
+      "sha256": "81ce55d7db02da5e773d586cf5a484d7fb72be64dac94a359a03901894781cca"
+    },
+    {
+      "file": "r4b_p14p_de_auszahlung_bankkonto_mixed.pdf",
+      "bytes": 1781,
+      "sha256": "cdb7e3e67c78f5a663e8fbb0fcb60d6809ee11a3805238bd13162028432c306c"
+    },
+    {
+      "file": "r4b_p14p_disbursed_usd_eur.pdf",
+      "bytes": 1882,
+      "sha256": "4ab3b4c0468e2a0c1c6a165e49e938a0f7eb33e69773e76b15d4389ce47ffa4b"
+    },
+    {
+      "file": "r4b_p14p_prose_payout_sent.pdf",
+      "bytes": 1702,
+      "sha256": "3acace3784a33b8a6d1a37218b9e2d380cbc080c89837afab585c03915c88815"
+    },
+    {
+      "file": "r4b_p14p_funds_transferred_single.pdf",
+      "bytes": 2404,
+      "sha256": "84d1cd2b7403c324598e469267123d529520b019cccb513a718daa8d33d22cd2"
+    },
+    {
+      "file": "r4b_p14n_payout_failed.pdf",
+      "bytes": 1700,
+      "sha256": "a8a9d9b1b318bd30555a53995cb766a22abc296c626492df79132d466937a6d6"
+    },
+    {
+      "file": "r4b_p14n_amount_due_negative.pdf",
+      "bytes": 1641,
+      "sha256": "f3a8d2b496a0cfc547370e8688f82d645d9b26e3b2e66339ffe25ef55e830eb5"
+    },
+    {
+      "file": "r4b_p14n_withheld_transfer_differs.pdf",
+      "bytes": 1710,
+      "sha256": "62c759353c39ecd2895de4ad6789097c77f20d3d4957fca3f36117423c7c2093"
+    },
+    {
+      "file": "r4b_p14n_expected_payout.pdf",
+      "bytes": 1575,
+      "sha256": "043d3982e1c02b2658b1c93cf49ad170fc4c981b3e8d9873ebad6e01f9f41df4"
+    },
+    {
+      "file": "r4b_p14n_balance_next_payout.pdf",
+      "bytes": 1601,
+      "sha256": "016facd596cbf5f68015e9ecd102dc61c31c5744a629eb41d82740f045867c56"
+    },
+    {
+      "file": "r4b_p02p_stadtkasse_umbuchungen.pdf",
+      "bytes": 1821,
+      "sha256": "aa23cff4cc317baf16c83c761a46e513b08b7cd2e93bdc36fab95dd688c972f3"
+    },
+    {
+      "file": "r4b_p02p_finanzamt_aufrechnung_auszuzahlen.pdf",
+      "bytes": 2088,
+      "sha256": "237a558e8909dd2044c498acbfe9f35587add8a46c3dd8678d87145eb8d047a6"
+    },
+    {
+      "file": "r4b_p02p_zoll_kfz_prose.pdf",
+      "bytes": 1789,
+      "sha256": "05814a207c3b4a33c709349209be40fb1cf5aa85d52450063a307e096d7f55c8"
+    },
+    {
+      "file": "r4b_p02p_ueberzahlung_verrechnet_insgesamt.pdf",
+      "bytes": 1906,
+      "sha256": "6a68683fe90142ce130a469d0f2dd4ac83b4b0043becd8e27a1c95a51ca408e3"
+    },
+    {
+      "file": "r4b_p02p_vorauszahlungen_angerechnet.pdf",
+      "bytes": 1731,
+      "sha256": "43aed18831d011655936e89acc756526c971b4a8f8a9a04d5242d4a9c5b9b7f3"
+    },
+    {
+      "file": "r4b_p02n_umgebucht_kein_rest.pdf",
+      "bytes": 1740,
+      "sha256": "cc93fec9823c0b0d47e8abca09f9c182e9cd04fcc026918582ef7cb430a5fa81"
+    },
+    {
+      "file": "r4b_p02n_umbuchung_vorauszahlung_antrag.pdf",
+      "bytes": 1709,
+      "sha256": "219fef164ca258b51896c9b9298a417cc51c8cf87d9a441a29e00eb1ce994178"
+    },
+    {
+      "file": "r4b_p02n_erstattungszinsen_plus.pdf",
+      "bytes": 1834,
+      "sha256": "43c9c8ac2b587fabc72dd68fbacd4fcd03ccd587a67b482ab3c14e1b4f697e98"
+    },
+    {
+      "file": "r4b_p02n_nachzahlung_nach_verrechnung.pdf",
+      "bytes": 1739,
+      "sha256": "13cfc815c396e1d321b508b21343b2fe8e1d48201042852536a5e9f80ac23b31"
+    },
+    {
+      "file": "r4b_x_en_reminder_received_paid.pdf",
+      "bytes": 1678,
+      "sha256": "77cf8857922629d31b4a2e00ea161bac4ab199674335ee0d01af13a7912079d6"
+    },
+    {
+      "file": "r4b_x_de_aufforderung_eingegangen_ueberwiesen.pdf",
+      "bytes": 1890,
+      "sha256": "5b0043788927cc1c78b876c6ecf60872f9a0f328aba16a1fdbc8b33ddd271f01"
+    },
+    {
+      "file": "r4b_x_payee_offener_restbetrag_erwarten.pdf",
+      "bytes": 1883,
+      "sha256": "47a3133811e56beba64e6b88931a07324ffbe5e478526cda992f0b4686b18dd3"
+    },
+    {
+      "file": "r4b_x_payee_schlussrechnung_rest_arith.pdf",
+      "bytes": 1917,
+      "sha256": "c6b9ec896ef86ea312a6e5844678ed68584a1a2b0224a83e71233ad650b39351"
+    },
+    {
+      "file": "r4b_x_nach_abschluss_heute_rest_wrapped.pdf",
+      "bytes": 1925,
+      "sha256": "84cb0911798de84819c6ade4b40619b6ecafd376a5b9484c9da14e0add4bd526"
+    },
+    {
+      "file": "r4b_x_kasse_gesamt_verrechnet.pdf",
+      "bytes": 1750,
+      "sha256": "9c4add6996c42985660c98c820f9cc6d1953e486e07439d3d4d8056c0c7deb7d"
+    },
+    {
+      "file": "r4b_x_available_for_payout.pdf",
+      "bytes": 1548,
+      "sha256": "8647ae32261de778d8a633e28877fb8a6d4ccfb6a7cbb4e7b4c8e24004c93e88"
+    },
+    {
+      "file": "r4b_x_bank_kest_erstattung.pdf",
+      "bytes": 1701,
+      "sha256": "96043011216342612056c10cce409d274ca1ad3bdafdd765decbf8cd01e3bcec"
+    },
+    {
+      "file": "r4b_x_payee_en_you_have_paid.pdf",
+      "bytes": 1734,
+      "sha256": "e0bc454fb2a8112e7700e52cd99519031a9d5e72cec3eebfb878cdb252745e1c"
+    },
+    {
+      "file": "r4b_x_pl_do_zaplaty_zostalo.pdf",
+      "bytes": 1789,
+      "sha256": "1126db9d2d42b1fcf5a6e67a53ce59857fa93ced5dc8aef9506e7d6358475606"
+    },
+    {
+      "file": "r4b_x_skonto_bei_ihnen_gehen_ein.pdf",
+      "bytes": 1831,
+      "sha256": "5bdb7062e2bd7c343ab7703d4edebdc7a2036bb9ce1adb3a01db280c5e83754f"
+    },
+    {
+      "file": "r4b_x_dann_ueberweisen_conditional.pdf",
+      "bytes": 1920,
+      "sha256": "68cc214333335801f4edf51c71c8caca791c5b2bfdf0dc2f46a56a60b60c4d16"
+    },
+    {
+      "file": "r4b_y_bank_credit_payer_is_other_sparkasse.pdf",
+      "bytes": 1688,
+      "sha256": "aa9e61a09bf8d38e0704bd509483d40563cfa98446a166c99d39ee1ddbaf6c58"
+    },
+    {
+      "file": "r4b_y_en_thanks_for_reminder_paid.pdf",
+      "bytes": 1835,
+      "sha256": "12782f737feace9bffe825a2e1cb545d4f471322c9880118eee6a8d94c3cc5af"
+    },
+    {
+      "file": "r4b_y_skonto_sie_erhalten.pdf",
+      "bytes": 2326,
+      "sha256": "4f8b849ea0c585334ca71b92aa415eddec125e00cf95059c20255a5c364d17e7"
+    },
+    {
+      "file": "r4b_y_bank_festgeld_zinsen.pdf",
+      "bytes": 1688,
+      "sha256": "861540d606aabb371a7b88e89eaac8b5252d6360442252095edc47ba463200aa"
+    },
+    {
+      "file": "r4b_y_payee_bestaetigt_teilzahlung_lieferschein.pdf",
+      "bytes": 1947,
+      "sha256": "f64633b0b63864524e7821f2089f4e459afbb43ec7f5c03ee081c91c90da8af0"
+    },
+    {
+      "file": "r4b_y_payout_reversed.pdf",
+      "bytes": 1579,
+      "sha256": "081c543f85269d423799bca05c2adbf3c1ee13e73b919268c894a87611c872f3"
+    },
+    {
+      "file": "r4b_f_bank_transfer_debit_leading_minus.pdf",
+      "bytes": 1720,
+      "sha256": "2ca54f60c3ca4851e5e675e5265aed5f7626d8b93329cc1b00dd64962d451aec"
+    },
+    {
+      "file": "r4b_f_bank_transfer_debit_trailing_minus.pdf",
+      "bytes": 1720,
+      "sha256": "42c3cb061ad5f44bd75f107cb03b4e0476bfb64400ee0adb589490c86420abaf"
+    },
+    {
+      "file": "r4b_f_bank_transfer_debit_spaced_dash.pdf",
+      "bytes": 1720,
+      "sha256": "146cf2b19a4abcebbe8938f8374c99673188ab7cc17f6d19d8f080b5d0af8836"
+    },
+    {
+      "file": "r4b_f_bank_transfer_execution_positive.pdf",
+      "bytes": 1689,
+      "sha256": "ed0add92260681f4c8a646b0a6a61bee25e20b71a0a9ac56dd0a2d31ece9237f"
+    },
+    {
+      "file": "r4b_f_en_invoice_which_we_received_paid.pdf",
+      "bytes": 1584,
+      "sha256": "450064fbf6997b2be86eba238c20f9e2db6adfcbb187f1f4e2d97b906915b855"
+    },
+    {
+      "file": "r4b_f_gutschrift_unserem_konto_rest_heute.pdf",
+      "bytes": 1898,
+      "sha256": "b6fead2fb136790b5b5d3bfae6b5bcd340babe96d9ae22732d4770c029f409e0"
+    },
+    {
+      "file": "r4b_f_lieferschein_paid_and_other_not_due.pdf",
+      "bytes": 1874,
+      "sha256": "b35187477bbf4aa2e5bca3aa3fafa360e7ebf2a3fcd60faa88a84781f716e64f"
+    },
+    {
+      "file": "r4b_f_lieferschein_not_paid_with_reason.pdf",
+      "bytes": 1870,
+      "sha256": "b09a84a557d235e070b825838812a217ac6ed1f8c16f53ec178b2108c01a3a0e"
+    }
+  ],
+  "generators": [
+    {
+      "generator": "make_ext.js",
+      "sha256": "cd1c16f3b007b46f88d8eb4da2e7bef613b0ecb7ff9d0536eb4fbead44ed27e7",
+      "exitCode": 0
+    },
+    {
+      "generator": "make_heur.js",
+      "sha256": "f5795999538819d818a91ba38014cd9d775ae13aa405ac3f87dc9ac42b86a377",
+      "exitCode": 0
+    },
+    {
+      "generator": "make_review.js",
+      "sha256": "fab0e2b6dee4ee4e901ba7f9e08b2520b58f3762e3ccaa5bdd2ce2fa02702804",
+      "exitCode": 0
+    },
+    {
+      "generator": "make_r2.js",
+      "sha256": "4549b07d1fed3d07871bdc8029ebe5fe86663bba4f2e3b974ee7aa3e27dfddb3",
+      "exitCode": 0
+    },
+    {
+      "generator": "make_r2b.js",
+      "sha256": "c68bc91032238c75be20908c928ffafa34be3b78cb6b4b1c1e3c909b9d2f8bc3",
+      "exitCode": 0
+    },
+    {
+      "generator": "make_r3.js",
+      "sha256": "657767d48733fb86f8cce788d4fc0a577e40cd0f41613dd37bc00e1dca8382e6",
+      "exitCode": 0
+    },
+    {
+      "generator": "make_r3b.js",
+      "sha256": "81e3c24da74f19aefbec5132f977d087690644dad9bda32fd2af1b1157cd01bb",
+      "exitCode": 0
+    },
+    {
+      "generator": "make_r4.js",
+      "sha256": "eb8c2e2c9b67e8d4d26cc0fc9a3800138435158c99c1450b09218c9a3bc0a73a",
+      "exitCode": 0
+    },
+    {
+      "generator": "make_r4b.js",
+      "sha256": "28c536803263ea325a9ae0dedf4465e33c640cc821daa93a2904929d00aeecab",
+      "exitCode": 0
+    },
+    {
+      "generator": "make_smime.js",
+      "sha256": "89be9583d5e0e842b9ca66cd7f5092b4fa0c0bb85db65d83dad579a3992ee88d",
+      "exitCode": 0
+    },
+    {
+      "generator": "make_fixtures2.py",
+      "sha256": "f76bb1942006b6e2162aae6745b2b8b9962b7f6e96de90f70a6c77eb1c783e6b",
+      "exitCode": 0
+    },
+    {
+      "generator": "make_fixtures3.py",
+      "sha256": "8dcca9512c1f1d71214d8b7bfaf1c1c1ce434e888ad82944868ec9998dcea5a5",
+      "exitCode": 0
+    },
+    {
+      "generator": "make_fixtures.py",
+      "sha256": "0cf6231fcce7ddd57cde1a1edb56acb00d5a9b6e3d790a1e6571781367f80b7e",
+      "changes": "Only skip unavailable qpdf command, keep all PDF creation unchanged",
+      "exitCode": 0
+    },
+    {
+      "generator": "make_pdflib.js",
+      "sha256": "fd032fa86e0c67678ede4a9f7ec3fcc676d467fbcf1b5212bded3618564985aa",
+      "changes": "Only module locations mapped to installed pdf-lib and @pdf-lib/fontkit",
+      "exitCode": 0
+    },
+    {
+      "recovered": "chrome_skia.pdf",
+      "sources": [
+        "in_b64x2_chrome.input.txt",
+        "in_bom_chrome.input.txt",
+        "in_jsonesc_chrome.input.txt"
+      ],
+      "crosscheck": "identical decoded bytes",
+      "sha256": "b4856b20b3baff61ed31969281a7f25d4c89d5503027d230f9e73b82c89f07b6"
+    },
+    {
+      "recovered": "sm_opaque_der.p7m",
+      "sources": [
+        "in_b64x2_smime_der.input.txt"
+      ],
+      "method": "base64x2",
+      "sha256": "05463dea8b1c3957a9067a05565c48a6212d7f4df3ef4dc4acca2482750a1acf"
+    },
+    {
+      "recovered": "sm_quoted_printable.p7m",
+      "sources": [
+        "in_latin1_smime_qp.input.txt"
+      ],
+      "method": "latin1",
+      "sha256": "67aaf1a33d5036c8ae02de6dac4ba4b159d2d9396934870656c65d5c9e01462a"
+    },
+    {
+      "generator": "make_fixtures.py qpdf recipe",
+      "file": "qpdf_objstm.pdf",
+      "command": [
+        "/workspace/avis-review/legacy-generator-deps/qpdf/extracted/usr/bin/qpdf",
+        "--object-streams=generate",
+        "/workspace/avis-review/legacy-generated/test/fixtures/rl_std_helvetica.pdf",
+        "/workspace/avis-review/legacy-generated/test/fixtures/qpdf_objstm.pdf"
+      ],
+      "exitCode": 0,
+      "note": ""
+    },
+    {
+      "generator": "make_fixtures.py qpdf recipe",
+      "file": "qpdf_linearized.pdf",
+      "command": [
+        "/workspace/avis-review/legacy-generator-deps/qpdf/extracted/usr/bin/qpdf",
+        "--linearize",
+        "/workspace/avis-review/legacy-generated/test/fixtures/rl_std_helvetica.pdf",
+        "/workspace/avis-review/legacy-generated/test/fixtures/qpdf_linearized.pdf"
+      ],
+      "exitCode": 0,
+      "note": ""
+    },
+    {
+      "generator": "make_fixtures.py qpdf recipe",
+      "file": "qpdf_uncompressed.pdf",
+      "command": [
+        "/workspace/avis-review/legacy-generator-deps/qpdf/extracted/usr/bin/qpdf",
+        "--stream-data=uncompress",
+        "/workspace/avis-review/legacy-generated/test/fixtures/rl_std_helvetica.pdf",
+        "/workspace/avis-review/legacy-generated/test/fixtures/qpdf_uncompressed.pdf"
+      ],
+      "exitCode": 0,
+      "note": ""
+    },
+    {
+      "generator": "make_fixtures.py qpdf recipe",
+      "file": "qpdf_encrypted.pdf",
+      "command": [
+        "/workspace/avis-review/legacy-generator-deps/qpdf/extracted/usr/bin/qpdf",
+        "--allow-weak-crypto",
+        "--encrypt",
+        "",
+        "owner",
+        "128",
+        "--",
+        "/workspace/avis-review/legacy-generated/test/fixtures/rl_std_helvetica.pdf",
+        "/workspace/avis-review/legacy-generated/test/fixtures/qpdf_encrypted.pdf"
+      ],
+      "exitCode": 0,
+      "note": "Explicit --allow-weak-crypto permits original 128-bit RC4 fixture on modern qpdf"
+    },
+    {
+      "generator": "make_fixtures.py qpdf recipe",
+      "file": "qpdf_lo_objstm.pdf",
+      "command": [
+        "/workspace/avis-review/legacy-generator-deps/qpdf/extracted/usr/bin/qpdf",
+        "--object-streams=generate",
+        "--recompress-flate",
+        "/workspace/avis-review/legacy-generated/test/fixtures/lo_docx.pdf",
+        "/workspace/avis-review/legacy-generated/test/fixtures/qpdf_lo_objstm.pdf"
+      ],
+      "exitCode": 0,
+      "note": ""
+    }
+  ],
+  "notes": [
+    "Original expected.json restored after each generator; generators never supply new test expectations.",
+    "Synthetic OpenSSL CMS fixtures regenerated with throw-away self-signed certificates, not byte-identical signatures.",
+    "chrome_skia.pdf recovered byte-for-byte from three independently wrapped repository inputs.",
+    "sm_opaque_der.p7m and sm_quoted_printable.p7m recovered from existing wrapper inputs.",
+    "Five base fixtures lack their producing generator in this upload.",
+    "525 separate corpus manifest PDF cases remain unavailable; no corresponding generators were uploaded.",
+    "Five qpdf fixtures reproduced using original generator recipes with isolated Debian qpdf12.2.0 binary; modern weak-crypto opt-in added solely for original RC4 fixture."
+  ],
+  "qpdfDownload": {
+    "url": "https://deb.debian.org/debian/pool/main/q/qpdf/qpdf_12.2.0-1_amd64.deb",
+    "sha256": "c3971a154f25854865547037b0316f445e2f5573d9721ea4386b48bc48f1ea04",
+    "bytes": 153136,
+    "version": "qpdf version 12.2.0\nRun qpdf --copyright to see copyright and license information.\n"
+  }
+}
