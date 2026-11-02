@@ -30,8 +30,9 @@ interface AvisResult {
   // version 2: decision for the whole mail (always set)
   verdict: string;        // advice (exactly one advice) / several (advices with different amounts) / unclear / other
   verdictWhy: string;     // short English reason
-  category: string;       // Outlook category: "Avis" / "Avis prüfen" / "mehrere Avise" / "" (none)
-  subjectPrefix: string;  // "2.601,35 ", "2.601,35 (prüfen) ", "2.601,35 ? " or ""
+  category: string;       // Outlook category: "Avis" / "Avis prüfen" / "" (none)
+  paymentAmounts: string[]; // separate payments for "several", e.g. ["1.200,30 EUR", "5.632,21 EUR"]; otherwise []
+  subjectPrefix: string;  // one amount (with optional check marker) or several joined by " + ", then a space
   newSubject: string;     // prefix + subject ("2.601,35 Zahlungsavis"), "" when the subject stays as it is
   patchCategory: string;  // JSON body {"categories":[...]} for the HTTP request, "" when no category is set
   patchSubject: string;   // JSON body {"subject":"..."} for the HTTP request, "" when the subject stays as it is
@@ -1693,8 +1694,9 @@ const SHEET_MAX_CELL = 1000;  // characters of one cell in the text lines
 // one table (worksheet / CSV) as text lines like a PDF page: non-empty cells joined by three spaces, blank rows dropped;
 // paySum: sum of the payment column over payRows data rows (header payHeader) for lists without a total row, 0 if none;
 // groups: number of separate payments found in the table (1 = one payment, 0 = unknown); payCheck: the amount column whose
-// sum equals paySum when the payment column repeats one payment amount on every row ("" = none: paySum is a plain sum)
-interface SheetTable { name: string; lines: string[]; hidden: boolean; paySum: number; payRows: number; payHeader: string; groups: number; payCheck: string }
+// sum equals paySum when the payment column repeats one payment amount on every row ("" = none: paySum is a plain sum);
+// paymentAmounts: separate group totals, with their currency where shown (filled from the document otherwise)
+interface SheetTable { name: string; lines: string[]; hidden: boolean; paySum: number; payRows: number; payHeader: string; groups: number; payCheck: string; paymentAmounts: string[] }
 // type: "xlsx", "csv", "tsv", "html-export", "mhtml-export", "xml2003" or "" (not a spreadsheet);
 // unreadable: English reason when it is an office file that cannot be read (old .xls, .xlsb, encrypted, .msg), else ""
 // (type is then "" and tables is empty: check unreadable first)
@@ -2429,10 +2431,11 @@ function shFinish(g: ShGrid): SheetTable {
   let sum = 0, count = 0;
   // blocks of payment rows that a total row closes with their sum ("Total payment 1", "Summe Zahlung 2"); grand: a total
   // row over more rows than the last block (one payment with subtotals)
-  let blockSum = 0, blockRows = 0, blocks = 0, grand = false;
+  let blockSum = 0, blockRows = 0, blocks = 0, coveredBlockRows = 0, grand = false;
   // the currency of the open block ("" = none named, "*" = mixed) and of each closed block
   let blockCur = "";
   const blockCurs: string[] = [];
+  const blockValues: number[] = [];
   let payHeader = "";
   const ids: string[] = [], dates: string[] = [];
   const valCol = h.pay >= 0 ? h.pay : h.ded.length > 0 ? h.amt : -1;
@@ -2451,6 +2454,8 @@ function shFinish(g: ShGrid): SheetTable {
   const flag = shSignFlag(rows, h, valCol);
   // the rows counted in the payment sum and their values
   const rowIdx: number[] = [], rowVals: number[] = [];
+  // Keep every payment row for the individual totals; rowIdx remains capped for the existing sum check below.
+  const paymentRows: number[] = [], paymentValues: number[] = [];
   if (h.row >= 0 && valCol >= 0) {
     // data rows below the header: repeated headers and total rows skipped; groups only count these rows
     const mode = shColMode(rows, h.row + 1, valCol);
@@ -2486,7 +2491,9 @@ function shFinish(g: ShGrid): SheetTable {
       if (total) {
         if (blockRows > 0 && v > 0 && Math.abs(v - blockSum) < 0.005) {
           blocks++;
+          coveredBlockRows += blockRows;
           blockCurs.push(blockCur !== "" ? blockCur : shRowCur(cells));
+          blockValues.push(v);
         }
         if (count > blockRows && Math.abs(v - sum) < 0.005) grand = true;
         blockSum = 0;
@@ -2504,6 +2511,8 @@ function shFinish(g: ShGrid): SheetTable {
       blockSum += v;
       blockRows++;
       if (rowIdx.length < 1000) { rowIdx.push(r); rowVals.push(v); }
+      paymentRows.push(r);
+      paymentValues.push(v);
       if (!fixedCur) {
         const cc = curCol >= 0 && curCol < cells.length ? cells[curCol] : null;
         let code = cc && !cc.isNum ? shCurCode(shClean(cc.text), "") : "";
@@ -2544,13 +2553,26 @@ function shFinish(g: ShGrid): SheetTable {
   let groups = ids.length > 0 ? ids.length : dates.length > 0 ? dates.length : paySum > 0 ? 1 : 0;
   // without payment number or date columns: two or more blocks, each closed by its own total and no grand total over
   // them, are one payment each
-  if (blocks >= 2 && !grand && ids.length === 0 && dates.length === 0) groups = blocks;
+  let useBlocks = blocks >= 2 && !grand && ids.length === 0 && dates.length === 0;
+  if (useBlocks) groups = blocks;
   if (curs.length >= 2 && curs.length > groups) groups = curs.length;
   // blocks in different currencies, each closed by its own total ("Total EUR", "Total GBP"): one transfer has one
   // currency, so these are separate payments even on the same day
   const blockCodes: string[] = [];
   for (const c of blockCurs) if (c !== "" && c !== "*" && blockCodes.indexOf(c) < 0) blockCodes.push(c);
-  if (blocks >= 2 && !grand && blockCodes.length >= 2 && blocks > groups) groups = blocks;
+  if (blocks >= 2 && !grand && blockCodes.length >= 2 && blocks > groups) { groups = blocks; useBlocks = true; }
+  const paymentAmounts: string[] = [];
+  if (groups >= 2) {
+    if (useBlocks) {
+      // No partial subject when a block has an invalid/missing total or its currency cannot be determined.
+      if (coveredBlockRows === count && blockCurs.indexOf("*") < 0) {
+        for (let k = 0; k < blockValues.length; k++) paymentAmounts.push(germanAmount(blockValues[k]) + (blockCurs[k] !== "" ? " " + blockCurs[k] : ""));
+      }
+    } else {
+      const parts = shGroupAmounts(g, h, paymentRows, paymentValues, valCol, conv, ids.length > 0 ? h.id : dates.length > 0 ? h.date : -1, payHeader);
+      for (const part of parts) paymentAmounts.push(part);
+    }
+  }
   const colMode: number[] = [];
   for (let c = 0; c < money.length; c++) colMode.push(money[c] ? shColMode(rows, h.row + 1, c) : 0);
   const lines: string[] = [];
@@ -2582,7 +2604,71 @@ function shFinish(g: ShGrid): SheetTable {
     if (parts.length > 0) lines.push(parts.join("   "));
   }
   for (let i = 0; i < g.post.length; i++) lines.push(g.post[i]);
-  return { name: g.name, lines: lines, hidden: g.hidden, paySum: paySum, payRows: count, payHeader: payHeader, groups: groups, payCheck: payCheck };
+  return { name: g.name, lines: lines, hidden: g.hidden, paySum: paySum, payRows: count, payHeader: payHeader, groups: groups, payCheck: payCheck, paymentAmounts: paymentAmounts };
+}
+
+function shGroupAmounts(g: ShGrid, h: ShHead, rowIdx: number[], values: number[], valCol: number, conv: boolean[], groupCol: number, payHeader: string): string[] {
+  // Totals per already-recognised payment ID/date and currency. Blank grouping cells continue the preceding group.
+  // An absent currency stays absent here and is filled from the document's currency in sheetExtras.
+  const keys: { [key: string]: number } = {};
+  const parts: { sum: number; currency: string; rows: number[]; values: number[] }[] = [];
+  const fixed = new RegExp(CURRENCY_TOKEN.source, "i").exec(payHeader);
+  const fixedCode = fixed !== null ? currencyCode(fixed[0]) : "";
+  const labels: string[] = [], currencies: string[] = [];
+  const shown: { [key: string]: string } = {};
+  let previous = "";
+  for (let i = 0; i < rowIdx.length; i++) {
+    const cells = g.rows[rowIdx[i]].cells;
+    const cell = groupCol >= 0 && groupCol < cells.length ? cells[groupCol] : null;
+    const label = cell ? cell.isNum ? shNumText(cell, false, g.date1904) : shClean(cell.text) : "";
+    if (label !== "") previous = label;
+    if (groupCol >= 0 && previous === "") return []; // a row cannot be assigned to a payment
+    const currency = fixedCode !== "" ? fixedCode : shRowCur(cells);
+    labels.push(previous);
+    currencies.push(currency);
+    const labelKey = "$" + previous;
+    if (currency !== "") shown[labelKey] = shown[labelKey] === undefined || shown[labelKey] === currency ? currency : "*";
+  }
+  for (let i = 0; i < rowIdx.length; i++) {
+    let currency = currencies[i];
+    if (currency === "") {
+      const known = shown["$" + labels[i]];
+      if (known === "*") return []; // a blank currency cannot be assigned to one of several currencies
+      currency = known || "";
+    }
+    const key = "$" + labels[i] + "\u0000" + currency;
+    let at = keys[key];
+    if (at === undefined) {
+      at = parts.length;
+      keys[key] = at;
+      parts.push({ sum: 0, currency: currency, rows: [], values: [] });
+    }
+    parts[at].sum += values[i];
+    parts[at].rows.push(rowIdx[i]);
+    parts[at].values.push(values[i]);
+  }
+  const out: string[] = [];
+  const columnModes: { [key: number]: number } = {};
+  for (const part of parts) {
+    // Some exports repeat a payment's whole amount for every invoice. Apply the existing column-sum proof per group.
+    let repeated = part.values.length >= 2 && part.values[0] > 0;
+    for (const v of part.values) if (Math.abs(v - part.values[0]) >= 0.005) repeated = false;
+    for (let c = 0; c < h.texts.length && repeated; c++) {
+      if (c === valCol || h.texts[c] === "" || !shMoneyHeader(h.texts[c]) || SH_DED_HDR.test(h.texts[c]) || (c < conv.length && conv[c])) continue;
+      if (columnModes[c] === undefined) columnModes[c] = shColMode(g.rows, h.row + 1, c);
+      const mode = columnModes[c];
+      let sum = 0, count = 0;
+      for (const r of part.rows) {
+        const cells = g.rows[r].cells;
+        const v = shCellNum(c < cells.length ? cells[c] : null, mode);
+        if (!isNaN(v)) { sum += v; count++; }
+      }
+      if (count === part.rows.length && Math.abs(sum - part.values[0]) < 0.005) { part.sum = part.values[0]; break; }
+    }
+    if (!isFinite(part.sum) || Math.abs(part.sum) >= MAX_AMOUNT) return [];
+    out.push(germanAmount(part.sum) + (part.currency !== "" ? " " + part.currency : ""));
+  }
+  return out;
 }
 
 function shTableName(base: string, i: number, n: number): string {
@@ -7447,7 +7533,7 @@ interface LineInfo {
 // document in a mail; neither changes the amount nor the confidence); curHow: "" when the document shows the currency,
 // "$" for a bare dollar sign it does not explain (read as US dollars), "none" when it shows no currency (read as euros);
 // curSplit: payment totals in different currencies ("3,747.83 USD; 22,257.84 EUR": separate payments), "" otherwise
-interface AmountPick { best: Candidate | null; candidates: Candidate[]; currency: string; curHow: string; curSplit: string; confidence: string; reason: string; doc: DocInfo; ev: AdviceEvidence }
+interface AmountPick { best: Candidate | null; candidates: Candidate[]; currency: string; curHow: string; curSplit: string; curAmounts: string[]; confidence: string; reason: string; doc: DocInfo; ev: AdviceEvidence }
 
 // total and payment labels (also NL, FR, IT, ES, PT, PL, CZ, DA/SV totals, "paid" participles and transfer nouns)
 const STRONG_KEYWORDS = /gesamt|zahlbetrag|auszuzahlende[rn]? betrag|payout total|transfer to (?:your )?bank(?: account)?|funds transferred|net remitted|total remitted|remitted amount|net payout|total payout|payout amount|amount paid out|paid out|amount disbursed|disbursement amount|zahlungsbetrag|überweisungsbetrag|ueberweisungsbetrag|überweisungssumme|auszahlungsbetrag|auszahlung\b|gutschriftsbetrag|erstattungsbetrag|endbetrag|endsumme|summe|total|nettobetrag der zahlung|betrag der überweisung|wir überweisen|überwiesen|ueberwiesen|überweisen wir|überweisen ihnen|zahlung in höhe|zahlen wir|wir zahlen|zu zahlen|angewiesen|den betrag von|gutgeschrieben|zu ihren gunsten|betrag der zahlung|überweisung\b|ueberweisung\b|ausgleichsbetrag|gezahlte[rn]? betrag|bezahlte[rn]? betrag|nettozahlung|gutschrift auf ihr konto|remittance total|remittance amount|payment amount|payment value(?! date)|net amount paid|net payment|total paid|payment total|check amount|credited amount|amount credited|transfer amount|we have (?:today )?(?:paid|transferred|remitted)|payment of\b|totaal|celkem|\bi alt\b|totalt|\bsumma\b|\bsuma\b|razem|betaald|overgemaakt|overboeking|réglé|reglé|payé|viré|versé|virement|pagato|bonifico|bonificato|pagado|transferencia|transferido|abonado|valor pago|montante pago|total pago|transferência|przelew|przelano|zapłacono|zapłacona|wpłacono|uregulowano|uhrazen|zaplacen|převedeno|betalt|overført|indbetalt|överfört|utbetalt|nous avons (?:réglé|payé|viré|versé)|wij hebben (?:betaald|overgemaakt)|abbiamo (?:pagato|bonificato|saldato)|hemos (?:pagado|transferido|abonado)|efetu[aá]mos|pagámos|transferimos|uhradili jsme|jsme uhradili|zaplatili jsme|jsme zaplatili|převedli jsme|przelaliśmy|zapłaciliśmy|uregulowaliśmy|vi har (?:betalt|overført|betalat|överfört)|montant (?:du |de )?(?:règlement|reglement|paiement|virement)|importo (?:del )?(?:pagamento|bonifico)|importe (?:del )?(?:pago|transferencia)|bedrag (?:van de )?betaling|kwota (?:płatności|przelewu)|částka (?:platby|úhrady)|(?:transferred|remitted) to your (?:bank )?account|(?:net|total) remittance|amount (?:actually |effectively )?remitted|amount (?:actually |effectively )?paid|amount (?:actually |effectively )?transferred|dividend paid|amount of (?:this|the) payment|betrag dieser zahlung|(?:eft|bacs|chaps) (?:amount|total)|(?:^|\s)payout\s*:?\s*(?:[€$£]|eur|usd|gbp|chf)?\s*$|(?:^|[^a-zäöüß])(?:an sie|auf ihr (?:bank)?konto) (?:überwiesen|ueberwiesen|ausgezahlt)(?![a-zäöüß])|\b(?:paid|transferred|remitted) to you\b/i;
@@ -8773,7 +8859,7 @@ function deductionChain(all: Candidate[], infos: LineInfo[], candAt: Candidate[]
   for (const c of all) if (Math.abs(c.value - sum) < 0.015 && (c.label.strong || c.method === "column-sum")) { c.score += 2; c.confirmed = true; }
 }
 
-function chooseCurrency(best: Candidate | null, infos: LineInfo[], valueLine: string): { code: string; competing: boolean; codes: string; how: string; split: string } {
+function chooseCurrency(best: Candidate | null, infos: LineInfo[], valueLine: string): { code: string; competing: boolean; codes: string; how: string; split: string; amounts: string[] } {
   // Currency token closest to the amount in its line, else in the line, else the document's most frequent one. A bare
   // "$" is the dollar the document names or the one of the payer's country (dollarCurrency), else US dollars.
   // how: "" = shown, "$" = a bare dollar sign without such evidence, "none" = no currency in the document (euros)
@@ -8821,14 +8907,17 @@ function chooseCurrency(best: Candidate | null, infos: LineInfo[], valueLine: st
     else if (anyCode !== "") { code = anyCode; how = anyShown ? "" : "$"; }
     else { code = "EUR"; how = "none"; }
   }
-  return { code: code, competing: order.length >= 2, codes: order.join("/"), how: how, split: order.length >= 2 ? currencySplit(infos, dollar) : "" };
+  const amounts: string[] = [];
+  const split = order.length >= 2 ? currencySplit(infos, dollar, amounts) : "";
+  return { code: code, competing: order.length >= 2, codes: order.join("/"), how: how, split: split, amounts: amounts };
 }
 
-function currencySplit(infos: LineInfo[], dollar: string): string {
+function currencySplit(infos: LineInfo[], dollar: string, amounts: string[]): string {
   // Payment amounts in two or more currencies, each on its own payment line ("Payment total USD 3,747.83", "Payment total
   // EUR 22,257.84"): separate payments, a transfer has one currency - not when the document converts between them
   // (exchange rate, equivalent) or names the debit of the payer's account; "" = none
   const parts: string[] = [];
+  const values: string[] = [];
   const codes: string[] = [];
   for (const inf of infos) {
     if (FX_LINE.test(inf.text)) return "";
@@ -8847,7 +8936,9 @@ function currencySplit(infos: LineInfo[], dollar: string): string {
     if (code === "" || two || codes.indexOf(code) >= 0) continue;
     codes.push(code);
     parts.push(inf.amounts[0].text + " " + code);
+    values.push(germanAmount(inf.amounts[0].value) + " " + code);
   }
+  if (codes.length >= 2) for (const value of values) amounts.push(value);
   return codes.length >= 2 ? parts.join("; ") : "";
 }
 
@@ -12714,7 +12805,7 @@ function pickAmount(lines0: string[], extraKeywords: string): AmountPick {
     if (!explained && !deductionsExplain(best.value - xcT.value, dedL)) transferMismatch = "transfer amount " + xcT.amount + " differs from " + best.amount;
   }
   const cur = chooseCurrency(best, infos, best !== null ? infos[best.lineIdx].text : "");
-  const out: AmountPick = { best: best, candidates: all.slice(0, 8), currency: cur.code, curHow: cur.how, curSplit: cur.split, confidence: "low", reason: "", doc: doc, ev: adviceEvidence(infos, doc, best) };
+  const out: AmountPick = { best: best, candidates: all.slice(0, 8), currency: cur.code, curHow: cur.how, curSplit: cur.split, curAmounts: cur.amounts, confidence: "low", reason: "", doc: doc, ev: adviceEvidence(infos, doc, best) };
   if (best === null) return out;
 
   // ---- confidence: rule quality + distance to the next different amount + absolute score floors
@@ -14560,8 +14651,10 @@ const NO_SUBJECT = "(Kein Betreff)";
 // the amount in front of a subject (also after reply and forward prefixes "AW: 2.601,35 EUR - Zahlungsavis"): the flow ran
 // before; group 1 = amount and currency
 const BOT_PREFIX = /^\s*(?:(?:aw|re|wg|fw|fwd|antw|tr|wtr|sv|vs)\s*:\s*)*(-?\d{1,3}(?:\.\d{3})*,\d{2} [A-Z]{3})(?: \(prüfen\)| \?)?(?: - |\s*$)/i;
-// current prefix: amount only, followed by a space and the original subject; group 1 = amount
-const BOT_PLAIN_PREFIX = /^\s*(?:(?:aw|re|wg|fw|fwd|antw|tr|wtr|sv|vs)\s*:\s*)*(-?\d{1,3}(?:\.\d{3})*,\d{2})(?: \(prüfen\)| \?)?(?:\s|$)/i;
+// current prefix: one or several amounts, followed by a space and the original subject; group 1 = complete amount list
+const BOT_PLAIN_PREFIX = /^\s*(?:(?:aw|re|wg|fw|fwd|antw|tr|wtr|sv|vs)\s*:\s*)*(-?\d{1,3}(?:\.\d{3})*,\d{2}(?: \+ -?\d{1,3}(?:\.\d{3})*,\d{2})*)(?: \(prüfen\)| \?)?(?!\s*\+)(?:\s|$)/i;
+// canonical separate payment values, retained by the parser before any diagnostic text is built
+const PAYMENT_AMOUNT = /^(-?\d{1,3}(?:\.\d{3})*,\d{2}) ([A-Z]{3})$/;
 // the mail text refers to an attachment ("anbei", "im Anhang", "attached")
 const ATTACH_REF = /\banbei\b|im anhang|in der anlage|als anlage|beigefügt|beiliegend|anhängend|\bangehängt|\bangehaengt|siehe anhang|siehe anlage|\battached\b|\benclosed\b|see attachment|please find/i;
 // the payee's colleague says that a payment is received or booked ("die Zahlung ist eingegangen und gebucht", "the payment
@@ -14944,7 +15037,7 @@ function extractPdf(bytes: Uint8Array): ExtractInfo {
 
 function emptyResult(): AvisResult {
   return { ok: false, amount: "", amountNumber: 0, currency: "", line: "", method: "none", confidence: "low", candidates: [], pages: 0, text: "", textLength: 0, warnings: "", error: "",
-    verdict: "other", verdictWhy: "", category: "", subjectPrefix: "", newSubject: "", patchCategory: "", patchSubject: "", documents: [] };
+    verdict: "other", verdictWhy: "", category: "", paymentAmounts: [], subjectPrefix: "", newSubject: "", patchCategory: "", patchSubject: "", documents: [] };
 }
 
 // one analysed PDF: the result, the score of the chosen amount (-1 = none), the evidence of pickAmount (null when no text
@@ -14954,6 +15047,7 @@ interface PdfOutcome { res: AvisResult; score: number; pick: AmountPick | null; 
 function applyPick(res: AvisResult, pick: AmountPick): number {
   // amount, confidence and candidates of pickAmount into the result; returns the score of the chosen amount (-1 = none)
   res.currency = pick.currency;
+  res.paymentAmounts = pick.curAmounts.slice();
   res.candidates = [];
   for (const c of pick.candidates) res.candidates.push(c.amount + " | " + c.score.toFixed(2) + " | " + c.method + " | " + c.line.substring(0, 120));
   if (!pick.best) { res.error = "no amount pattern found"; return -1; }
@@ -15074,9 +15168,12 @@ function pdfDocument(name: string, data: Uint8Array, kw: string): DocResult {
   if (d.verdict === "other" && o.incomplete) { d.verdict = "unclear"; d.why = "PDF read incompletely; " + v.why; }
   // several advices in one PDF (one per page, each with its own payment number and total)
   if (d.verdict === "advice") {
-    const parts = paymentParts(o.res.text.split("\n"), kw, d.register === "");
-    if (parts.length >= 2) { d.verdict = "several"; d.why = parts.length + " payments in the document (" + parts.join("; ") + ")"; }
+    const complete = [true];
+    const parts = paymentParts(o.res.text.split("\n"), kw, d.register === "", complete);
+    if (parts.length >= 2) { d.verdict = "several"; d.res.paymentAmounts = complete[0] ? parts : []; d.why = parts.length + " payments in the document (" + parts.join("; ") + ")"; }
+    else if (!complete[0]) { d.verdict = "unclear"; d.res.paymentAmounts = []; d.why = "separate payments in the document, but not all amounts readable"; }
   }
+  if (o.incomplete && d.verdict === "several") d.res.paymentAmounts = [];
   return d;
 }
 
@@ -15207,34 +15304,43 @@ function bodyAmountFix(d: DocResult, lines: string[]): void {
   }
 }
 
-function paymentParts(lines: string[], kw: string, split: boolean): string[] {
+function paymentParts(lines: string[], kw: string, split: boolean, complete: boolean[]): string[] {
   // separate payments printed in one document, each part with a payment total of its own: parts that start at a heading
   // counting the payments ("Payment 1 of 2"), at the first line of each payment number of one kind ("Zahlbeleg
   // 1500011937" / "Zahlbeleg 1500012763") or at the mail header of each forwarded bank confirmation; returns the
   // different amounts of the parts ("7.981,17 EUR"; [] = one payment or not clear). The part before the first heading
   // belongs to the first payment; a grand total over the parts ("Total paid this week") is no payment of its own. A
   // payment history lists earlier payments, no new ones. split: also one payment split by the means of payment
-  // (splitPayments; not in a payment register, whose lines go to several payees)
+  // (splitPayments; not in a payment register, whose lines go to several payees). complete[0] becomes false when a
+  // named payment is missing/unreadable or a parsing limit omits parts; the partial list is then only diagnostic.
   if (lines.length < 4 || lines.length > 4000) return [];
   const text = lines.join("\n");
   if (PAY_HISTORY.test(text)) return [];
   const starts: number[] = [];
-  for (let i = 0; i < lines.length && starts.length < 20; i++) {
+  let expectedParts = 0;
+  for (let i = 0; i < lines.length; i++) {
     // a heading of its own, not a row with an amount ("Zahlung 2 von 3   gezahlt am 01.10.2026   1.000,00" lists rates)
     const m = PAY_COUNT_HEAD.exec(lines[i]);
     if (m === null || /\d[.,]\d{2}(?![\d.,])/.test(lines[i])) continue;
     const k = parseInt(m[1], 10), n = parseInt(m[2], 10);
-    if (n >= 2 && k >= 1 && k <= n) starts.push(i);
+    if (n >= 2 && k >= 1 && k <= n) {
+      if (starts.length < 20) starts.push(i);
+      else complete[0] = false;
+      expectedParts = Math.max(expectedParts, n);
+    }
   }
   // headings that number the payments without their count ("Auszahlung 1" ... "Auszahlung 2"), in the order 1, 2, ...
   // (headed: a part's heading names its payment, so a part's amount labelled only "Betrag" is that payment)
   let headed = starts.length >= 2;
   if (starts.length < 2) {
     const nums: number[] = [];
-    for (let i = 0; i < lines.length && nums.length < 20; i++) {
+    let numberedCount = 0;
+    for (let i = 0; i < lines.length; i++) {
       const m = PAY_NUM_HEAD.exec(lines[i]);
-      if (m === null || parseInt(m[1], 10) !== nums.length + 1) continue;
-      nums.push(i);
+      if (m === null || parseInt(m[1], 10) !== numberedCount + 1) continue;
+      numberedCount++;
+      if (nums.length < 20) nums.push(i);
+      else complete[0] = false;
     }
     if (nums.length >= 2) {
       starts.length = 0;
@@ -15253,9 +15359,9 @@ function paymentParts(lines: string[], kw: string, split: boolean): string[] {
         const id = m[2].replace(/[.\/_-]+$/, "").toUpperCase();
         const kind = /avis|remittance|advice/i.test(m[1]) ? 1 : /^(?:che|scheck)/i.test(m[1]) ? 2 : 0;
         const digits = id.replace(/\D/g, "").length;
-        if (digits >= 3 && !/^\d{1,2}[.\/]\d{1,2}[.\/]\d{2,4}$/.test(id) && ids[kind].indexOf(id) < 0 && ids[kind].length < 20) {
-          ids[kind].push(id);
-          at[kind].push(i);
+        if (digits >= 3 && !/^\d{1,2}[.\/]\d{1,2}[.\/]\d{2,4}$/.test(id) && ids[kind].indexOf(id) < 0) {
+          if (ids[kind].length < 20) { ids[kind].push(id); at[kind].push(i); }
+          else complete[0] = false;
         }
         m = PAY_NUMBER.exec(lines[i]);
       }
@@ -15264,7 +15370,10 @@ function paymentParts(lines: string[], kw: string, split: boolean): string[] {
       const rm = PAY_REF_DATED.exec(lines[i]);
       if (rm !== null) {
         const id = rm[1].replace(/[.\/_-]+$/, "").toUpperCase();
-        if (id.replace(/\D/g, "").length >= 3 && ids[0].indexOf(id) < 0 && ids[0].length < 20) { ids[0].push(id); at[0].push(i); }
+        if (id.replace(/\D/g, "").length >= 3 && ids[0].indexOf(id) < 0) {
+          if (ids[0].length < 20) { ids[0].push(id); at[0].push(i); }
+          else complete[0] = false;
+        }
       }
     }
     PAY_NUMBER.lastIndex = 0;
@@ -15276,11 +15385,11 @@ function paymentParts(lines: string[], kw: string, split: boolean): string[] {
   let blocks = false;
   if (starts.length < 2) {
     const hs: number[] = [];
-    for (let i = 0; i < lines.length && hs.length < 20; i++) {
+    for (let i = 0; i < lines.length; i++) {
       if (!MAIL_FROM.test(lines[i])) continue;
       let more = 0;
       for (let k = i + 1; k <= i + 4 && k < lines.length; k++) if (MAIL_HEADER.test(lines[k])) more++;
-      if (more >= 2) hs.push(i);
+      if (more >= 2) { if (hs.length < 20) hs.push(i); else complete[0] = false; }
     }
     if (hs.length >= 2) {
       starts.length = 0;
@@ -15288,12 +15397,13 @@ function paymentParts(lines: string[], kw: string, split: boolean): string[] {
       blocks = true;
     }
   }
+  if (expectedParts > starts.length) complete[0] = false;
   if (starts.length < 2) return split ? splitPayments(lines) : [];
   const vals: number[] = [];
   const curs: string[] = [];
   const picks: AmountPick[] = [];
   for (let s = 0; s < starts.length; s++) {
-    if (runDeadline > 0 && Date.now() > runDeadline) return [];
+    if (runDeadline > 0 && Date.now() > runDeadline) { complete[0] = false; return []; }
     const part = lines.slice(s === 0 ? 0 : starts[s], s + 1 < starts.length ? starts[s + 1] : lines.length);
     const pk = pickAmount(part, kw);
     let b = pk.best;
@@ -15312,7 +15422,10 @@ function paymentParts(lines: string[], kw: string, split: boolean): string[] {
     }
     // the part's own payment total: a payment label or column, or an amount its arithmetic confirms; under a heading that
     // names the payment also an amount labelled "Betrag" / "Amount" when the part shows that it was paid (PART_DONE)
-    if (b === null || b.copy || b.value <= 0 || b.label.neg || !(b.label.payment || b.col === "pay" || b.confirmed || (headed && b.label.weak && !b.label.ded && PART_DONE.test(part.join("\n").replace(NOT_PAID_G, " ").replace(PART_PENDING_G, " "))))) continue;
+    if (b === null || b.copy || b.value <= 0 || b.label.neg || !(b.label.payment || b.col === "pay" || b.confirmed || (headed && b.label.weak && !b.label.ded && PART_DONE.test(part.join("\n").replace(NOT_PAID_G, " ").replace(PART_PENDING_G, " "))))) {
+      if (!blocks || pk.doc.kind === "advice") complete[0] = false;
+      continue;
+    }
     if (blocks && !(pk.doc.kind === "advice" && pk.doc.transferForm)) continue;
     vals.push(Math.round(b.value * 100) / 100);
     curs.push(pk.currency !== "" ? pk.currency : "EUR");
@@ -15680,15 +15793,17 @@ function linesDocument(name: string, type: string, lines0: string[], kw: string,
   d.forOwner = pick.doc.forOwner;
   // several payments in one mail text or text file ("Zahllauf 22.10. ... Überweisungsbetrag", "Zahllauf 29.10. ...")
   if (d.verdict === "advice" && (body || TEXT_DOC.test(type))) {
-    const parts = paymentParts(lines, kw, d.register === "");
-    if (parts.length >= 2) { d.verdict = "several"; d.why = parts.length + " payments in the document (" + parts.join("; ") + ")"; }
+    const complete = [true];
+    const parts = paymentParts(lines, kw, d.register === "", complete);
+    if (parts.length >= 2) { d.verdict = "several"; d.res.paymentAmounts = complete[0] ? parts : []; d.why = parts.length + " payments in the document (" + parts.join("; ") + ")"; }
+    else if (!complete[0]) { d.verdict = "unclear"; d.res.paymentAmounts = []; d.why = "separate payments in the document, but not all amounts readable"; }
   }
   // the writer says it made several separate payments and lists that many amounts, one per line ("Heute sind zwei
   // Überweisungen an Sie rausgegangen ...:" / "1. ... 4.380,00 EUR für RE-2026-10690" / "2. ... 1.126,40 EUR für
   // RE-2026-10702"): one advice per payment
   if (body && (d.verdict === "advice" || d.verdict === "unclear") && pick.ev.payer && res.ok) {
     const sp = statedPayments(pick.doc.ownText, res.currency !== "" ? res.currency : "EUR");
-    if (sp.length >= 2) { d.verdict = "several"; d.why = sp.length + " payments named in the mail text (" + sp.join("; ") + ")"; }
+    if (sp.length >= 2) { d.verdict = "several"; d.res.paymentAmounts = sp; d.why = sp.length + " payments named in the mail text (" + sp.join("; ") + ")"; }
   }
   if (body) {
     // the writer asks for money back (a duplicate payment, an overpayment): the money goes to the writer, no advice. Beside
@@ -15871,6 +15986,8 @@ function sheetExtras(d: DocResult, t: SheetTable, hintCtx: boolean, sheet: boole
     d.why = d.why + ", but " + plan;
   }
   if (t.groups > 1 && (d.verdict === "advice" || (evidence && d.verdict !== "other"))) {
+    // Keep the separate totals, including a possible history later confirmed by the mail text. Never expose a partial list.
+    d.res.paymentAmounts = !cut && t.paymentAmounts.length >= t.groups ? t.paymentAmounts.map((a) => / [A-Z]{3}$/.test(a) ? a : a + " " + (d.res.currency || "EUR")) : [];
     // a payment history (earlier payments over a period, a "year to date" total) names no new payment: titled as such and
     // without an advice title, a payer statement or an advice word in the subject or file name it is no advice; a period
     // or a "year to date" total alone leaves it for a check
@@ -16001,6 +16118,7 @@ function dataDocument(name: string, type: string, tree: DataNode, kw: string): D
   const d = linesDocument(name, type, dataToLines(tree, info), kw, false, false);
   if (info.cut) {
     // (a list too long to read in full: its totals and rows may be incomplete)
+    d.res.paymentAmounts = [];
     d.res.warnings = "data file read in part (first " + DATA_MAX_LINES + " lines)";
     if (d.res.ok && d.res.confidence !== "low") {
       d.res.confidence = "low";
@@ -16343,6 +16461,23 @@ function decideMail(docs: DocResult[], hint: string, noDocError: string): AvisRe
       break;
     }
   }
+  // A cover note may repeat the combined total of separate attached payments. That total is not another payment;
+  // an explicitly additional transfer with the same amount still is.
+  if (attachAdvice) {
+    const attached = collectPaymentAmounts(docs.filter((d) => !d.body), groups);
+    for (let i = groups.length - 1; i >= 0; i--) {
+      const g = groups[i];
+      if (!g.docs.every((d) => d.body && !ADDITIONAL_PAYMENT.test(d.res.text))) continue;
+      let sum = 0, count = 0;
+      for (const p of attached) {
+        const m = PAYMENT_AMOUNT.exec(p);
+        if (m !== null && m[2] === g.currency) { sum += parseGermanAmount(m[1]); count++; }
+      }
+      if (count < 2 || Math.abs(sum - g.value) >= 0.005) continue;
+      for (const d of g.docs) { d.verdict = "unclear"; d.why = "mail text repeats the total of the separate payments"; }
+      groups.splice(i, 1);
+    }
+  }
   // one line per document, before the chosen result gets the notes of the mail
   const lines: string[] = [];
   for (const d of docs) lines.push(docLine(d));
@@ -16357,11 +16492,22 @@ function decideMail(docs: DocResult[], hint: string, noDocError: string): AvisRe
       for (const d of g.docs) if (d.type !== "pdf") allPdf = false;
       res.candidates.push(g.docs[0].res.amount + " | " + g.docs[0].res.confidence + " | " + g.docs[0].name);
     }
-    if (severalDoc !== null) list.push(severalDoc.why + " (" + severalDoc.name + ")");
+    let complete = true;
+    for (const d of docs) if (d.verdict === "several") {
+      list.push(d.why + " (" + d.name + ")");
+      if (d.res.paymentAmounts.length < 2) complete = false;
+    }
+    res.paymentAmounts = collectPaymentAmounts(docs, groups);
     res.verdict = "several";
     const what = groups.length < 2 ? "several payments in one document" : allPdf ? "several PDFs in the mail with different amounts" : "several advices in the mail with different amounts";
     res.verdictWhy = (groups.length >= 2 ? groups.length + " advices with different amounts" : "several payments in one document") + " (" + list.join("; ") + ")";
     res.error = what + " (" + list.join("; ") + ")";
+    // Never write just the known part of a multi-payment document as if it were the complete list.
+    if (!complete) {
+      res.verdict = "unclear";
+      res.verdictWhy = "separate payment amounts incomplete (" + res.verdictWhy + ")";
+      res.error = res.verdictWhy;
+    }
     chosen = groups.length > 0 ? groups[0].docs[0] : severalDoc;
     if (chosen !== null) { res.pages = chosen.res.pages; res.warnings = chosen.res.warnings; }
   } else if (groups.length === 1) {
@@ -16858,6 +17004,17 @@ function bodyTableCheck(d: DocResult, html: Uint8Array): void {
   r.error = "uncertain: total computed from " + big.payRows + " rows of column '" + big.payHeader + "'";
 }
 
+function inferredPaymentCurrency(res: AvisResult, code: string): void {
+  // Correct the retained parts together with an inferred document currency. Explicitly mixed currencies remain
+  // separate; this helper is called only for documents with no currency or an ambiguous dollar sign.
+  const old = res.currency || "EUR";
+  const suffix = " " + old;
+  if (res.paymentAmounts.every((p) => p.endsWith(suffix))) {
+    res.paymentAmounts = res.paymentAmounts.map((p) => p.substring(0, p.length - suffix.length) + " " + code);
+  }
+  res.currency = code;
+}
+
 function mailCurrency(docs: DocResult[]): void {
   // An amount whose document shows no currency, or only a bare "$" (a CSV or sheet export, a short remittance list): the
   // currency the mail gives for it - the same amount with its currency in another document of the mail (the mail text of
@@ -16905,13 +17062,13 @@ function mailCurrency(docs: DocResult[]): void {
     }
     if (usPayer) {
       const prev = d.res.error.indexOf("uncertain: ") === 0 ? d.res.error.substring(11) : d.res.error;
-      d.res.currency = "USD";
+      inferredPaymentCurrency(d.res, "USD");
       d.res.confidence = "low";
       d.res.error = "uncertain: no currency in the document, payer in the US (USD or EUR?)" + (prev !== "" ? "; " + prev : "");
       continue;
     }
     if (code === "" || code === d.res.currency) continue;
-    d.res.currency = code;
+    inferredPaymentCurrency(d.res, code);
     if (!assumed) continue;
     if (d.res.confidence === "high") d.res.confidence = "medium";
     d.res.warnings = "no currency in " + d.name + " - " + code + " assumed from the mail" + (d.res.warnings !== "" ? " | " + d.res.warnings : "");
@@ -17381,6 +17538,40 @@ function documentResult(bytes: Uint8Array, raw: string, kw: string, subject: str
   return res;
 }
 
+function collectPaymentAmounts(docs: DocResult[], groups: AmountGroup[]): string[] {
+  // Document order is retained. A PDF and its copy in the mail text count once; if a document explicitly contains
+  // identical separate payments, retain that multiplicity rather than collapsing the payments into a single amount.
+  const out: string[] = [];
+  const counts: { [amount: string]: number } = {};
+  for (const d of docs) {
+    const parts: string[] = [];
+    if (d.verdict === "several") {
+      for (const p of d.res.paymentAmounts) parts.push(p);
+    } else if (d.verdict === "advice") {
+      for (const g of groups) if (g.docs.indexOf(d) >= 0) parts.push(germanAmount(g.value) + " " + g.currency);
+    }
+    const seen: { [amount: string]: number } = {};
+    for (const p of parts) {
+      seen[p] = (seen[p] || 0) + 1;
+      if (seen[p] > (counts[p] || 0)) {
+        out.push(p);
+        counts[p] = seen[p];
+      }
+    }
+  }
+  return out;
+}
+
+function samePaymentPrefix(shown: string, amounts: string[]): boolean {
+  // A repeated run or a reply can see the same documents in a different order. Compare the entire list, including
+  // repeated values; matching only its first amount would hide a new second or third payment.
+  const before = shown.split(" + ").sort();
+  const current = amounts.slice().sort();
+  if (before.length !== current.length) return false;
+  for (let i = 0; i < before.length; i++) if (before[i] !== current[i]) return false;
+  return true;
+}
+
 function subjectFields(res: AvisResult, subject: string, keywords: string): void {
   // category, subject prefix and the JSON bodies of the two HTTP requests (PATCH categories, PATCH subject)
   let cat = "";
@@ -17391,30 +17582,47 @@ function subjectFields(res: AvisResult, subject: string, keywords: string): void
     if (res.verdict === "advice") { res.verdict = "unclear"; res.verdictWhy = res.error; }
   }
   let amt = "";
+  const amounts: string[] = [];
   if (res.verdict === "advice" && res.ok) {
     amt = germanAmount(res.amountNumber);
+    amounts.push(amt);
     if (res.confidence === "high") { cat = "Avis"; tag = amt; }
     else if (res.confidence === "medium") { cat = "Avis"; tag = amt + " (prüfen)"; }
     else { cat = "Avis prüfen"; tag = amt + " ?"; }
   } else if (res.verdict === "advice") {
     res.verdict = "unclear";
     cat = "Avis prüfen";
-  } else if (res.verdict === "several") cat = "mehrere Avise";
+  } else if (res.verdict === "several") {
+    let valid = res.paymentAmounts.length >= 2;
+    for (const p of res.paymentAmounts) {
+      const m = PAYMENT_AMOUNT.exec(p);
+      const value = m !== null ? parseGermanAmount(m[1]) : NaN;
+      if (m === null || !isFinite(value) || Math.abs(value) >= MAX_AMOUNT || germanAmount(value) !== m[1]) valid = false;
+      else amounts.push(m[1]);
+    }
+    if (valid) { cat = "Avis"; tag = amounts.join(" + "); }
+    else {
+      res.verdict = "unclear";
+      res.verdictWhy = "separate payment amounts incomplete or out of range (" + res.verdictWhy + ")";
+      res.error = res.verdictWhy;
+      cat = "Avis prüfen";
+    }
+  }
   else if (res.verdict === "unclear") cat = "Avis prüfen";
+  if (res.verdict !== "several") res.paymentAmounts = [];
   res.category = cat;
   res.subjectPrefix = tag !== "" ? tag + " " : "";
   res.newSubject = "";
   res.patchSubject = "";
   const subj = subject.trim();
-  // the amount goes in front of the subject; a subject that already carries this amount (in front, also after AW:/WG:, or
-  // behind as written by earlier versions) stays as it is (the flow ran before); another amount there (a new advice in a
-  // reply thread) gets the new amount in front; a mail without a subject gets the amount alone
-  const had = BOT_PREFIX.exec(subj) || BOT_SUFFIX.exec(subj);
+  // The complete amount list goes in front of the subject. A matching list (also after AW:/WG:) stays as it is.
+  // Older versions wrote a single amount with currency at the front or back; retain their currency comparison.
   const plain = BOT_PLAIN_PREFIX.exec(subj);
+  const had = BOT_PREFIX.exec(subj) || (plain === null ? BOT_SUFFIX.exec(subj) : null);
   // retain recognition of earlier prefixes with currency, including their currency comparison
   const sameAmount = had !== null
-    ? had[1].toUpperCase() === (amt + " " + (res.currency || "EUR")).toUpperCase()
-    : plain !== null && plain[1] === amt;
+    ? amounts.length === 1 && had[1].toUpperCase() === (amt + " " + (res.currency || "EUR")).toUpperCase()
+    : plain !== null && samePaymentPrefix(plain[1], amounts);
   if (tag !== "" && subj !== "" && !sameAmount) {
     res.newSubject = subj === NO_SUBJECT ? tag : tag + " " + subj;
     res.patchSubject = JSON.stringify({ subject: res.newSubject });
@@ -17426,6 +17634,8 @@ function subjectFields(res: AvisResult, subject: string, keywords: string): void
     for (const k of keywords.split(",")) {
       const t = k.trim();
       if (t === "") continue;
+      // Replace the retired category when this multi-advice mail is processed again; keep unrelated categories.
+      if (res.verdict === "several" && cat === "Avis" && t.toLowerCase() === "mehrere avise") continue;
       let dup = false;
       for (const c of cats) if (c.toLowerCase() === t.toLowerCase()) dup = true;
       if (!dup) cats.push(t);

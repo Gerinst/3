@@ -2,7 +2,7 @@
 
 Diese Anleitung baut den Flow für ein **freigegebenes Postfach** (Exchange Shared Mailbox). Jede neue Mail geht als Ganzes an das Skript: PDF-Anlagen, Excel- und CSV-Dateien, SAP-Exporte und der Mailtext. Bei einem Zahlungsavis mit neuem Betreff bekommt die **Original-Mail** zuerst den Betrag vorne in den Betreff und danach die Kategorie. Fälle ohne neuen Betreff erhalten nur ihre Kategorie. Andere Mails bleiben unberührt. Es kommen keine zusätzlichen Mails.
 
-Alle Klickwege in dieser Anleitung sind am 30.10.2026 in einem Microsoft-365-Testzugang mit dem damaligen Stand von Skript und Flow nachgegangen worden (12 Test-Mails, 12 richtige Ergebnisse). Die neue Reihenfolge „erst Betreff, dann Kategorie“ wurde danach lokal geprüft und ist noch nicht live in Microsoft 365 getestet. Einen klickbaren Nachbau des aktuellen Flows mit allen Feldern, Einstellungen und Formeln zum Kopieren gibt es in `dist/avis-flow.html` (herunterladen und im Browser öffnen).
+Alle Klickwege in dieser Anleitung sind am 30.10.2026 in einem Microsoft-365-Testzugang mit dem damaligen Stand von Skript und Flow nachgegangen worden (12 Test-Mails, 12 richtige Ergebnisse). Die neue Reihenfolge „erst Betreff, dann Kategorie“ und die Anzeige mehrerer Beträge mit ` + ` und Kategorie „Avis“ wurden danach lokal geprüft und sind noch nicht erneut live in Microsoft 365 getestet. Einen klickbaren Nachbau des aktuellen Flows mit allen Feldern, Einstellungen und Formeln zum Kopieren gibt es in `dist/avis-flow.html` (herunterladen und im Browser öffnen).
 
 ## Überblick
 
@@ -11,14 +11,18 @@ Alle Klickwege in dieser Anleitung sind am 30.10.2026 in einem Microsoft-365-Tes
 | Ein Avis, Betrag sicher | Avis | `2.601,35 Zahlungsavis` |
 | Ein Avis, Betrag ziemlich sicher | Avis | `2.601,35 (prüfen) Zahlungsavis` |
 | Ein Avis, Betrag unsicher | Avis prüfen | `2.601,35 ? Zahlungsavis` |
-| Mehrere Avise in einer Mail | mehrere Avise | unverändert |
+| Mehrere Avise in einer Mail | Avis | `1.200,30 + 5.632,21 + 500,42 Zahlungsavis` |
 | Unklar: Avis-Hinweis, aber nicht lesbar (Scan, verschlüsselt, altes .xls) oder nicht sicher erkennbar | Avis prüfen | unverändert |
 | Skript-Fehler oder Zeitüberschreitung | Avis prüfen | unverändert |
 | Kein Avis (Rechnung, Reklamation, Bestellung, Info, Mahnung …) | keine | unverändert |
 
 „Zahlungsavis" steht hier für den Betreff, den der Absender geschrieben hat. Er bleibt vollständig erhalten; der Betrag steht immer davor, im deutschen Format und mit einem Leerzeichen als Trenner. Eine Währung oder ein Bindestrich wird dabei nicht ergänzt.
 
-„Zahlungsavis“ wird nicht automatisch hinzugefügt. Beispiel mit einem anderen Originalbetreff: Aus `Abrechnung Oktober` wird bei einem sicheren Betrag von 5.500,05 Euro `5.500,05 Abrechnung Oktober`. Bei unsicheren Ergebnissen steht weiterhin `(prüfen)` oder `?` hinter dem Betrag.
+„Zahlungsavis“ wird nicht automatisch hinzugefügt. Beispiel mit einem anderen Originalbetreff: Aus `Abrechnung Oktober` wird bei einem sicheren Betrag von 5.500,05 Euro `5.500,05 Abrechnung Oktober`. Bei einem einzelnen unsicheren Ergebnis steht weiterhin `(prüfen)` oder `?` hinter dem Betrag.
+
+Bei mehreren Avisen werden die einzelnen erkannten Zahlbeträge mit Leerzeichen, Pluszeichen und Leerzeichen (` + `) verbunden. Danach folgen ein Leerzeichen und der vollständige ursprüngliche Betreff: `1.200,30 + 5.632,21 + 500,42 Abrechnung Oktober`. Das Skript rechnet daraus keine Gesamtsumme. Die Kategorie ist ebenfalls `Avis`. Kann die vollständige Betragsliste nicht verlässlich ausgegeben werden, bleibt der Betreff unverändert und die Mail bekommt `Avis prüfen`.
+
+Eine Gesamtsumme im Begleittext, die nur die einzelnen Zahlungen aus den Anlagen wiederholt, kommt nicht zusätzlich in die Liste. Eine ausdrücklich separat geleistete weitere Zahlung bleibt ein eigener Betrag.
 
 Der Flow in Kurzform:
 
@@ -57,13 +61,15 @@ Wenn eine neue E-Mail in einem freigegebenen Postfach eingeht (V2)
 1. Outlook im Web öffnen und das Postfach aufrufen: `https://outlook.office.com/mail/avis@firma.de/`.
 2. Eine beliebige Mail anklicken, oben auf das **Etikett-Symbol** (Kategorisieren) → **Kategorien verwalten**.
 3. **Neu erstellen** → Name `Avis` → eine Farbe (z. B. Grün) → **Speichern**.
-4. Genauso `Avis prüfen` (z. B. Orange) und `mehrere Avise` (z. B. Lila) anlegen. Die Namen müssen genau so geschrieben sein, mit Leerzeichen und „ü".
+4. Genauso `Avis prüfen` (z. B. Orange) anlegen. Der Name muss genau so geschrieben sein, mit Leerzeichen und „ü". Die frühere Kategorie `mehrere Avise` wird nicht mehr benötigt.
 
 Ohne diesen Schritt erscheinen die Kategorien trotzdem an den Mails, nur grau. Die Farben gelten für alle, die das Postfach öffnen.
 
 **Bei einem bestehenden Flow:** Die bisherige Kategorie `Avise` in Outlook unter **Kategorien verwalten** in `Avis` umbenennen und das Skript `AvisV2` wie in Schritt 3 beschrieben aktualisieren. Wird **Plan B** verwendet, zusätzlich in `Kategorie_Kopie` das Feld **Text** durch die aktuelle Formel aus `dist/avis-flow.html` ersetzen (Plan B einschalten → Karte **Kategorie Kopie**). Sie verwendet die Kategorie `Avis` und erkennt das `?` im neuen Betreffformat. Die sechs TXT-Formeln in `formeln/` bleiben für diese Umstellung unverändert.
 
-Die Reihenfolge „erst Betreff, dann Kategorie“ erfordert zusätzlich einen Umbau des Flows; dafür ist kein weiteres Skriptupdate nötig. Die Schritte stehen unter „Bestehenden Flow auf die neue Reihenfolge umstellen“ nach Schritt 5.9.
+**Mehrere Beträge im Betreff aktivieren:** Das Skript `AvisV2` durch die aktuelle Fassung ersetzen. Es liefert dann auch bei mehreren Avisen einen neuen Betreff und die Kategorie `Avis`. Die sechs TXT-Formeln bleiben unverändert. Bei erneut verarbeiteten Mails mit mehreren Avisen ersetzt es die bisherige Kategorie `mehrere Avise` durch `Avis`; andere Kategorien bleiben erhalten. Bereits vorhandene Mails werden durch das Skriptupdate nicht automatisch nachträglich geändert.
+
+Die Reihenfolge „erst Betreff, dann Kategorie“ erfordert einen Umbau des Flows, falls sie noch nicht eingerichtet ist. Die Schritte stehen unter „Bestehenden Flow auf die neue Reihenfolge umstellen“ nach Schritt 5.9. Ist die Reihenfolge bereits umgestellt, ist für mehrere Beträge kein weiterer Flow-Umbau nötig.
 
 ## Schritt 3: Skript AvisV2 in Excel anlegen (einmalig)
 
@@ -175,7 +181,7 @@ Im Lasttest mit 40 Mails brauchte ein Lauf meist 8 bis 20 Sekunden, auch für ei
 2. Eine Zeile: links **fx** → Formel aus `formeln/Betreff_noetig_links.txt`, Mitte **ist gleich**, rechts **fx** → `true`. Leere Zeile löschen.
 3. Der Zweig **Falsch** bleibt leer. Als erste Karte im Wahr-Zweig von Kategorie_noetig hat Betreff_noetig keinen Vorgänger unter **Ausführen nach** (Codeansicht: `"runAfter": {}`).
 
-Bei „mehrere Avise", unklaren Fällen und schon bearbeiteten Betreffs liefert das Skript keinen neuen Betreff. Auch wenn das Skript gescheitert ist, bleibt der Betreff unverändert. In diesen Fällen wird der leere Falsch-Zweig durchlaufen; danach folgt trotzdem Kategorie_setzen.
+Bei einem Avis oder mehreren erkannten Avisen liefert das Skript einen neuen Betreff: ein Betrag oder eine Liste mit ` + `. In unklaren Fällen, bei bereits vollständig ergänztem Betreff und bei einem Skriptfehler bleibt der Betreff unverändert. Dann wird der leere Falsch-Zweig durchlaufen; danach folgt trotzdem Kategorie_setzen.
 
 ### 5.7 Betreff_setzen
 
@@ -197,7 +203,7 @@ Bei „mehrere Avise", unklaren Fällen und schon bearbeiteten Betreffs liefert 
    - **Content-Type**: `application/json` (steht schon da)
 4. **Einstellungen → Ausführen nach → Betreff noetig**: **Ist erfolgreich**, **Timeout** und **Ist fehlgeschlagen** anhaken. Die Abhängigkeit muss auf die ganze Bedingung zeigen, nicht auf die darin liegende Aktion Betreff_setzen. In der Codeansicht steht `"runAfter": {"Betreff_noetig": ["Succeeded", "TimedOut", "Failed"]}`.
 
-Die Aktion setzt erst nach der Betreff-Bedingung die Kategorie, die das Skript liefert, z. B. `{"categories":["Avis"]}`. Kategorien, die das Skript an der Mail gelesen hat, bleiben erhalten. Ist das Skript gescheitert, setzt die Ersatzformel „Avis prüfen". Ein Fehler oder Timeout beim Ändern des Betreffs verhindert die Kategorisierung nicht; das Skriptergebnis bestimmt weiterhin die Kategorie.
+Die Aktion setzt erst nach der Betreff-Bedingung die Kategorie, die das Skript liefert, z. B. `{"categories":["Avis"]}`. Kategorien, die das Skript an der Mail gelesen hat, bleiben erhalten; bei mehreren Avisen wird nur die frühere Kategorie „mehrere Avise" durch „Avis" ersetzt. Ist das Skript gescheitert, setzt die Ersatzformel „Avis prüfen". Ein Fehler oder Timeout beim Ändern des Betreffs verhindert die Kategorisierung nicht; das Skriptergebnis bestimmt weiterhin die Kategorie.
 
 ### 5.9 Speichern
 
@@ -221,17 +227,20 @@ Oben **Speichern**. Die Meldung „Ihr Flow ist fertiggestellt" erscheint. Der F
    Wichtig für eigene Tests: Eine Mail aus dem eigenen Postfach kommt aus derselben Domain wie `avis@firma.de` und gilt als interne Mail einer Kollegin oder eines Kollegen. Ein Avis als PDF-Anhang wird trotzdem erkannt. Steht das Avis aber nur im Mailtext („wir haben heute 2.601,35 EUR überwiesen"), bekommt eine interne Mail keine Kategorie, weil das Skript dann eine eigene Zahlung der Firma annimmt. Avise im Mailtext deshalb von einer externen Adresse aus testen (z. B. einem privaten Postfach).
 4. Ausführungsverlauf: Power Automate → **Meine Flows** → **Avis V2** → unten die Läufe. Einen Lauf anklicken → **Keine Automatik** aufklappen → **Run script** anklicken → unter **Ausgaben** stehen `result.verdict`, `result.category`, `result.newSubject`, `result.verdictWhy` und je Dokument `result.documents`.
 
-Für die neue Reihenfolge zusätzlich diese Fälle prüfen. Fehlerfälle nur in einer Testkopie des Flows mit Testmails auslösen, z. B. durch einen absichtlich ungültigen Text im Betreff-PATCH. Danach die korrekte Formel wieder einsetzen.
+Für die neue Reihenfolge und mehrere Beträge zusätzlich diese Fälle prüfen. Fehlerfälle nur in einer Testkopie des Flows mit Testmails auslösen, z. B. durch einen absichtlich ungültigen Text im Betreff-PATCH. Danach die korrekte Formel wieder einsetzen.
 
 | Testfall | Erwarteter Ablauf |
 | --- | --- |
 | Ein Avis, dessen Betrag noch nicht im Betreff steht | Erst Betreff_setzen, danach Kategorie_setzen. Im Ausführungsverlauf beginnt die Kategorie-Aktion erst nach Abschluss von Betreff_noetig. |
 | Ein Avis mit bereits ergänztem, gleichem Betrag | Betreff_noetig ist Falsch; der Betreff bleibt erhalten, Kategorie_setzen läuft trotzdem. |
-| Mehrere Avise mit verschiedenen Beträgen oder unlesbares Avis | Kein Betreff-PATCH; danach Kategorie „mehrere Avise“ bzw. „Avis prüfen“. |
+| Zwei oder drei Avise mit verschiedenen Beträgen | Erst z. B. `1.200,30 + 5.632,21 + 500,42 Originalbetreff`, danach Kategorie „Avis“. Keine Währung, keine errechnete Gesamtsumme. |
+| Mehrere Avise mit bereits vollständig ergänzter Betragsliste | Kein weiterer Betreff-PATCH, keine doppelte Betragsliste; Kategorie „Avis“ wird trotzdem gesetzt. |
+| Mehrere Avise auf einer Mail mit Kategorie „mehrere Avise“ und weiterer eigener Kategorie | Betragsliste im Betreff; „mehrere Avise“ wird durch „Avis“ ersetzt, die eigene Kategorie bleibt. |
+| Unlesbares Avis oder unvollständig erkannte Betragsliste | Kein Betreff-PATCH; Kategorie „Avis prüfen“. |
 | Skript fehlgeschlagen oder mit Timeout | Kategorie_noetig läuft, Betreff_noetig ist Falsch, danach setzt Kategorie_setzen „Avis prüfen“. |
 | Betreff-PATCH fehlgeschlagen oder mit Timeout | Erst nach Abschluss der fehlgeschlagenen Betreff-Bedingung läuft Kategorie_setzen; die vom Skript bestimmte Kategorie wird weiterhin gesetzt. |
 | Kein Avis | Kategorie_noetig ist Falsch; weder Betreff noch Kategorie ändern sich. |
-| Plan B: Kopie erfolgreich versandt und Kategorie gesetzt | Erst Kopie_anlegen → Kopie_anpassen → Kopie_senden, danach Kategorie_setzen, anschließend Original_verschieben_noetig = Wahr und Original_verschieben. |
+| Plan B: Ein oder mehrere Avise, Kopie erfolgreich versandt und Kategorie gesetzt | Erst Kopie_anlegen → Kopie_anpassen → Kopie_senden, danach Kategorie_setzen, anschließend Original_verschieben_noetig = Wahr und Original_verschieben. |
 | Plan B: Versand fehlgeschlagen oder ohne nötige Kopie | Kategorie_setzen läuft nach Betreff_noetig; Original_verschieben_noetig ist Falsch, das Original bleibt im Posteingang. |
 | Plan B: Kategorie_setzen fehlgeschlagen | Original_verschieben_noetig wird übersprungen; das Original bleibt im Posteingang, auch wenn die Kopie bereits versandt wurde. |
 
@@ -241,8 +250,9 @@ Was das Skript zurückgibt:
 | --- | --- |
 | `verdict` | `advice` (ein Avis), `several` (mehrere), `unclear`, `other` (kein Avis) |
 | `verdictWhy` | Kurzer Grund auf Englisch, z. B. `advice title 'Zahlungsavis' in Zahlung_4711.pdf` (Anhang B) |
-| `category` | `Avis`, `Avis prüfen`, `mehrere Avise` oder leer |
-| `subjectPrefix` / `newSubject` | Betrag vor dem Betreff (z. B. `2.601,35 `) / der fertige neue Betreff (leer = keine Änderung) |
+| `category` | `Avis`, `Avis prüfen` oder leer |
+| `subjectPrefix` / `newSubject` | Ein Betrag oder mit ` + ` getrennte Beträge vor dem Betreff / der fertige neue Betreff (leer = keine Änderung) |
+| `paymentAmounts` | Bei `several`: einzelne Zahlbeträge mit Währung, z. B. `["1.200,30 EUR", "5.632,21 EUR"]`; sonst leer. `amountNumber` ist bei mehreren Avisen keine errechnete Gesamtsumme. |
 | `patchCategory` / `patchSubject` | Fertiger Text für Kategorie_setzen und Betreff_setzen (leer = nichts tun) |
 | `documents` | Je geprüftem Dokument eine Zeile: Name, Art, Urteil, Betrag, Sicherheit, Grund |
 | `amount`, `amountNumber`, `currency`, `confidence`, `line`, `method`, `candidates`, `pages`, `text`, `textLength`, `warnings`, `error` | Wie in Version 1, zur Fehlersuche (Gründe und Hinweise: Anhang B) |
@@ -257,14 +267,14 @@ Was das Skript zurückgibt:
 
 - **Avis:** Betrag vorne im Betreff. Steht dahinter „(prüfen)", ist sich das Skript nur ziemlich sicher (z. B. Avis nur im Mailtext). In den ersten Wochen jede Avis-Mail kurz gegen das Dokument halten.
 - **Avis prüfen:** Steht ein Betrag mit „?" im Betreff, ist er ein Vorschlag. Ohne Betrag: Mail öffnen und von Hand buchen. Den Grund zeigt der Ausführungsverlauf bei Run script (`result.error`, `result.verdictWhy`, Anhang B).
-- **mehrere Avise:** Die Mail enthält zwei oder mehr Avise mit verschiedenen Beträgen. Beträge von Hand buchen; der Betreff bleibt unverändert.
+- **Mehrere Avise:** Die Mail enthält mehrere erkannte Zahlungen. Alle einzelnen Beträge stehen mit ` + ` getrennt vor dem Originalbetreff, die Kategorie ist „Avis“. Eine Wiederholung desselben Betrags mit derselben Währung, etwa im PDF und im Mailtext, wird wie bisher nur einmal gezählt. Eindeutig als getrennte Zahlungen erkannte gleich hohe Teilbeträge bleiben einzeln erhalten.
 - **Keine Kategorie:** kein Avis, oder der Flow ist an dieser Mail nicht gelaufen (Ausführungsverlauf prüfen).
 - **Suchen:** Den Betrag ins Outlook-Suchfeld eintippen, z. B. `2.601,35`.
 - **Antworten und Weiterleitungen:** Kommt ein Avis als Antwort oder Weiterleitung, steht der Betrag ganz vorne, vor „AW:" oder „WG:" („2.601,35 AW: Ihre Zahlungserinnerung"). Wer auf eine schon bearbeitete Mail antwortet, schickt den Betrag im Betreff mit („AW: 2.601,35 Zahlungsavis"). Kommt in so einem Verlauf ein neues Avis mit einem anderen Betrag, steht der neue Betrag ganz vorne („12.347,80 AW: 2.601,35 Zahlungsavis").
-- Ein Betreff, der schon mit demselben Betrag beginnt (auch nach „AW:" oder „WG:") oder mit ihm endet (so haben ältere Versionen geschrieben), wird kein zweites Mal ergänzt. Das gilt auch für bisherige Ergänzungen mit Währung und Bindestrich wie `2.601,35 EUR - Zahlungsavis`: Bei demselben Betrag bleibt der vorhandene Betreff erhalten.
+- Ein Betreff, der schon mit demselben Betrag beginnt (auch nach „AW:" oder „WG:") oder mit ihm endet (so haben ältere Versionen geschrieben), wird kein zweites Mal ergänzt. Das gilt auch für bisherige Ergänzungen mit Währung und Bindestrich wie `2.601,35 EUR - Zahlungsavis`: Bei demselben einzelnen Betrag bleibt der vorhandene Betreff erhalten. Bei mehreren Avisen muss die vollständige Betragsliste bereits vorhanden sein; derselbe erste Betrag allein reicht nicht aus. Ändert sich ein Betrag oder kommt ein weiterer hinzu, wird die neue vollständige Liste vor den bisherigen Betreff gesetzt.
 - **Mails von Kolleginnen und Kollegen:** Haben Absender und alle Empfänger dieselbe Domain und ist die Mail keine Weiterleitung („WG:"), gilt eine Zahlung im Mailtext als eigene Zahlung der Firma: keine Kategorie. Gibt jemand den Anruf eines Kunden weiter („hat gerade angerufen: hat heute 2.601,35 EUR überwiesen"), kommt „Avis prüfen". Weitergeleitete Kunden-Avise und Avise als Datei werden normal erkannt.
 - **Nur erwähnt:** Eine Mail, die ein Avis nur erwähnt, ohne Betrag und ohne Datei oder Foto, bekommt keine Kategorie. Beispiele: die Frage „kann ich euch das Avis per Mail schicken?", „wir schicken das Avis nächste Woche", ein Hinweis in einer Bestellung, ein Lieferavis einer Spedition, „anbei unser Avis" mit vergessenem Anhang. Ein Hinweis auf ein Avis im Kundenportal bleibt „Avis prüfen".
-- Eine Mail ohne Betreff bekommt nur den Betrag als Betreff („2.601,35"; Outlook zeigt leere Betreffzeilen sonst als „(Kein Betreff)"). Sehr lange Betreffzeilen werden ebenfalls ergänzt (live getestet mit 250 Zeichen).
+- Eine Mail ohne Betreff bekommt nur den Betrag oder die Betragsliste als Betreff („2.601,35" bzw. „1.200,30 + 5.632,21"; Outlook zeigt leere Betreffzeilen sonst als „(Kein Betreff)"). Sehr lange Betreffzeilen werden ebenfalls ergänzt (live getestet mit 250 Zeichen).
 - **Zwei Läufe für eine Mail:** Bei vielen gleichzeitig eintreffenden Mails startet Power Automate manchmal zwei Läufe für dieselbe Mail (im Lasttest bei 20 von 40 Mails). Das schadet nicht: Der zweite Lauf setzt dieselbe Kategorie und denselben Betreff, der Betrag steht nie doppelt im Betreff.
 
 ## Fehler finden
@@ -292,7 +302,7 @@ Microsoft hat angekündigt, ab dem 31.12.2026 Änderungen an Betreff und Text em
 
 ### Plan B: Reihenfolge und Verschieben
 
-Plan B ist noch nicht live im Testzugang gebaut; der aktuelle Aufbau wurde lokal geprüft. Die Reihenfolge im Wahr-Zweig von Kategorie_noetig lautet:
+Plan B ist noch nicht live im Testzugang gebaut; der aktuelle Aufbau wurde lokal geprüft. Er erzeugt auch bei mehreren Avisen eine Kopie mit der vollständigen Betragsliste im Betreff und der Kategorie „Avis“. Die Reihenfolge im Wahr-Zweig von Kategorie_noetig lautet:
 
 ```
 Betreff_noetig
@@ -425,11 +435,13 @@ Mit der ganzen Mail prüft das Skript jede PDF, jede andere lesbare Anlage und d
 
 | Grund (englisch) | Bedeutung | Was tun |
 | --- | --- | --- |
-| `several PDFs in the mail with different amounts (…)` / `several advices in the mail with different amounts (…)` | Die Mail enthält zwei oder mehr Avise (PDF, Tabelle oder Mailtext) mit verschiedenen Beträgen. In der Klammer stehen Name und Betrag je Avis. Kategorie „mehrere Avise", der Betreff bleibt | Beträge von Hand buchen |
+| `several PDFs in the mail with different amounts (…)` / `several advices in the mail with different amounts (…)` | Die Mail enthält zwei oder mehr Avise (PDF, Tabelle oder Mailtext) mit verschiedenen Beträgen. In der Klammer stehen Name und Betrag je Avis. Kategorie „Avis“, die einzelnen Beträge stehen mit ` + ` vor dem Originalbetreff | Einzelne Zahlungen wie üblich zuordnen |
 | `uncertain: the mail text names another payment amount (…) than the attached advice` | Im Mailtext steht „wir haben … überwiesen" mit einem anderen Betrag als im angehängten Avis, und dieser Betrag kommt in keiner Anlage vor (Tippfehler, Teilzahlung, falsches Avis). In der Klammer steht der Betrag aus dem Mailtext. Der Betreff bekommt den Betrag aus dem Avis mit „?", Kategorie „Avis prüfen" | Avis und Zahlungseingang vergleichen, Betrag von Hand prüfen |
 | `uncertain: the mail text names another payment amount (…, actually paid) than the attached advice (…)` | Der Mailtext nennt ausdrücklich den tatsächlich gezahlten Betrag („the BACS payment actually sent today is GBP 5,702.45", „tatsächlich überwiesen"), und der weicht vom angehängten Avis ab (zweite Klammer: Betrag des Avis). Der Betreff bekommt den Betrag aus dem Mailtext mit „?", Kategorie „Avis prüfen"; im `verdictWhy` steht `…, the amount actually paid named in the mail text`. Liegt die genannte Zahlung mehr als 5 Tage vor der Mail, ist sie eine frühere Zahlung und kein Widerspruch | Avis, Mailtext und Zahlungseingang vergleichen |
-| `mail text with another amount than the attached advice (…)` (in `documents`) | Der Mailtext nennt einen anderen Betrag als das angehängte Avis; gezählt wird das Avis. Steht im Mailtext „zusätzlich", „separat", „gesondert", „außerdem" oder „weitere Zahlung", ist der Mailtext eine eigene zweite Zahlung: Kategorie „mehrere Avise" | – |
-| `several payments in one document (…)` | Eine Tabelle enthält mehrere getrennte Zahlungen (z. B. zwei Zahlungsblöcke) | Beträge von Hand buchen |
+| `mail text with another amount than the attached advice (…)` (in `documents`) | Der Mailtext nennt einen anderen Betrag als das angehängte Avis; gezählt wird das Avis. Steht im Mailtext „zusätzlich", „separat", „gesondert", „außerdem" oder „weitere Zahlung", ist der Mailtext eine eigene zweite Zahlung: Beide Beträge kommen mit ` + ` in den Betreff, Kategorie „Avis“ | – |
+| `several payments in one document (…)` | Eine Tabelle enthält mehrere getrennte Zahlungen (z. B. zwei Zahlungsblöcke). Die Beträge stehen mit ` + ` im Betreff, Kategorie „Avis“ | Einzelne Zahlungen wie üblich zuordnen |
+| `separate payment amounts incomplete (…)` / `separate payment amounts incomplete or out of range (…)` / `separate payments in the document, but not all amounts readable` | Eine erkannte Mehrfachzahlung hat keine vollständige gültige Betragsliste. Kategorie „Avis prüfen“, Betreff unverändert | Fehlende Beträge in den Originalunterlagen prüfen |
+| `mail text repeats the total of the separate payments` (in `documents`) | Der Begleittext nennt die Summe der einzelnen Zahlungen aus den Anlagen. Diese Summe wird nicht als weitere Zahlung in den Betreff übernommen | – |
 | `mail contains no PDF` | Die Mail hat keine PDF, und weder Mailtext noch andere Anlagen enthalten einen Betrag | Nur bei Kategorie „Avis prüfen" etwas tun: Mail öffnen |
 | `file named PDF without a PDF header - cannot be read` | Eine Anlage heißt `.pdf` oder ist als PDF gekennzeichnet, ist aber keine PDF (beschädigt oder etwas anderes) | Anlage von Hand öffnen |
 | `Office file (old .xls/.doc, encrypted or .msg) - cannot be read` | Altes Excel- oder Word-Format, eine verschlüsselte Office-Datei oder eine beschädigte Outlook-Nachricht (.msg). Lesbare Outlook-Nachrichten (.msg) werden wie angehängte Mails gelesen: Betreff, Absender, Text, Anhänge und eingebettete Mails | Anlage von Hand öffnen, Betrag von Hand |
@@ -521,7 +533,7 @@ Die Tabelle ist alphabetisch nach dem englischen Grund sortiert. `no advice: …
 | `cover note of an invoice ('…')` | Der Mailtext ist das Begleitschreiben einer eigenen Rechnung oder Abrechnung des Absenders („anbei erhalten Sie unsere Rechnung", „your … invoice is attached") mit einem offenen oder schon eingezogenen Betrag („zahlbar bis …", „already deducted from your payouts"): kein Avis, keine Kategorie. Daneben gilt eine Anlage mit nur einer Zahlbetrag-Spalte oder -Zeile nicht als Avis (`…, but the mail text speaks against an advice (…)`). Gilt nicht, wenn der Mailtext daneben die eigene Zahlung des Absenders nennt („die Details zu unserer heutigen Zahlung sowie unsere Rechnung …", „our invoice … together with the breakdown of our payment of today"). Dann entscheidet die Zahlungsanlage |
 | `credit note requested or announced ('…')` | Der Text bittet um eine Gutschrift oder kündigt eine an („bitte erstellen Sie uns eine Gutschrift"), und nichts spricht für ein Avis. Kein Avis |
 | `forwarded payment confirmation ('…')` | Der Kunde leitet die Bestätigung seines Zahlungsdienstes oder seiner Bank weiter („Your transfer to … is complete", „Sie haben … an … gesendet"). Das ist sein Zahlungsnachweis: „Avis" |
-| `further payment named in the mail text (…)` | Neben dem Avis nennt der Mailtext eine weitere, schon erfolgte Zahlung mit einem Betrag, der in keiner Anlage steht („Zusätzlich hat unsere Niederlassung heute CHF 3'810.78 überwiesen"): „mehrere Avise" |
+| `further payment named in the mail text (…)` | Neben dem Avis nennt der Mailtext eine weitere, schon erfolgte Zahlung mit einem Betrag, der in keiner Anlage steht („Zusätzlich hat unsere Niederlassung heute CHF 3'810.78 überwiesen"): Kategorie „Avis“, beide Beträge mit ` + ` im Betreff |
 | Hinweis zu `mailing list` | Avis-Mails von Zahlungsportalen kommen oft als Massenmail (Kopf `List-Unsubscribe`). Hat der Mailtext einen Avis-Titel, eine Zahlungserklärung oder ein Zahlbetrag-Feld mit Betrag, zählt er als Avis. Newsletter mit Beispiel-Avis, „What's new", Webinar bleiben ohne Kategorie |
 | `…, in a mail about another topic (…)` | Eine Anlage mit Zahlungswörtern, aber ohne Avis-Merkmal und ohne Avis-Wort (z. B. eine Offene-Posten-Liste oder ein Ratenplan) in einer Mail, deren Text sagt, dass (noch) nicht gezahlt, zurückgehalten oder storniert wird, oder die ein anderes Thema hat (Abstimmung, Mahnung, Preis; in der Klammer der Grund des Mailtexts). Die Anlage gehört zu diesem Thema: keine Kategorie. Nicht, wenn der Mailtext die übrigen Rechnungen als heute bezahlt nennt oder die Anlage andere Rechnungsnummern enthält als der Mailtext |
 | `… in a reply, a deduction or discount whose amount it does not state` | Eine Antwort auf unsere Rechnungs- oder Mahnmail sagt, dass bezahlt wurde, nennt keinen eigenen Betrag, aber einen Abzug, dessen Höhe offen bleibt: eine Gutschrift oder Verrechnung („abzüglich unserer Gutschrift GS-…“, „net of your credit note …“), mehrere Prozentsätze, Skonto ohne Satz, wenn die zitierte Mail keinen oder mehrere Skontosätze nennt, oder nur ein Skonto-Wort ohne Aussage, ob abgezogen wurde („innerhalb der Skontofrist“). Der Betrag der zitierten Mail ist dann nicht der Zahlbetrag: „Avis prüfen“ ohne Betrag |
@@ -539,10 +551,10 @@ Die Tabelle ist alphabetisch nach dem englischen Grund sortiert. `no advice: …
 | `mail of the group company … to … with the mailbox in copy - our own payment, not a payment received (…)` | Eine Konzerngesellschaft (Domain wie unsere mit einem Zusatz, z. B. nordwerk-group.example zu nordwerk.example) schreibt an einen Externen, unser Postfach steht nur in Cc: Die Inhouse-Bank oder die Zentrale zahlt für uns an einen Lieferanten. Eigene Zahlung: keine Kategorie |
 | `mail text refers to an attachment, amount doubtful (…)` | Der Mailtext verweist auf eine Anlage („anbei unser Zahlungsavis", „Details siehe Anhang"), aber sein Betrag ist unsicher (nur nach Größe gewählt, z. B. eine Rechnungssumme oder eine Zahl aus der Signatur), und keine Anlage ist ein lesbares Avis (z. B. nur ein Foto): „Avis prüfen" ohne Betrag im Betreff. Anlage von Hand öffnen |
 | `meeting invitation (…)` | Eine Termineinladung (Kalenderteil oder .ics-Datei; auch als Text weitergeleitet mit „Einladung:" und „Wann:"), deren Mailtext Zahlungswörter, aber kein Avis-Merkmal enthält: keine Kategorie, auch wenn die Einladung selbst ein Avis-Wort im Betreff oder in der Tagesordnung hat. Hängt nur eine .ics-Datei an einer normalen Mail, hebt ein Avis-Wort im Betreff sie weiter auf „Avis prüfen" |
-| `N payments in table '…'` / `several payments in one document` / `several advices in the mail with different amounts` / `N advices with different amounts (…)` | Mehrere Zahlungen in einer Tabelle, einem Dokument oder einer Mail: „mehrere Avise", der Betreff bleibt unverändert |
-| `N payments in the document (…)` | Ein Dokument (PDF, Datei oder Mailtext) enthält mehrere Zahlungen mit je eigener Summe: Überschriften wie „Payment 1 of 2" / „Zahlung 2 von 2" / „Auszahlung 1 / 2", in einer Sammel-Gutschriftsanzeige der Bank auch „Gutschrift 1 von 3" / „Credit 1 of 3", oder verschiedene Zahlbeleg-, Zahlungs-, Avis- oder Schecknummern. Auch eine Überweisung und ein Scheck oder zwei Teilüberweisungen mit eigenem Valutadatum, deren Summe darüber oder darunter steht, sind getrennte Zahlungen. In der Klammer stehen die Beträge: „mehrere Avise" |
-| `N payments in …, the mail text names separate payments` | Eine Tabelle mit mehreren Zahlungen und einem Zeitraum („Zeitraum 01.10.2026 – 31.10.2026") wäre sonst eine mögliche Zahlungshistorie. Der Mailtext sagt, dass die Zahlungen getrennt ausgeführt wurden: „mehrere Avise" |
-| `N payments named in the mail text (…)` | Der Mailtext sagt, dass mehrere getrennte Zahlungen gemacht wurden („Heute sind zwei Überweisungen an Sie rausgegangen"), und listet darunter genauso viele Beträge, je einen pro Zeile: „mehrere Avise" |
+| `N payments in table '…'` / `several payments in one document` / `several advices in the mail with different amounts` / `N advices with different amounts (…)` | Mehrere Zahlungen in einer Tabelle, einem Dokument oder einer Mail: Kategorie „Avis“, die einzelnen Beträge stehen mit ` + ` vor dem Originalbetreff |
+| `N payments in the document (…)` | Ein Dokument (PDF, Datei oder Mailtext) enthält mehrere Zahlungen mit je eigener Summe: Überschriften wie „Payment 1 of 2" / „Zahlung 2 von 2" / „Auszahlung 1 / 2", in einer Sammel-Gutschriftsanzeige der Bank auch „Gutschrift 1 von 3" / „Credit 1 of 3", oder verschiedene Zahlbeleg-, Zahlungs-, Avis- oder Schecknummern. Auch eine Überweisung und ein Scheck oder zwei Teilüberweisungen mit eigenem Valutadatum, deren Summe darüber oder darunter steht, sind getrennte Zahlungen. In der Klammer stehen die Beträge; sie werden mit ` + ` vor den Originalbetreff gesetzt, Kategorie „Avis“ |
+| `N payments in …, the mail text names separate payments` | Eine Tabelle mit mehreren Zahlungen und einem Zeitraum („Zeitraum 01.10.2026 – 31.10.2026") wäre sonst eine mögliche Zahlungshistorie. Der Mailtext sagt, dass die Zahlungen getrennt ausgeführt wurden: einzelne Beträge mit ` + ` im Betreff, Kategorie „Avis“ |
+| `N payments named in the mail text (…)` | Der Mailtext sagt, dass mehrere getrennte Zahlungen gemacht wurden („Heute sind zwei Überweisungen an Sie rausgegangen"), und listet darunter genauso viele Beträge, je einen pro Zeile: einzelne Beträge mit ` + ` im Betreff, Kategorie „Avis“ |
 | `no amount, no payment wording` | Weder ein Betrag noch ein Zahlungswort: kein Avis |
 | `no document to check` | Die Mail hatte weder lesbaren Text noch Anlagen |
 | `no input` / `script error` | Das Skript hat keinen Inhalt bekommen (`error`: `no PDF content passed`) oder ist an einem internen Fehler gescheitert (`exception: …`): „Avis prüfen". Bei `no input` das Feld pdfBase64 in Run_script prüfen (Schritt 5.4) |
@@ -552,7 +564,7 @@ Die Tabelle ist alphabetisch nach dem englischen Grund sortiert. `no advice: …
 | `own mail to …, passed on internally as an attached mail - our own payment, not a payment received (…)` | Ein Kollege gibt unsere eigene Mail an einen Externen als angehängte Mail intern weiter („anbei unsere Mail an Hesselbach“): Absender der angehängten Mail in unserer Domain, Empfänger außerhalb. Eigene Zahlung: keine Kategorie. Gilt nicht, wenn eine angehängte Mail von außen kommt oder selbst eine Weiterleitung ist |
 | `own payment named by a colleague (…) - not a payment received` | Interne Mail (keine Antwort, keine Weiterleitung), in der ein Kollege eine eigene Ausgabe der Firma nennt (Handkasse, bar, Firmenkarte, Kostenstelle, Quittung, z. B. „we have paid your invoice … with the company card"). Eigene Zahlung, kein Zahlungseingang: keine Kategorie. Steht ein Avis-Wort im Mailtext, wird die Mail trotzdem „Avis prüfen" |
 | `own payment sent by a colleague ('…') - not a payment received (…)` | Interne Mail, in der ein Kollege unseren eigenen Zahllauf oder unsere Zahlung an einen Lieferanten als Datei schickt („anbei unser heutiger Zahllauf als Export“, „anbei unsere heutige Zahlung an …“, „please find attached today's payment run“). Die Liste ist eine eigene ausgehende Zahlung: keine Kategorie. Ein Dokument, das uns als Zahlungsempfänger nennt, zählt weiter |
-| `own payment, the mail text names several payments (…)` | Der Mailtext sagt, dass mehrere getrennte Zahlungen gemacht wurden („zwei separate Überweisungen", „two separate payments"), und ein weiteres Dokument hat einen eigenen sicheren Betrag: „mehrere Avise" |
+| `own payment, the mail text names several payments (…)` | Der Mailtext sagt, dass mehrere getrennte Zahlungen gemacht wurden („zwei separate Überweisungen", „two separate payments"), und ein weiteres Dokument hat einen eigenen sicheren Betrag: beide Beträge mit ` + ` im Betreff, Kategorie „Avis“ |
 | `payer statement ('…')` | Der Schreiber sagt selbst, dass er bezahlt hat („wir haben heute … überwiesen“, „we have paid …“, „Rechnung 4711 ist bezahlt“). Neu gilt das auch im Präsens („wir überweisen Ihnen … mit Valuta 02.11.2026“, „We are paying invoices … with value date November 2, 2026“, „we have today wired the second instalment of …“) und für den heutigen Zahllauf („ist im heutigen Zahllauf enthalten“, „is included in today's payment run“). Steht das nur im Mailtext, höchstens „Avis“ mit „(prüfen)“ |
 | `payer statement …, but …` / `payer statement, but …` (z. B. `holiday notice`, `'…' - not a payment advice?`) | Eine Zahlungserklärung neben einem Hinweis wie Betriebsferien, neuer Bankverbindung, einer Reklamation oder einem Wort für einen anderen Dokumenttyp: „Avis prüfen", nie stillschweigend „kein Avis" |
 | `…, payment amount in every row of column '…', equal to the sum of column '…'` | Eine Exportliste wiederholt den Zahlbetrag in jeder Rechnungszeile („Payment Amount"); die bezahlten Beträge der Rechnungen („Amount Paid") ergeben genau diesen Betrag. Er zählt einmal, nicht so oft wie Zeilen: „Avis" mit „(prüfen)" |
@@ -588,7 +600,7 @@ Die Tabelle ist alphabetisch nach dem englischen Grund sortiert. `no advice: …
 | `payment wording without an amount beside documents that are no advice` | Der Mailtext nennt eine Zahlung ohne Betrag, und alle Anlagen sind etwas anderes (Rechnung, Gutschrift): kein Avis |
 | `payment wording, but no advice evidence, in a workbook of another type (…)` | Tabellenblatt mit Zahlungswörtern, aber ohne Avis-Merkmal, in einer Excel-Datei, deren anderes Blatt ein anderer Dokumenttyp ist (z. B. Offene-Posten- oder Mahnliste). Keine Kategorie |
 | `payment wording, but no amount` | Ein Zahlungswort ohne lesbaren Betrag (z. B. neben einer Anlage, die sich nicht lesen ließ): „Avis prüfen". Ohne Datei und ohne Betrag gilt die Mail als nur erwähnt (keine Kategorie) |
-| `payments in different currencies (…)` | Das Dokument nennt Zahlbeträge in zwei oder mehr Währungen ohne Umrechnungskurs oder Gegenwert (z. B. eine Summe in USD und eine in EUR, oder eine Währungsspalte mit EUR- und GBP-Zeilen). Jede Währung ist eine eigene Überweisung: Kategorie „mehrere Avise" |
+| `payments in different currencies (…)` | Das Dokument nennt Zahlbeträge in zwei oder mehr Währungen ohne Umrechnungskurs oder Gegenwert (z. B. eine Summe in USD und eine in EUR, oder eine Währungsspalte mit EUR- und GBP-Zeilen). Jede Währung ist eine eigene Überweisung: Kategorie „Avis“, die einzelnen Beträge stehen mit ` + ` im Betreff. Währungskürzel bleiben im Betreff weg und sind unter `paymentAmounts` nachlesbar |
 | `payout to the writer ('…'), its own payment announced - not a payment to the reader` | Ein Kunde leitet die Auszahlungsmitteilung seines eigenen Shops oder Marktplatzkontos weiter oder hängt sie an („Unsere Auszahlung …", „our payout …", „Sobald das Geld bei uns eingegangen ist …") und kündigt seine eigene Zahlung an uns erst an. Das Geld ging an den Kunden, nicht an uns: kein Avis |
 | `price negotiation ('…')` | Preisverhandlung („Is there any further discount", „Preisnachlass"). Kein Avis |
 | `question whether a reported payment came in ('…')` | Der Absender gibt nur wieder, was ein Dritter über eine Zahlung gesagt hat („hat mir gesagt, sie hätten überwiesen", „told me they had paid"), und fragt, ob das Geld eingegangen ist (z. B. eine Rückfrage aus dem Vertrieb). Kein Avis, keine Kategorie |
