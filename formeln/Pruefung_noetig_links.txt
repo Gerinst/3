@@ -1,0 +1,1 @@
+or(not(equals(actions('Run_script')?['status'], 'Succeeded')), equals(outputs('Run_script')?['body/result/needsReview'], true), equals(outputs('Run_script')?['body/result/category'], 'Avis prüfen'))

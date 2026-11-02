@@ -14,12 +14,18 @@ function check(name, fn) {
 }
 const run = (args) => ctx.main({}, eml(args));
 const arr = (x) => Array.from(x);
+function assertReview(result) {
+  assert.equal(result.needsReview, true);
+  assert.equal(result.category, "");
+  assert.equal(result.patchCategory, "");
+}
 const two = "1.200,30 + 5.632,21";
 const three = two + " + 500,42";
 function multiple(args, prefix, amounts) {
   const r = run(args);
   assert.equal(r.verdict, "several", r.verdictWhy);
   assert.equal(r.category, "Avis");
+  assert.equal(r.needsReview, false);
   assert.equal(r.subjectPrefix, prefix + " ");
   assert.equal(
     r.newSubject,
@@ -222,6 +228,7 @@ check("invoice is unchanged", () => {
     body: "Rechnung 4711\nGesamtbetrag: 1.200,30 EUR\nBitte ueberweisen Sie den Betrag bis 15.11.2026.",
   });
   assert.equal(r.verdict, "other");
+  assert.equal(r.needsReview, false);
   assert.equal(r.patchCategory, "");
   assert.equal(r.patchSubject, "");
 });
@@ -284,7 +291,7 @@ check("unclosed payment block prevents partial subject", () => {
   const r = run({
     attachments: [{ name: "avis.csv", type: "text/csv; charset=utf-8", text }],
   });
-  assert.equal(r.category, "Avis prüfen");
+  assertReview(r);
   assert.equal(r.newSubject, "");
 });
 check("unmatched earlier block prevents partial subject", () => {
@@ -296,7 +303,7 @@ check("unmatched earlier block prevents partial subject", () => {
   const r = run({
     attachments: [{ name: "avis.csv", type: "text/csv; charset=utf-8", text }],
   });
-  assert.equal(r.category, "Avis prüfen");
+  assertReview(r);
   assert.equal(r.newSubject, "");
 });
 check("unreadable third numbered payment prevents partial subject", () => {
@@ -305,7 +312,7 @@ check("unreadable third numbered payment prevents partial subject", () => {
     "Zahlbetrag: Betrag nicht lesbar",
   );
   const r = run({ body });
-  assert.equal(r.category, "Avis prüfen");
+  assertReview(r);
   assert.equal(r.newSubject, "");
 });
 for (const values of [
@@ -326,7 +333,7 @@ for (const values of [
       })()`,
       ctx,
     );
-    assert.equal(r.category, "Avis prüfen");
+    assertReview(r);
     assert.equal(r.newSubject, "");
     assert.equal(r.patchSubject, "");
   });
@@ -352,7 +359,7 @@ check(
       })()`,
       ctx,
     );
-    assert.equal(r.category, "Avis prüfen");
+    assertReview(r);
     assert.equal(r.newSubject, "");
     assert.equal(r.patchSubject, "");
   },
@@ -362,7 +369,7 @@ check(
 for (const [confidence, category, marker] of [
   ["high", "Avis", ""],
   ["medium", "Avis", " (prüfen)"],
-  ["low", "Avis prüfen", " ?"],
+  ["low", "", " ?"],
 ]) {
   for (const value of [1200.3, -1200.3, 0]) {
     check(`single ${confidence}, amount ${value}`, () => {
@@ -385,9 +392,12 @@ for (const [confidence, category, marker] of [
         value === 0 ? "0,00" : value < 0 ? "-1.200,30" : "1.200,30";
       assert.equal(result.category, category);
       assert.equal(result.newSubject, amount + marker + " Abrechnung Oktober");
-      assert.deepEqual(JSON.parse(result.patchCategory), {
-        categories: [category],
-      });
+      assert.equal(result.needsReview, confidence === "low");
+      if (confidence === "low") assertReview(result);
+      else
+        assert.deepEqual(JSON.parse(result.patchCategory), {
+          categories: [category],
+        });
       assert.deepEqual(JSON.parse(result.patchSubject), {
         subject: result.newSubject,
       });
@@ -443,10 +453,16 @@ for (const usePdf of [false, true]) {
     const body = fixtures.numbered.body
       .replace("Zahlbetrag: 5.632,21 EUR", "Zahlbetrag: unlesbar")
       .replace("Zahlbetrag: 500,42 EUR", "Zahlbetrag: unlesbar");
-    const result = run(usePdf ? {
-      attachments: [{ name: "avis.pdf", type: "application/pdf", text: pdf(body) }],
-    } : { body });
-    assert.equal(result.category, "Avis prüfen");
+    const result = run(
+      usePdf
+        ? {
+            attachments: [
+              { name: "avis.pdf", type: "application/pdf", text: pdf(body) },
+            ],
+          }
+        : { body },
+    );
+    assertReview(result);
     assert.equal(result.patchSubject, "");
     assert.deepEqual(arr(result.paymentAmounts), []);
   });
@@ -454,18 +470,106 @@ for (const usePdf of [false, true]) {
 
 check("incomplete PDF extraction cannot write a partial payment list", () => {
   const partial = load();
-  vm.runInContext(`
+  vm.runInContext(
+    `
     const readPdf = analyzePdf;
     analyzePdf = (bytes, keywords) => {
       const result = readPdf(bytes, keywords);
       result.incomplete = true;
       return result;
     };
-  `, partial);
+  `,
+    partial,
+  );
   const result = partial.main({}, eml(fixtures.pdfParts));
-  assert.equal(result.category, "Avis prüfen");
+  assertReview(result);
   assert.equal(result.patchSubject, "");
   assert.deepEqual(arr(result.paymentAmounts), []);
+});
+
+check(
+  "missing input requests review without a category or subject change",
+  () => {
+    const result = ctx.main({}, "", "", "Abrechnung Oktober");
+    assertReview(result);
+    assert.equal(result.verdict, "unclear");
+    assert.equal(result.newSubject, "");
+    assert.equal(result.patchSubject, "");
+  },
+);
+
+check("caught script errors request review without writing a category", () => {
+  const failing = load();
+  vm.runInContext(
+    `
+    decodeInput = () => { throw new Error('Synthetic input decoding failure'); };
+  `,
+    failing,
+  );
+  const result = failing.main({}, eml(fixtures.two));
+  assertReview(result);
+  assert.equal(result.verdictWhy, "script error");
+  assert.equal(result.patchSubject, "");
+});
+
+check(
+  "normal advice retains existing categories and does not request review",
+  () => {
+    const result = run({
+      attachments: [fixtures.two.attachments[0]],
+      keywords: "Wichtig, Intern, WICHTIG",
+    });
+    assert.equal(result.needsReview, false);
+    assert.equal(result.category, "Avis");
+    assert.deepEqual(JSON.parse(result.patchCategory), {
+      categories: ["Wichtig", "Intern", "Avis"],
+    });
+  },
+);
+
+check("low-confidence review leaves existing categories untouched", () => {
+  const result = vm.runInContext(
+    `(() => {
+    const result = emptyResult();
+    result.ok = true;
+    result.verdict = 'advice';
+    result.amountNumber = 1200.3;
+    result.currency = 'EUR';
+    result.confidence = 'low';
+    subjectFields(result, 'Abrechnung Oktober', 'Wichtig, Intern');
+    return result;
+  })()`,
+    ctx,
+  );
+  assertReview(result);
+  assert.deepEqual(JSON.parse(result.patchSubject), {
+    subject: "1.200,30 ? Abrechnung Oktober",
+  });
+});
+
+for (const mode of ["missing", "out-of-range", "nonfinite"]) {
+  check(`single advice with ${mode} amount requests review`, () => {
+    ctx.invalidMode = mode;
+    const result = vm.runInContext(
+      `(() => {
+      const result = emptyResult();
+      result.verdict = 'advice';
+      result.ok = invalidMode !== 'missing';
+      result.amountNumber = invalidMode === 'nonfinite' ? Infinity : 1e12;
+      result.confidence = 'high';
+      subjectFields(result, 'Abrechnung Oktober', 'Wichtig');
+      return result;
+    })()`,
+      ctx,
+    );
+    assertReview(result);
+    assert.equal(result.verdict, "unclear");
+    assert.equal(result.patchSubject, "");
+  });
+}
+
+check("empty result always includes a false review flag", () => {
+  assert.equal(vm.runInContext("emptyResult().needsReview", ctx), false);
 });
 
 console.log(`PASS: ${count} multi-advice and regression checks.`);

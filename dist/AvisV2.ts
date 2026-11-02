@@ -30,7 +30,8 @@ interface AvisResult {
   // version 2: decision for the whole mail (always set)
   verdict: string;        // advice (exactly one advice) / several (advices with different amounts) / unclear / other
   verdictWhy: string;     // short English reason
-  category: string;       // Outlook category: "Avis" / "Avis prüfen" / "" (none)
+  category: string;       // Outlook category: "Avis" / "" (none)
+  needsReview: boolean;   // true when the flow should move the mail for manual review instead of setting a category
   paymentAmounts: string[]; // separate payments for "several", e.g. ["1.200,30 EUR", "5.632,21 EUR"]; otherwise []
   subjectPrefix: string;  // one amount (with optional check marker) or several joined by " + ", then a space
   newSubject: string;     // prefix + subject ("2.601,35 Zahlungsavis"), "" when the subject stays as it is
@@ -15037,7 +15038,7 @@ function extractPdf(bytes: Uint8Array): ExtractInfo {
 
 function emptyResult(): AvisResult {
   return { ok: false, amount: "", amountNumber: 0, currency: "", line: "", method: "none", confidence: "low", candidates: [], pages: 0, text: "", textLength: 0, warnings: "", error: "",
-    verdict: "other", verdictWhy: "", category: "", paymentAmounts: [], subjectPrefix: "", newSubject: "", patchCategory: "", patchSubject: "", documents: [] };
+    verdict: "other", verdictWhy: "", category: "", needsReview: false, paymentAmounts: [], subjectPrefix: "", newSubject: "", patchCategory: "", patchSubject: "", documents: [] };
 }
 
 // one analysed PDF: the result, the score of the chosen amount (-1 = none), the evidence of pickAmount (null when no text
@@ -17576,6 +17577,7 @@ function subjectFields(res: AvisResult, subject: string, keywords: string): void
   // category, subject prefix and the JSON bodies of the two HTTP requests (PATCH categories, PATCH subject)
   let cat = "";
   let tag = "";
+  let review = false;
   if (res.ok && !(isFinite(res.amountNumber) && Math.abs(res.amountNumber) < MAX_AMOUNT)) {
     // an amount out of range never goes into a subject
     dropAmount(res);
@@ -17588,10 +17590,10 @@ function subjectFields(res: AvisResult, subject: string, keywords: string): void
     amounts.push(amt);
     if (res.confidence === "high") { cat = "Avis"; tag = amt; }
     else if (res.confidence === "medium") { cat = "Avis"; tag = amt + " (prüfen)"; }
-    else { cat = "Avis prüfen"; tag = amt + " ?"; }
+    else { review = true; tag = amt + " ?"; }
   } else if (res.verdict === "advice") {
     res.verdict = "unclear";
-    cat = "Avis prüfen";
+    review = true;
   } else if (res.verdict === "several") {
     let valid = res.paymentAmounts.length >= 2;
     for (const p of res.paymentAmounts) {
@@ -17605,12 +17607,13 @@ function subjectFields(res: AvisResult, subject: string, keywords: string): void
       res.verdict = "unclear";
       res.verdictWhy = "separate payment amounts incomplete or out of range (" + res.verdictWhy + ")";
       res.error = res.verdictWhy;
-      cat = "Avis prüfen";
+      review = true;
     }
   }
-  else if (res.verdict === "unclear") cat = "Avis prüfen";
+  else if (res.verdict === "unclear") review = true;
   if (res.verdict !== "several") res.paymentAmounts = [];
   res.category = cat;
+  res.needsReview = review;
   res.subjectPrefix = tag !== "" ? tag + " " : "";
   res.newSubject = "";
   res.patchSubject = "";

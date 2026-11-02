@@ -1,1 +1,0 @@
-or(not(equals(actions('Run_script')?['status'], 'Succeeded')), not(empty(outputs('Run_script')?['body/result/patchCategory'])))
