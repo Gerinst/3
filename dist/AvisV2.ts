@@ -17590,7 +17590,7 @@ function subjectFields(res: AvisResult, subject: string, keywords: string): void
     amounts.push(amt);
     if (res.confidence === "high") { cat = "Avis"; tag = amt; }
     else if (res.confidence === "medium") { cat = "Avis"; tag = amt + " (prüfen)"; }
-    else { review = true; tag = amt + " ?"; }
+    else { review = true; tag = amt; }
   } else if (res.verdict === "advice") {
     res.verdict = "unclear";
     review = true;

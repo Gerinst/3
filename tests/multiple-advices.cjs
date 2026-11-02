@@ -369,7 +369,7 @@ check(
 for (const [confidence, category, marker] of [
   ["high", "Avis", ""],
   ["medium", "Avis", " (prüfen)"],
-  ["low", "", " ?"],
+  ["low", "", ""],
 ]) {
   for (const value of [1200.3, -1200.3, 0]) {
     check(`single ${confidence}, amount ${value}`, () => {
@@ -527,7 +527,7 @@ check(
   },
 );
 
-check("low-confidence review leaves existing categories untouched", () => {
+check("low-confidence review preserves categories and the original question mark", () => {
   const result = vm.runInContext(
     `(() => {
     const result = emptyResult();
@@ -536,14 +536,14 @@ check("low-confidence review leaves existing categories untouched", () => {
     result.amountNumber = 1200.3;
     result.currency = 'EUR';
     result.confidence = 'low';
-    subjectFields(result, 'Abrechnung Oktober', 'Wichtig, Intern');
+    subjectFields(result, 'Abrechnung Oktober?', 'Wichtig, Intern');
     return result;
   })()`,
     ctx,
   );
   assertReview(result);
   assert.deepEqual(JSON.parse(result.patchSubject), {
-    subject: "1.200,30 ? Abrechnung Oktober",
+    subject: "1.200,30 Abrechnung Oktober?",
   });
 });
 

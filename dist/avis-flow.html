@@ -468,7 +468,7 @@ mark.mbm { background: var(--chg-bg); color: inherit; border-radius: 3px; paddin
         <tr><th>Ergebnis</th><th>Kategorie / Ablage</th><th>Betreff im Hauptflow</th></tr>
         <tr><td>Ein Avis, Betrag sicher</td><td><span class="cat g">Avis</span></td><td><code>2.601,35 Zahlungsavis</code></td></tr>
         <tr><td>Ein Avis, Betrag ziemlich sicher</td><td><span class="cat g">Avis</span></td><td><code>2.601,35 (prüfen) Zahlungsavis</code></td></tr>
-        <tr><td>Ein Avis, Betrag unsicher</td><td>Keine neue Kategorie; Ordner „Avisbetrag fehlt“</td><td><code>2.601,35 ? Zahlungsavis</code></td></tr>
+        <tr><td>Ein Avis, Betrag unsicher</td><td>Keine neue Kategorie; Ordner „Avisbetrag fehlt“</td><td><code>2.601,35 Zahlungsavis</code></td></tr>
         <tr><td>Mehrere Avise, alle Beträge lesbar</td><td><span class="cat g">Avis</span></td><td><code>1.200,30 + 5.632,21 + 500,42 Zahlungsavis</code></td></tr>
         <tr><td>Mehrere Avise, Betrag fehlt oder ungültig</td><td>Keine neue Kategorie; Ordner „Avisbetrag fehlt“</td><td>unverändert</td></tr>
         <tr><td>Unklar, nicht lesbar, Export- oder Skriptfehler</td><td>Keine neue Kategorie; Ordner „Avisbetrag fehlt“</td><td>unverändert</td></tr>
@@ -477,7 +477,7 @@ mark.mbm { background: var(--chg-bg); color: inherit; border-radius: 3px; paddin
       <p>Der ursprüngliche Betreff bleibt erhalten. Ein einzelner Betrag steht im deutschen Format mit einem Leerzeichen davor, auch vor „AW:“ oder „WG:“. Mehrere Beträge werden durch <code> + </code> getrennt: <code>1.200,30 + 5.632,21 + 500,42 Abrechnung Oktober</code>. Es wird keine Gesamtsumme gebildet und keine Währung ergänzt. Ist derselbe Betrag bzw. dieselbe vollständige Liste schon vorangestellt, wird der Betreff nicht nochmals ergänzt.</p>
       <p>Ein Hinweis auf ein Avis im Kundenportal ohne Betrag ist ebenfalls ein Prüffall. <b>Plan B</b> verschiebt alle Prüffälle im Original unverändert: weder neue Kopie noch Betreffänderung. Die Kategorie „Avis prüfen“ wird nicht mehr gesetzt.</p>
     </div></details>
-    <p>„Zahlungsavis“ ist in den Beispielen nur ein möglicher Originalbetreff und wird nicht automatisch hinzugefügt. Bei einem sicheren Betrag von 5.500,05 Euro wird aus <code>Abrechnung Oktober</code> der Betreff <code>5.500,05 Abrechnung Oktober</code>. Prüfhinweise bleiben gegebenenfalls hinter dem Betrag stehen.</p>
+    <p>„Zahlungsavis“ ist in den Beispielen nur ein möglicher Originalbetreff und wird nicht automatisch hinzugefügt. Bei einem sicheren Betrag von 5.500,05 Euro wird aus <code>Abrechnung Oktober</code> der Betreff <code>5.500,05 Abrechnung Oktober</code>. Bei mittlerer Sicherheit bleibt „(prüfen)“ hinter dem Betrag. Bei niedriger Sicherheit wird kein Fragezeichen ergänzt; der erkannte Betrag steht weiterhin vor dem Originalbetreff und die Mail wird in den Prüfungsordner verschoben.</p>
     <details><summary>Welches Postfach? (Feld „Avis-Postfach“ oben rechts)</summary><div class="dc" id="mbDrawer"></div></details>
     <details><summary>Designer-Tipps (vor dem Bauen lesen)</summary><div class="dc"><ul>
       <li><b>Umbenennen:</b> Karte anklicken, oben im Bereich auf den Titel klicken, neuen Namen eintippen, Enter. Auf der Fläche zeigt Power Automate statt <code>_</code> ein Leerzeichen („Run script“). Das ist richtig; die Formeln brauchen den Namen mit <code>_</code>.</li>
@@ -534,7 +534,7 @@ mark.mbm { background: var(--chg-bg); color: inherit; border-radius: 3px; paddin
       <tr><td><code>verdict</code></td><td><code>advice</code> (ein Avis), <code>several</code> (mehrere), <code>unclear</code>, <code>other</code> (kein Avis)</td></tr>
       <tr><td><code>verdictWhy</code></td><td>Kurzer Grund auf Englisch, z. B. <code>advice title 'Zahlungsavis' in Zahlung_4711.pdf</code></td></tr>
       <tr><td><code>category</code></td><td><code>Avis</code> oder leer; bei Prüffällen bleiben category und patchCategory leer</td></tr>
-      <tr><td><code>needsReview</code></td><td><code>true</code>: ohne neue Kategorie in den Prüfungsordner verschieben. Ein unsicherer Betrag kann im Hauptflow weiterhin einen Betreffvorschlag mit <code>?</code> liefern.</td></tr>
+      <tr><td><code>needsReview</code></td><td><code>true</code>: ohne neue Kategorie in den Prüfungsordner verschieben. Ein unsicherer Betrag kann im Hauptflow weiterhin vor dem Originalbetreff stehen; ein Fragezeichen wird dabei nicht ergänzt.</td></tr>
       <tr><td><code>subjectPrefix</code> / <code>newSubject</code></td><td>Betrag oder mit <code> + </code> getrennte Betragsliste vor dem Betreff (z. B. <code>1.200,30 + 5.632,21 </code>) / der fertige neue Betreff (leer = keine Änderung)</td></tr>
       <tr><td><code>paymentAmounts</code></td><td>Bei mehreren Avisen eine Liste von Zeichenketten mit den einzelnen Beträgen und ihrer Währung, z. B. <code>["1.200,30 EUR", "5.632,21 EUR"]</code>. Für den Betreff entfällt die Währung; <code>amountNumber</code> stellt bei mehreren Avisen keinen einzelnen Gesamtbetrag dar.</td></tr>
       <tr><td><code>patchCategory</code> / <code>patchSubject</code></td><td>Fertiger Text für Kategorie setzen und Betreff setzen (leer = nichts tun)</td></tr>
@@ -857,7 +857,7 @@ mark.mbm { background: var(--chg-bg); color: inherit; border-radius: 3px; paddin
       summary: { chg: false, html: 'Erster Schritt in diesem Zweig: keine vorherige Aktion bei „Ausführen nach“. Beim Umbau eine alte Abhängigkeit von Kategorie setzen entfernen.' },
       settings: [S.tracking],
       code: CODE.Betreff_noetig,
-      info: '<p>Wenn das Skript einen neuen Betreff liefert, wird er zuerst geschrieben. Auch ein unsicherer Betrag mit <code>?</code> bleibt im Hauptflow als Vorschlag erhalten. Danach entscheidet Pruefung noetig zwischen Verschieben ohne Kategorie und Kategorie „Avis“. Bei unverändertem Betreff läuft diese Entscheidung ebenfalls.</p>',
+      info: '<p>Wenn das Skript einen neuen Betreff liefert, wird er zuerst geschrieben. Auch ein unsicherer Betrag bleibt im Hauptflow als Vorschlag vor dem Originalbetreff erhalten, ohne zusätzliches Fragezeichen. Danach entscheidet Pruefung noetig zwischen Verschieben ohne Kategorie und Kategorie „Avis“. Bei unverändertem Betreff läuft diese Entscheidung ebenfalls.</p>',
       planBParams: conditionParams(F.betLinksB, 'Für Plan B die eigene Formel aus Betreff_noetig_Plan_B_links.txt verwenden: neuer Betreff und kein Prüfbedarf.'),
       planBInfo: '<p>Plan B erstellt nur für verwertbare Avise ohne Prüfbedarf eine Kopie. Prüffälle werden weder kopiert noch im Betreff verändert; Pruefung noetig verschiebt ihr Original anschließend in den Prüfungsordner. Einzel- und Mehrfachbeträge verwenden sonst denselben Kopierweg.</p>'
 
@@ -876,14 +876,14 @@ mark.mbm { background: var(--chg-bg); color: inherit; border-radius: 3px; paddin
       summary: { chg: false, html: 'Nichts ändern.' },
       settings: ACTION_SETTINGS,
       code: CODE.Betreff_setzen,
-      info: '<p>Schreibt im Hauptflow zuerst den Betrag oder die vollständige Betragsliste vor den Originalbetreff. Ein unsicherer Einzelbetrag trägt weiterhin <code>?</code>. Danach entscheidet <b>Pruefung noetig</b>: Prüffälle werden ohne neue Kategorie verschoben, andere Avise bekommen „Avis“.</p><p>Auch nach Fehler oder Timeout dieser Aktion läuft die Prüfentscheidung. Die Betreffänderung selbst ändert den vom Skript ermittelten Prüfbedarf nicht. Bei einer Sperre für empfangene Betreffzeilen auf Plan B umstellen.</p>'
+      info: '<p>Schreibt im Hauptflow zuerst den Betrag oder die vollständige Betragsliste vor den Originalbetreff. Auch bei einem unsicheren Einzelbetrag wird kein Fragezeichen ergänzt; der Prüfbedarf bleibt bestehen. Danach entscheidet <b>Pruefung noetig</b>: Prüffälle werden ohne neue Kategorie verschoben, andere Avise bekommen „Avis“.</p><p>Auch nach Fehler oder Timeout dieser Aktion läuft die Prüfentscheidung. Die Betreffänderung selbst ändert den vom Skript ermittelten Prüfbedarf nicht. Bei einer Sperre für empfangene Betreffzeilen auf Plan B umstellen.</p>'
 
     },
     finish: {
       kind: 'finish', conn: 'finish', title: 'Speichern und testen', sub: 'Zum Schluss',
       html: '<ol><li>Speichern und mit der Codeansicht von <b>Keine Automatik</b> sowie dem Trigger vergleichen. Den Zielordner in der Verschiebeaktion zusätzlich im gemeinsamen Postfach prüfen.</li>' +
         '<li>Ein sicheres Einzelavis und eine vollständige Mehrfach-Mail testen: erst Betreff setzen, danach Pruefung noetig = Falsch, Kategorie „Avis“. Gleiche vollständige Betragsliste erneut: keine doppelte Ergänzung, weiterhin „Avis“.</li>' +
-        '<li>Unsicheren Einzelbetrag testen: im Hauptflow zunächst Betreff mit <code>?</code>, danach Pruefung noetig = Wahr und Original ohne neue Kategorie nach <b>Posteingang → Archive → Avisbetrag fehlt</b>.</li>' +
+        '<li>Unsicheren Einzelbetrag testen: im Hauptflow zunächst Betrag vor dem Originalbetreff ohne zusätzliches Fragezeichen, danach Pruefung noetig = Wahr und Original ohne neue Kategorie nach <b>Posteingang → Archive → Avisbetrag fehlt</b>.</li>' +
         '<li>Scan ohne lesbaren Betrag, unvollständige Mehrfach-Mail und Skriptfehler: ohne Betreffänderung und ohne neue Kategorie in denselben Ordner. Bei Exportfehler muss Bearbeitung noetig trotz übersprungenem Run script laufen.</li>' +
         '<li>Eine Rechnung und eine herausgefilterte automatische Antwort bleiben unverändert. In einer Testkopie Betreff- und Verschiebefehler prüfen: Prüfentscheidung läuft nach Betrefffehler weiter; ein Verschiebefehler bleibt im Ausführungsverlauf sichtbar.</li>' +
         '<li>Ausgaben kontrollieren: <code>needsReview</code>, <code>category</code>, <code>newSubject</code>, <code>paymentAmounts</code> und <code>verdictWhy</code>. Diese Änderung wurde lokal geprüft; die beschriebenen Microsoft-365-Tests im eigenen Testpostfach durchführen.</li></ol>'
