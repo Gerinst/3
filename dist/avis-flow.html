@@ -463,7 +463,7 @@ mark.mbm { background: var(--chg-bg); color: inherit; border-radius: 3px; paddin
   <div class="dh"><b>Infos zum Flow „Avis V2“</b><button type="button" class="picon" id="dClose" aria-label="Schließen"><svg viewBox="0 0 16 16"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg></button></div>
   <div class="db">
     <details open><summary>Was an der Mail passiert</summary><div class="dc">
-      <p>Jede neue Mail im Posteingang des freigegebenen Postfachs geht als Ganzes an das Skript (PDF, Excel/CSV, SAP-Export und Mailtext). Ist es ein Zahlungsavis, bekommt die <b>Original-Mail</b> eine Kategorie und den Betrag vorne in den Betreff. Andere Mails bleiben unberührt; es kommen keine zusätzlichen Mails.</p>
+      <p>Jede neue Mail im Posteingang des freigegebenen Postfachs geht als Ganzes an das Skript (PDF, Excel/CSV, SAP-Export und Mailtext). Liefert es einen neuen Betreff, bekommt die <b>Original-Mail zuerst den Betrag vorne in den Betreff und danach die Kategorie</b>. Ist kein neuer Betreff nötig, wird nur die Kategorie gesetzt. Andere Mails bleiben unberührt; es kommen keine zusätzlichen Mails.</p>
       <div class="tblwrap"><table class="tbl">
         <tr><th>Ergebnis des Skripts</th><th>Kategorie</th><th>Betreff danach</th></tr>
         <tr><td>Ein Avis, Betrag sicher</td><td><span class="cat g">Avis</span></td><td><code>2.601,35 Zahlungsavis</code></td></tr>
@@ -492,19 +492,19 @@ mark.mbm { background: var(--chg-bg); color: inherit; border-radius: 3px; paddin
       <li><b>Skript:</b> Excel im Browser → Automatisieren → Neues Skript → Inhalt von <code>dist/AvisV2.ts</code> einfügen → speichern → umbenennen in <code>AvisV2</code>. Das alte Skript <code>AvisPdfAmount</code> bleibt unverändert.</li>
       <li><b>Arbeitsmappe:</b> die leere <code>AvisParser.xlsx</code> in OneDrive weiterverwenden (oder neu anlegen).</li>
       <li><b>Neuer Flow</b> mit den Karten auf der Fläche. Nie zwei Flows gleichzeitig auf dasselbe Postfach.</li>
-    </ol><p><b>Bestehenden Flow aktualisieren:</b> Die Kategorie „Avise“ in Outlook unter „Kategorien verwalten“ in „Avis“ umbenennen und das Skript <code>AvisV2</code> aktualisieren. Bei Plan B außerdem in <b>Kategorie Kopie</b> das Feld <b>Text</b> durch die aktuelle Formel dieser HTML ersetzen: Sie erkennt das <code>?</code> im neuen Betreffformat und setzt die Kategorie „Avis“. Die sechs TXT-Formeln bleiben für diese Umstellung unverändert.</p><p>Die ausführliche Klick-für-Klick-Anleitung steht in <code>docs/ANLEITUNG.md</code>.</p></div></details>
+    </ol><p><b>Bestehenden Flow aktualisieren:</b> Die Kategorie „Avise“ in Outlook unter „Kategorien verwalten“ in „Avis“ umbenennen und das Skript <code>AvisV2</code> aktualisieren. Bei Plan B außerdem in <b>Kategorie Kopie</b> das Feld <b>Text</b> durch die aktuelle Formel dieser HTML ersetzen: Sie erkennt das <code>?</code> im neuen Betreffformat und setzt die Kategorie „Avis“.</p><p><b>Neue Reihenfolge im bestehenden Flow:</b> Innerhalb von <b>Kategorie noetig → Wahr</b> die gesamte Bedingung <b>Betreff noetig</b> mit <b>Betreff setzen</b> an die erste Stelle schieben und ihre alte Abhängigkeit von Kategorie setzen entfernen. <b>Kategorie setzen</b> danach auf derselben Ebene platzieren, außerhalb beider Zweige von Betreff noetig. Dort <b>Ausführen nach → Betreff noetig</b>: <b>Ist erfolgreich</b>, <b>Timeout</b> und <b>Ist fehlgeschlagen</b> aktivieren; „Wurde übersprungen“ bleibt aus. So läuft die Kategorie auch ohne neuen Betreff oder nach einer fehlgeschlagenen Betreffänderung. Bei Plan B bleibt <b>Original verschieben</b> ganz am Ende, unter der neuen Bedingung <b>Original verschieben noetig</b> nach Kategorie setzen. Für diese Reihenfolge bleiben das Office-Skript und die sechs TXT-Formeln unverändert. Die Dateien aktualisieren einen bestehenden Power-Automate-Flow nicht automatisch.</p><p>Die ausführliche Klick-für-Klick-Anleitung steht in <code>docs/ANLEITUNG.md</code>.</p></div></details>
     <details><summary>5-Minuten-Test vor dem Bau</summary><div class="dc">
       <p>Prüft vorab, ob Vollzugriff und Betreffänderung im Postfach funktionieren.</p>
       <ol>
         <li>Testflow <code>PATCHTEST</code>: Trigger „Wenn eine neue E-Mail in einem freigegebenen Postfach eingeht (V2)“, Postfach <code class="mbv">avis@firma.de</code>, Erweiterte Parameter → <b>Filter für Betreff</b> = <code>PATCHTEST</code>.</li>
-        <li>Aktion <b>HTTP-Anforderung senden</b> (Office 365 Outlook): URI über <span class="kbd">fx</span> <button type="button" class="cp" data-copy-tpl="concat('https://graph.microsoft.com/v1.0/users/{{MB}}/messages/', triggerOutputs()?['body/id'])">URI-Formel kopieren</button>, Methode <b>PATCH</b>, Text <code>{"categories":["Avis"]}</code>.</li>
-        <li>Zweite gleiche Aktion mit Text <code>{"subject":"2.601,35 PATCHTEST Zahlungsavis"}</code>.</li>
+        <li>Aktion <b>HTTP-Anforderung senden</b> (Office 365 Outlook): URI über <span class="kbd">fx</span> <button type="button" class="cp" data-copy-tpl="concat('https://graph.microsoft.com/v1.0/users/{{MB}}/messages/', triggerOutputs()?['body/id'])">URI-Formel kopieren</button>, Methode <b>PATCH</b>, Text <code>{"subject":"2.601,35 PATCHTEST Zahlungsavis"}</code>.</li>
+        <li>Zweite gleiche Aktion mit Text <code>{"categories":["Avis"]}</code>. Bei ihr <b>Ausführen nach</b> der ersten Aktion: <b>Ist erfolgreich</b>, <b>Timeout</b> und <b>Ist fehlgeschlagen</b> aktivieren.</li>
         <li>Mail mit Betreff „PATCHTEST Zahlungsavis“ an das Postfach schicken, 1 bis 5 Minuten warten. Richtig: neuer Betreff und Kategorie in Outlook, beide Aktionen grün. 403 = kein Vollzugriff oder falsches Konto; 404 = URI oder Adresse falsch.</li>
         <li>Danach den Testflow deaktivieren.</li>
       </ol></div></details>
     <details><summary>Alle Formeln zum Kopieren</summary><div class="dc" id="formulaList"></div></details>
     <details><summary>Live getestet am 30. und 31.10.2026</summary><div class="dc">
-      <p>Diese Berichte beziehen sich auf den damaligen Stand. Die Kategorie „Avis“ und das Betreffformat ohne Währung und Bindestrich wurden danach lokal geprüft; die Anzeige-Beispiele sind entsprechend aktualisiert.</p>
+      <p>Diese Berichte beziehen sich auf den damaligen Stand. Die Kategorie „Avis“, das Betreffformat ohne Währung und Bindestrich und die Reihenfolge „erst Betreff, dann Kategorie“ wurden danach lokal geprüft, noch nicht erneut in Microsoft 365; die Anzeige-Beispiele sind entsprechend aktualisiert.</p>
       <p>31.10.2026 abends, Endfassung: 20 weitere Live-Mails (10 deutsch, 10 englisch) aus den Themen-Testrunden, u. a. Teilzahlung, CSV-Export, Korrektur-Avis, Marktplatz-Auszahlung, verschachtelte Weiterleitung, zwei Avise in einer Mail und als JSON, ZIP-Anhang, eigenes Avis, Abwesenheitsnotiz, Rücksendung, Skonto-Zahlung, Avis einer Behörde, Steuererstattung, ODS-Liste, Verrechnung, Lieferavis. Jedes Ergebnis war live genau wie im lokalen Test (7 „Avis“ mit Betrag je Sprache, je 1 „mehrere Avise“, je 2 „Avis prüfen“, je 2 ohne Kategorie).</p>
       <p>Danach 6 Mails mit Outlook-Elementen (.msg) als Anlage: Kunden-Avis als PDF im Element (deutsch, englisch), Avis nur im Text des Elements, eingebettete Mail, zwei Rechnungen als Fallen. Live genau wie lokal.</p>
       <p>31.10.2026: 41 weitere Live-Mails (22 deutsch, 19 englisch): Excel/CSV-Avise und -Fallen, englische Überweisungsbestätigung und SWIFT-Kopie, zwei Zahlungen in einer Mail, Teilzahlung, nur erwähntes Avis, Portal-Hinweis, Antwort mit neuem Betrag. Jedes Ergebnis war live genau wie im lokalen Test, der Betrag steht vorne im Betreff (z. B. <code>12.347,80 AW: 2.601,35 Zahlungsavis</code>).</p>
@@ -556,7 +556,7 @@ mark.mbm { background: var(--chg-bg); color: inherit; border-radius: 3px; paddin
     </ul></div></details>
     <details><summary>Plan B – nur falls Microsoft den Betreff sperrt</summary><div class="dc">
       <p>Microsoft will ab 31.12.2026 Betreffänderungen an empfangenen Mails sperren. Im Januar den 5-Minuten-Test wiederholen. Ist die Kategorie grün und der Betreff rot (meist 403), auf Plan B umstellen.</p>
-      <p>Plan B legt statt der Betreffänderung eine Weiterleitung als Entwurf an, setzt dort den Betreff (Entwürfe dürfen weiter geändert werden), schickt sie an das Postfach und verschiebt das Original in den Ordner „Avis-Original“. Absender der Kopie ist das Postfach; Antworten gehen über „Antwort an“ an den Kunden. Braucht „Senden als“. Je Avis landet eine Kopie in „Gesendete Elemente“. Plan B ist noch nicht im Testzugang gebaut.</p>
+      <p>Plan B legt statt der Betreffänderung eine Weiterleitung als Entwurf an, setzt dort den Betreff (Entwürfe dürfen weiter geändert werden) und schickt sie an das Postfach. Danach wird die Kategorie am Original gesetzt. Erst wenn das Senden der Kopie und das Setzen der Kategorie erfolgreich waren, verschiebt <b>Original verschieben noetig</b> das Original in den Ordner „Avis-Original“. Ohne neuen Betreff oder bei einem Kopierfehler bleibt das Original im Posteingang und erhält weiterhin seine Kategorie, sofern die Kategorie-Anfrage erfolgreich ist. Absender der Kopie ist das Postfach; Antworten gehen über „Antwort an“ an den Kunden. Braucht „Senden als“. Je Avis landet eine Kopie in „Gesendete Elemente“. Plan B ist noch nicht im Testzugang gebaut.</p>
       <p><button type="button" class="btn primary" id="toPlanB">Plan B auf der Fläche zeigen</button></p>
     </div></details>
     <details><summary>Fortschritt</summary><div class="dc"><p>Die Häkchen „Erledigt“ merkt sich nur dieser Browser.</p><p><button type="button" class="btn" id="resetDone">Alle Häkchen entfernen</button></p></div></details>
@@ -622,7 +622,7 @@ mark.mbm { background: var(--chg-bg); color: inherit; border-radius: 3px; paddin
       }).join('') + '<div class="nt">' + esc(p.note) + '</div></div>';
   }
 
-  /* ---------- the flow, exactly as in the designer (Codeansicht of 30.10.2026) ---------- */
+  /* ---------- flow based on Codeansicht of 30.10.2026; subject before category ---------- */
   var OUTLOOK_API = '/providers/Microsoft.PowerApps/apis/shared_office365';
   var EXCEL_API = '/providers/Microsoft.PowerApps/apis/shared_excelonlinebusiness';
   var ID = {
@@ -647,7 +647,8 @@ mark.mbm { background: var(--chg-bg); color: inherit; border-radius: 3px; paddin
     fwdBody: '{"toRecipients":[{"emailAddress":{"address":"{{MB}}"}}]}',
     uriCopy: "concat('https://graph.microsoft.com/v1.0/users/{{MB}}/messages/', body('Kopie_anlegen')?['id'])",
     copyText: "string(setProperty(setProperty(json('{}'), 'subject', outputs('Run_script')?['body/result/newSubject']), 'replyTo', createArray(setProperty(json('{}'), 'emailAddress', setProperty(json('{}'), 'address', triggerOutputs()?['body/from'])))))",
-    uriSend: "concat('https://graph.microsoft.com/v1.0/users/{{MB}}/messages/', body('Kopie_anlegen')?['id'], '/send')"
+    uriSend: "concat('https://graph.microsoft.com/v1.0/users/{{MB}}/messages/', body('Kopie_anlegen')?['id'], '/send')",
+    moveLinks: "equals(actions('Kopie_senden')?['status'], 'Succeeded')"
   };
   function host(api, conn, op) { return { apiId: api, connection: conn, operationId: op }; }
   function httpCode(uri, body) {
@@ -669,11 +670,15 @@ mark.mbm { background: var(--chg-bg); color: inherit; border-radius: 3px; paddin
       return { type: 'OpenApiConnection', inputs: { parameters: { source: 'me', drive: ID.drive, file: ID.file, scriptId: ID.script, 'ScriptParameters/pdfBase64': '@' + F.pdf, 'ScriptParameters/mailSubject': "@triggerOutputs()?['body/subject']" }, host: host(EXCEL_API, 'shared_excelonlinebusiness', 'RunScriptProd'), retryPolicy: { type: 'fixed', count: 3, interval: 'PT1M' } }, runAfter: { Export_email: ['Succeeded'] }, metadata: meta };
     },
     Kategorie_noetig: function () {
-      return { type: 'If', expression: { and: [{ equals: ['@' + F.katLinks, '@true'] }] }, actions: { Kategorie_setzen: CODE.Kategorie_setzen(), Betreff_noetig: CODE.Betreff_noetig() }, else: { actions: {} }, runAfter: { Run_script: ['Succeeded', 'TimedOut', 'Failed'] } };
+      return { type: 'If', expression: { and: [{ equals: ['@' + F.katLinks, '@true'] }] }, actions: { Betreff_noetig: CODE.Betreff_noetig(), Kategorie_setzen: CODE.Kategorie_setzen() }, else: { actions: {} }, runAfter: { Run_script: ['Succeeded', 'TimedOut', 'Failed'] } };
     },
-    Kategorie_setzen: function () { return httpCode(F.uri, F.katText); },
+    Kategorie_setzen: function () {
+      var action = httpCode(F.uri, F.katText);
+      action.runAfter = { Betreff_noetig: ['Succeeded', 'TimedOut', 'Failed'] };
+      return action;
+    },
     Betreff_noetig: function () {
-      return { type: 'If', expression: { and: [{ equals: ['@' + F.betLinks, '@true'] }] }, actions: { Betreff_setzen: CODE.Betreff_setzen() }, else: { actions: {} }, runAfter: { Kategorie_setzen: ['Succeeded'] } };
+      return { type: 'If', expression: { and: [{ equals: ['@' + F.betLinks, '@true'] }] }, actions: { Betreff_setzen: CODE.Betreff_setzen() }, else: { actions: {} }, runAfter: {} };
     },
     Betreff_setzen: function () { return httpCode(F.uri, F.betText); }
   };
@@ -792,7 +797,7 @@ mark.mbm { background: var(--chg-bg); color: inherit; border-radius: 3px; paddin
     },
     Kategorie_setzen: {
       kind: 'action', conn: 'outlook', title: 'Kategorie setzen', rename: 'Kategorie_setzen', sub: 'Office 365 Outlook · HTTP-Anforderung senden',
-      add: ['Im Zweig <b>Wahr</b> von Kategorie noetig: <b>+</b> → Suche <code>HTTP-Anforderung senden Office 365 Outlook</code> → <b>HTTP-Anforderung senden</b> (Office 365 Outlook).'],
+      add: ['Im Zweig <b>Wahr</b> von Kategorie noetig, <b>unter der gesamten Bedingung Betreff noetig</b> (außerhalb ihrer beiden Zweige): <b>+</b> → Suche <code>HTTP-Anforderung senden Office 365 Outlook</code> → <b>HTTP-Anforderung senden</b> (Office 365 Outlook).'],
       params: [
         { t: 'fx', label: 'URI', req: true, short: 'concat(...)', expr: F.uri, how: FX + ' → Formel (mit Ihrer Postfachadresse) → <b>Hinzufügen</b>.' },
         { t: 'dropdown', label: 'Methode', req: true, value: 'PATCH', how: '<b>PATCH</b> wählen.' },
@@ -801,26 +806,26 @@ mark.mbm { background: var(--chg-bg); color: inherit; border-radius: 3px; paddin
         { t: 'text', label: 'Content-Type', value: 'application/json', how: 'Steht meist schon da.' },
         { t: 'conn' }
       ],
-      summary: { chg: false, html: 'Nichts ändern.' },
-      settings: ACTION_SETTINGS,
+      summary: { chg: true, html: '<b>Ändern:</b> Ausführen nach → <b>Betreff noetig</b> → <b>Ist erfolgreich</b>, <b>Timeout</b> und <b>Ist fehlgeschlagen</b> anhaken. „Wurde übersprungen“ bleibt aus.' },
+      settings: [S.timeout, S.retryStd, S.after('Betreff noetig', 'cond', { s: true, t: true, f: true }, true), S.security, S.tracking],
       code: CODE.Kategorie_setzen,
-      info: '<p>Setzt an der Original-Mail die Kategorie, die das Skript liefert, z. B. <code>{"categories":["Avis"]}</code>. Kategorien, die schon an der Mail hingen, bleiben. Ist das Skript gescheitert, setzt sie „Avis prüfen“.</p><ul><li><b>403</b>: kein Vollzugriff oder falsches Konto in der Verbindung.</li><li><b>404</b>: Postfachadresse in der URI falsch, oder die Mail wurde vorher verschoben.</li><li><b>400</b>: Text falsch – Formel neu über ' + FX + ' einfügen.</li></ul>'
+      info: '<p>Setzt nach der Betreffprüfung und einer eventuell nötigen Betreffänderung die Kategorie an der Original-Mail, z. B. <code>{"categories":["Avis"]}</code>. Die Kategorie wird auch gesetzt, wenn kein neuer Betreff nötig ist oder die Betreffänderung scheitert. Deshalb steht diese Aktion außerhalb beider Zweige von <b>Betreff noetig</b>.</p><p>Kategorien, die das Skript an der Mail gelesen hat, bleiben. Ist das Skript gescheitert, setzt die Ersatzformel „Avis prüfen“.</p><ul><li><b>403</b>: kein Vollzugriff oder falsches Konto in der Verbindung.</li><li><b>404</b>: Postfachadresse in der URI falsch, oder die Mail wurde vorher verschoben.</li><li><b>400</b>: Text falsch – Formel neu über ' + FX + ' einfügen.</li></ul>'
     },
     Betreff_noetig: {
       kind: 'cond', title: 'Betreff noetig', rename: 'Betreff_noetig', sub: 'Steuerung · Bedingung',
-      add: ['<b>+</b> unter Kategorie setzen (noch im Zweig <b>Wahr</b> von Kategorie noetig) → <b>Bedingung</b>.'],
+      add: ['Als <b>ersten Schritt</b> im Zweig <b>Wahr</b> von Kategorie noetig: <b>+</b> → <b>Bedingung</b>. Kategorie setzen kommt erst unter die gesamte Bedingung.'],
       params: [{ t: 'condition', group: 'Und', rows: [{ l: { fx: 'and(...)', expr: F.betLinks }, op: 'ist gleich', r: { fx: 'true', expr: 'true' } }],
         how: 'Links: ' + FX + ' → Formel (oben) → <b>Hinzufügen</b>. Mitte: <b>ist gleich</b>. Rechts: ' + FX + ' → <code>true</code> → <b>Hinzufügen</b>.' }],
-      summary: { chg: false, html: 'Nichts ändern. „Ausführen nach“ steht schon richtig: Kategorie setzen ist erfolgreich.' },
-      settings: [S.after('Kategorie setzen', 'outlook', { s: true }), S.tracking],
+      summary: { chg: false, html: 'Erster Schritt in diesem Zweig: keine vorherige Aktion bei „Ausführen nach“. Beim Umbau eine alte Abhängigkeit von Kategorie setzen entfernen.' },
+      settings: [S.tracking],
       code: CODE.Betreff_noetig,
-      info: '<p>Nur wenn das Skript einen neuen Betreff liefert (ein Avis mit Betrag). Bei „mehrere Avise“, unklaren Fällen und schon ergänzten Betreffs bleibt es bei der Kategorie.</p><p>Diese Bedingung liegt bewusst <b>in</b> Kategorie noetig: Einen neuen Betreff gibt es nur zusammen mit einer Kategorie.</p>'
+      info: '<p>Nur wenn das Skript einen neuen Betreff liefert (ein Avis mit Betrag), läuft zuerst <b>Betreff setzen</b>. Bei „mehrere Avise“, unklaren Fällen und schon ergänzten Betreffs bleibt der Betreff unverändert. Anschließend läuft in beiden Fällen <b>Kategorie setzen</b>.</p><p>Diese Bedingung liegt bewusst <b>in</b> Kategorie noetig: Einen neuen Betreff gibt es nur zusammen mit einer Kategorie.</p>'
     },
     Betreff_setzen: {
       kind: 'action', conn: 'outlook', title: 'Betreff setzen', rename: 'Betreff_setzen', sub: 'Office 365 Outlook · HTTP-Anforderung senden',
       add: ['Im Zweig <b>Wahr</b> von Betreff noetig: <b>+</b> → <b>HTTP-Anforderung senden</b> (Office 365 Outlook).'],
       params: [
-        { t: 'fx', label: 'URI', req: true, short: 'concat(...)', expr: F.uri, how: FX + ' → dieselbe Formel wie bei Kategorie setzen → <b>Hinzufügen</b>.' },
+        { t: 'fx', label: 'URI', req: true, short: 'concat(...)', expr: F.uri, how: FX + ' → URI-Formel (mit Ihrer Postfachadresse) → <b>Hinzufügen</b>.' },
         { t: 'dropdown', label: 'Methode', req: true, value: 'PATCH', how: '<b>PATCH</b> wählen.' },
         { t: 'advanced', text: '2 von 7 wird/werden angezeigt', how: '<b>Alle anzeigen</b> → nur <b>Text</b> und <b>Content-Type</b> ausfüllen.' },
         { t: 'token', label: 'Text', tok: 'body/result/patchSubject', conn: 'excel', expr: F.betText, how: FX + ' → Formel → <b>Hinzufügen</b>. Nach dem Speichern zeigt der Designer daraus den Baustein „body/result/patchSubject“ (wie hier). Das ist richtig.' },
@@ -830,7 +835,7 @@ mark.mbm { background: var(--chg-bg); color: inherit; border-radius: 3px; paddin
       summary: { chg: false, html: 'Nichts ändern.' },
       settings: ACTION_SETTINGS,
       code: CODE.Betreff_setzen,
-      info: '<p>Setzt den Betrag vor den Betreff der Original-Mail, z. B. <code>2.601,35 Zahlungsavis</code>.</p><div class="callout warn"><b>Ab 31.12.2026</b> will Microsoft Betreffänderungen an empfangenen Mails sperren. Dann schlägt nur diese Aktion fehl; die Kategorie ist schon gesetzt. Im Januar testen; falls gesperrt: Plan B (oben umschalten).</div>'
+      info: '<p>Setzt zuerst den Betrag vor den Betreff der Original-Mail, z. B. <code>2.601,35 Zahlungsavis</code>. Erst nach Abschluss der Bedingung folgt <b>Kategorie setzen</b>.</p><div class="callout warn"><b>Ab 31.12.2026</b> will Microsoft Betreffänderungen an empfangenen Mails sperren. Scheitert diese Aktion, wird die Kategorie anschließend trotzdem gesetzt, sofern die Kategorie-Anfrage erfolgreich ist. Dafür bei Kategorie setzen auch Fehler und Timeout von Betreff noetig zulassen. Im Januar testen; falls gesperrt: Plan B (oben umschalten).</div>'
     },
     finish: {
       kind: 'finish', conn: 'finish', title: 'Speichern und testen', sub: 'Zum Schluss',
@@ -838,7 +843,8 @@ mark.mbm { background: var(--chg-bg); color: inherit; border-radius: 3px; paddin
         '<li>Die Flowprüfung zeigt „Drosselung der Trigger-Parallelität erkannt“. Das ist gewollt.</li>' +
         '<li><b>1:1-Kontrolle:</b> Im echten Designer die Karte <b>Keine Automatik</b> anklicken → <b>Codeansicht</b> → in den Code klicken → Strg+A, Strg+C (Mac: ⌘). Hier bei <b>Keine Automatik</b> → Codeansicht → einfügen → <b>Vergleichen</b>. Das prüft alle Aktionen darunter. Dasselbe für den Trigger.</li>' +
         '<li><b>Testen:</b> Aus dem eigenen Postfach eine Mail mit einem Zahlungsavis-PDF an <code>{{MB}}</code> schicken, eine zweite ohne Avis (z. B. eine Rechnung). 1 bis 5 Minuten warten.</li>' +
-        '<li>In Outlook: Die Avis-Mail hat die Kategorie „Avis“ und den Betrag im Betreff, die andere ist unverändert.</li>' +
+        '<li>In Outlook: Die Avis-Mail hat die Kategorie „Avis“ und den Betrag im Betreff, die andere ist unverändert. Im Ausführungsverlauf muss <b>Betreff setzen vor Kategorie setzen</b> abgeschlossen sein.</li>' +
+        '<li>Zusätzlich eine Mail mit mehreren unterschiedlichen Avis-Beträgen und einen unklaren Fall testen: Betreff unverändert, Kategorie „mehrere Avise“ bzw. „Avis prüfen“. Auch bei bereits ergänztem Betreff muss Kategorie setzen weiterhin laufen.</li>' +
         '<li>Ausführungsverlauf: Meine Flows → Avis V2 → Lauf anklicken → <b>Keine Automatik</b> aufklappen → <b>Run script</b> → Ausgaben: <code>result.verdict</code>, <code>result.category</code>, <code>result.newSubject</code>, <code>result.verdictWhy</code>, <code>result.documents</code>.</li></ol>' +
         '<div class="callout">Lief der alte Flow (Version 1) auf demselben Postfach: dort <b>⋯ → Deaktivieren</b>. Nie zwei Flows gleichzeitig auf ein Postfach.</div>'
     }
@@ -914,9 +920,18 @@ mark.mbm { background: var(--chg-bg); color: inherit; border-radius: 3px; paddin
       settings: [S.timeout, S.retryNone, S.after('Kopie anpassen', 'outlook', { s: true }), S.security, S.tracking],
       info: '<p>Schickt die Kopie an das Postfach (Antwortcode 202). Sie startet den Flow noch einmal; dort greift <b>Eigene Kopie</b>.</p>'
     },
+    Original_verschieben_noetig: {
+      kind: 'cond', planB: true, title: 'Original verschieben noetig', rename: 'Original_verschieben_noetig', sub: 'Steuerung · Bedingung · Plan B',
+      add: ['Im Zweig <b>Wahr</b> von Kategorie noetig, direkt <b>unter Kategorie setzen</b>: <b>+</b> → <b>Bedingung</b>. Diese Bedingung liegt außerhalb von Betreff noetig.'],
+      params: [{ t: 'condition', group: 'Und', rows: [{ l: { fx: 'equals(...)', expr: F.moveLinks }, op: 'ist gleich', r: { fx: 'true', expr: 'true' } }],
+        how: 'Links: ' + FX + ' → Formel → <b>Hinzufügen</b>. Mitte: <b>ist gleich</b>. Rechts: ' + FX + ' → <code>true</code> → <b>Hinzufügen</b>.' }],
+      summary: { chg: false, html: '„Ausführen nach“: Kategorie setzen <b>Ist erfolgreich</b>. Alle anderen Zustände bleiben aus.' },
+      settings: [S.after('Kategorie setzen', 'outlook', { s: true }), S.tracking],
+      info: '<p>Nur wenn die Kopie erfolgreich gesendet und die Kategorie am Original gesetzt wurde, darf das Original verschoben werden. War kein neuer Betreff nötig oder ist das Senden gescheitert, bleibt diese Bedingung <b>Falsch</b>. Scheitert Kategorie setzen, wird die Bedingung übersprungen.</p>'
+    },
     Original_verschieben: {
       kind: 'action', conn: 'outlook', planB: true, title: 'Original verschieben', rename: 'Original_verschieben', sub: 'Office 365 Outlook · E-Mail verschieben (V2) · Plan B',
-      add: ['<b>+</b> unter Kopie senden → Suche <code>E-Mail verschieben</code> → <b>E-Mail verschieben (V2)</b> (Office 365 Outlook).', 'Vorher im Postfach den Ordner <b>Avis-Original</b> anlegen.'],
+      add: ['Im Zweig <b>Wahr</b> von Original verschieben noetig: <b>+</b> → Suche <code>E-Mail verschieben</code> → <b>E-Mail verschieben (V2)</b> (Office 365 Outlook).', 'Vorher im Postfach den Ordner <b>Avis-Original</b> anlegen. Beim Umbau die alte Aktion unter Kopie senden entfernen.'],
       params: [
         { t: 'token', label: 'Nachrichten-ID', req: true, tok: 'Nachrichten-ID', conn: 'outlook', alt: F.msgId, pick: 'msgid', how: 'Ins Feld klicken → ' + BOLT + ' → <b>Nachrichten-ID</b> unter der Überschrift des Triggers, nicht „Internetnachrichten-ID“.' },
         { t: 'folder', label: 'Ordner', req: true, value: 'Avis-Original', how: 'Erst unten die Postfachadresse eintragen, dann über das Ordnersymbol <b>Avis-Original</b> wählen – sonst zeigt die Liste das eigene Postfach.' },
@@ -925,27 +940,27 @@ mark.mbm { background: var(--chg-bg); color: inherit; border-radius: 3px; paddin
         { t: 'conn' }
       ],
       summary: { chg: false, html: 'Nichts ändern.' },
-      settings: [S.timeout, S.retryStd, S.after('Kopie senden', 'outlook', { s: true }), S.security, S.tracking],
-      info: '<p>Immer als letzte Aktion. Schlägt die Kopie fehl, bleibt das Original mit seiner Kategorie im Posteingang – nichts verschwindet.</p>'
+      settings: ACTION_SETTINGS,
+      info: '<p>Immer als letzte Aktion, nach dem Senden der Kopie und dem Setzen der Kategorie am Original. Ein früheres Verschieben kann die Nachrichten-ID ändern und Kategorie setzen verhindern. Schlägt die Kopie oder Kategorie setzen fehl, bleibt das Original im Posteingang.</p>'
     },
     finishB: {
       kind: 'finish', conn: 'finish', title: 'Plan B testen', sub: 'Zum Schluss',
-      html: '<p>Vor dem Umstellen mit einer Testmail prüfen:</p><ol><li>Kopie anlegen <b>201</b>, Kopie anpassen <b>200</b>, Kopie senden <b>202</b>, Original verschieben grün.</li><li>Ein zweiter Lauf startet für die Kopie: Eigene Kopie = Wahr, nur Kategorie Kopie läuft.</li><li>Die Kopie hat den Betreff mit Betrag, alle Anhänge und „Antwort an“ = Kunde; das Original liegt in „Avis-Original“.</li></ol><p>Plan B braucht „Senden als“ für das Konto des Flows. Je Avis landet eine Kopie in „Gesendete Elemente“ des Postfachs.</p>'
+      html: '<p>Vor dem Umstellen mit Testmails prüfen:</p><ol><li>Reihenfolge: Kopie anlegen <b>201</b> → Kopie anpassen <b>200</b> → Kopie senden <b>202</b> → Kategorie setzen grün → Original verschieben noetig = Wahr → Original verschieben grün.</li><li>Ein zweiter Lauf startet für die Kopie: Eigene Kopie = Wahr, nur Kategorie Kopie läuft.</li><li>Die Kopie hat den Betreff mit Betrag, alle Anhänge und „Antwort an“ = Kunde; das Original liegt mit Kategorie in „Avis-Original“.</li><li>Bei mehreren Avis-Beträgen, unklaren Fällen oder bereits ergänztem Betreff: keine Kopie, Kategorie am Original, kein Verschieben. Bei fehlgeschlagenem Kopienschritt wird die Kategorie am Original trotzdem versucht; ohne erfolgreiches Senden und Kategorie setzen wird nichts verschoben.</li></ol><p>Plan B braucht „Senden als“ für das Konto des Flows. Je Avis landet eine Kopie in „Gesendete Elemente“ des Postfachs.</p>'
     }
   };
   Object.keys(PB).forEach(function (k) { N[k] = PB[k]; });
 
   var TREE = {
-    main: ['trigger', { cond: 'Keine_Automatik', yes: ['Export_email', 'Run_script', { cond: 'Kategorie_noetig', yes: ['Kategorie_setzen', { cond: 'Betreff_noetig', yes: ['Betreff_setzen'], no: [] }], no: [] }], no: [] }],
-    planB: ['trigger', { cond: 'Eigene_Kopie', yes: ['Kategorie_Kopie'], no: [{ cond: 'Keine_Automatik', yes: ['Export_email', 'Run_script', { cond: 'Kategorie_noetig', yes: ['Kategorie_setzen', { cond: 'Betreff_noetig', yes: ['Kopie_anlegen', 'Kopie_anpassen', 'Kopie_senden', 'Original_verschieben'], no: [] }], no: [] }], no: [] }] }]
+    main: ['trigger', { cond: 'Keine_Automatik', yes: ['Export_email', 'Run_script', { cond: 'Kategorie_noetig', yes: [{ cond: 'Betreff_noetig', yes: ['Betreff_setzen'], no: [] }, 'Kategorie_setzen'], no: [] }], no: [] }],
+    planB: ['trigger', { cond: 'Eigene_Kopie', yes: ['Kategorie_Kopie'], no: [{ cond: 'Keine_Automatik', yes: ['Export_email', 'Run_script', { cond: 'Kategorie_noetig', yes: [{ cond: 'Betreff_noetig', yes: ['Kopie_anlegen', 'Kopie_anpassen', 'Kopie_senden'], no: [] }, 'Kategorie_setzen', { cond: 'Original_verschieben_noetig', yes: ['Original_verschieben'], no: [] }], no: [] }], no: [] }] }]
   };
   var ORDER = {
-    main: ['trigger', 'Keine_Automatik', 'Export_email', 'Run_script', 'Kategorie_noetig', 'Kategorie_setzen', 'Betreff_noetig', 'Betreff_setzen', 'finish'],
-    planB: ['trigger', 'Eigene_Kopie', 'Kategorie_Kopie', 'Keine_Automatik', 'Export_email', 'Run_script', 'Kategorie_noetig', 'Kategorie_setzen', 'Betreff_noetig', 'Kopie_anlegen', 'Kopie_anpassen', 'Kopie_senden', 'Original_verschieben', 'finishB']
+    main: ['trigger', 'Keine_Automatik', 'Export_email', 'Run_script', 'Kategorie_noetig', 'Betreff_noetig', 'Betreff_setzen', 'Kategorie_setzen', 'finish'],
+    planB: ['trigger', 'Eigene_Kopie', 'Kategorie_Kopie', 'Keine_Automatik', 'Export_email', 'Run_script', 'Kategorie_noetig', 'Betreff_noetig', 'Kopie_anlegen', 'Kopie_anpassen', 'Kopie_senden', 'Kategorie_setzen', 'Original_verschieben_noetig', 'Original_verschieben', 'finishB']
   };
   /* in Plan B these nodes change below them, so the current Codeansicht no longer applies */
   var PB_CHANGED = { Keine_Automatik: 1, Kategorie_noetig: 1, Betreff_noetig: 1 };
-  var RUNAFTER = { Kategorie_noetig: { s: true, t: true, f: true } };
+  var RUNAFTER = { Kategorie_noetig: { s: true, t: true, f: true }, Kategorie_setzen: { s: true, t: true, f: true } };
 
   /* expose the data for tests (node) */
   if (typeof window !== 'undefined') window.AvisFlow = { code: function (id, m) { var old = MB; if (m) MB = m; try { return CODE[id](); } finally { MB = old; } }, ID: ID, F: F };
@@ -1335,8 +1350,8 @@ mark.mbm { background: var(--chg-bg); color: inherit; border-radius: 3px; paddin
   /* ---------- formulas list in the drawer ---------- */
   function renderFormulas() {
     var rows = [
-      ['Run script › pdfBase64', F.pdf], ['Kategorie noetig › links (rechts: fx true)', F.katLinks], ['Kategorie setzen und Betreff setzen › URI', F.uri],
-      ['Kategorie setzen › Text', F.katText], ['Betreff noetig › links (rechts: fx true)', F.betLinks], ['Betreff setzen › Text', F.betText]
+      ['Run script › pdfBase64', F.pdf], ['Kategorie noetig › links (rechts: fx true)', F.katLinks], ['Betreff setzen und Kategorie setzen › URI', F.uri],
+      ['Betreff noetig › links (rechts: fx true)', F.betLinks], ['Betreff setzen › Text', F.betText], ['Kategorie setzen › Text', F.katText]
     ];
     $('#formulaList').innerHTML = '<p>Jede Formel im Feld über <span class="kbd">fx</span> einfügen. Die Postfachadresse kommt aus dem Feld oben rechts.</p>' +
       rows.map(function (r) { return '<div style="margin-bottom:10px"><b style="font-size:13px">' + esc(r[0]) + '</b>' + exprHTML(r[1], 'Formel') + '</div>'; }).join('');

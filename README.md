@@ -4,6 +4,8 @@ Erkennt in einem freigegebenen Postfach jede Zahlungsavis-Mail am Inhalt: PDF, E
 
 Der ursprüngliche Betreff bleibt erhalten: Aus `Abrechnung Oktober` wird bei einem sicheren Betrag von 5.500,05 Euro `5.500,05 Abrechnung Oktober`. „Zahlungsavis“ ist in den Beispielen nur ein möglicher Originalbetreff; das Skript fügt dieses Wort nicht hinzu. Bei unsicheren Ergebnissen bleibt der jeweilige Prüfhinweis hinter dem Betrag stehen.
 
+Der Flow ändert zuerst den Betreff und setzt danach die Kategorie. Ist keine Betreffänderung nötig oder schlägt sie fehl, wird die Kategorie trotzdem anschließend gesetzt. Bestehende Flows müssen dafür wie in der Anleitung beschrieben umgebaut werden; das Skript und die sechs TXT-Formeln bleiben für diese Änderung unverändert. Bei Plan B wird das Original erst nach erfolgreichem Versand der Kopie und erfolgreicher Kategorisierung verschoben.
+
 ## Diese Dateien brauchst du
 
 | Datei | Wofür |
@@ -15,7 +17,7 @@ Der ursprüngliche Betreff bleibt erhalten: Aus `Abrechnung Oktober` wird bei ei
 
 ## Gut zu wissen
 
-Die folgenden Live-Testberichte beziehen sich auf den Stand vom 30./31.10.2026. Die Kategorie „Avis“ und das Betreffformat ohne Währung und Bindestrich wurden danach lokal geprüft; die Anzeige-Beispiele sind entsprechend aktualisiert.
+Die folgenden Live-Testberichte beziehen sich auf den Stand vom 30./31.10.2026. Die Kategorie „Avis“, das Betreffformat ohne Währung und Bindestrich sowie die neue Reihenfolge „erst Betreff, dann Kategorie“ wurden danach lokal geprüft; die Anzeige-Beispiele und Aufbauanweisungen sind entsprechend aktualisiert. Der neue Flow-Aufbau ist noch nicht live in Microsoft 365 getestet.
 
 - **Live getestet** am 30.10.2026 in einem Microsoft-365-Testzugang mit freigegebenem Postfach, mit erfundenen Test-Mails:
   - **Lasttest:** 40 Mails in unter 2 Minuten, davon 15 Avise (eines mit 72 Seiten und 2,7 Mio. EUR, eines mit 27 Seiten und Zwischensummen je Filiale, Excel, Mailtext, Gutschriftsanzeige der Bank, Englisch, Französisch, Schweizer Franken, Weiterleitung, Scan, zwei Avise in einer Mail, ein anderer Betrag im Mailtext) und 25 Fallen (Rechnungen, Gutschriften, Mahnungen, Kontoauszug, Saldenbestätigung, Lastschrift-Ankündigung, Lieferavis, Bestellung, Reklamation …). Jede Mail wurde verarbeitet, 37 genau wie erwartet, 3 vertretbar (eine Quittung und eine englische Rechnung bekamen „Avis prüfen", eine Antwort auf ein Avis blieb unberührt), keine Falle bekam „Avis", kein Avis ging verloren.

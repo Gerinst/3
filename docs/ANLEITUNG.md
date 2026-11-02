@@ -1,8 +1,8 @@
 # Avis-Flow Version 2 Schritt für Schritt
 
-Diese Anleitung baut den Flow für ein **freigegebenes Postfach** (Exchange Shared Mailbox). Jede neue Mail geht als Ganzes an das Skript: PDF-Anlagen, Excel- und CSV-Dateien, SAP-Exporte und der Mailtext. Ist die Mail ein Zahlungsavis, bekommt die **Original-Mail** die Kategorie „Avis" und den Betrag vorne in den Betreff. Andere Mails bleiben unberührt. Es kommen keine zusätzlichen Mails.
+Diese Anleitung baut den Flow für ein **freigegebenes Postfach** (Exchange Shared Mailbox). Jede neue Mail geht als Ganzes an das Skript: PDF-Anlagen, Excel- und CSV-Dateien, SAP-Exporte und der Mailtext. Bei einem Zahlungsavis mit neuem Betreff bekommt die **Original-Mail** zuerst den Betrag vorne in den Betreff und danach die Kategorie. Fälle ohne neuen Betreff erhalten nur ihre Kategorie. Andere Mails bleiben unberührt. Es kommen keine zusätzlichen Mails.
 
-Alle Klickwege in dieser Anleitung sind am 30.10.2026 in einem Microsoft-365-Testzugang mit dem damaligen Stand von Skript und Flow nachgegangen worden (12 Test-Mails, 12 richtige Ergebnisse). Einen klickbaren Nachbau des Flows mit allen Feldern, Einstellungen und Formeln zum Kopieren gibt es in `dist/avis-flow.html` (herunterladen und im Browser öffnen).
+Alle Klickwege in dieser Anleitung sind am 30.10.2026 in einem Microsoft-365-Testzugang mit dem damaligen Stand von Skript und Flow nachgegangen worden (12 Test-Mails, 12 richtige Ergebnisse). Die neue Reihenfolge „erst Betreff, dann Kategorie“ wurde danach lokal geprüft und ist noch nicht live in Microsoft 365 getestet. Einen klickbaren Nachbau des aktuellen Flows mit allen Feldern, Einstellungen und Formeln zum Kopieren gibt es in `dist/avis-flow.html` (herunterladen und im Browser öffnen).
 
 ## Überblick
 
@@ -26,11 +26,16 @@ Der Flow in Kurzform:
 Wenn eine neue E-Mail in einem freigegebenen Postfach eingeht (V2)
 └─ Keine_Automatik (Abwesenheitsnotizen und Zustellmeldungen raus)
    └─ Wahr: Export_email → Run_script → Kategorie_noetig
-            └─ Wahr: Kategorie_setzen → Betreff_noetig
-                     └─ Wahr: Betreff_setzen
+            └─ Wahr:
+               ├─ Betreff_noetig
+               │  ├─ Wahr: Betreff_setzen
+               │  └─ Falsch: leer
+               └─ danach: Kategorie_setzen
 ```
 
-**Ab 31.12.2026** will Microsoft das Ändern des Betreffs empfangener Mails sperren. Dann schlägt nur `Betreff_setzen` fehl, die Kategorie wird weiter gesetzt. Im Januar testen; was dann zu tun ist, steht unter „Ab Januar 2027: Betreff-Sperre prüfen".
+`Kategorie_setzen` wartet auf die gesamte Bedingung `Betreff_noetig`. Die Kategorie wird auch dann gesetzt, wenn keine Betreffänderung nötig ist oder die Betreffänderung fehlschlägt bzw. ihr Zeitlimit erreicht. Bei einem Skriptfehler bleibt der Betreff unverändert und die Kategorie wird „Avis prüfen“.
+
+**Ab 31.12.2026** will Microsoft das Ändern des Betreffs empfangener Mails sperren. Dann schlägt nur `Betreff_setzen` fehl, die Kategorie wird anschließend weiter gesetzt. Im Januar testen; was dann zu tun ist, steht unter „Ab Januar 2027: Betreff-Sperre prüfen".
 
 ## Was du brauchst
 
@@ -58,6 +63,8 @@ Ohne diesen Schritt erscheinen die Kategorien trotzdem an den Mails, nur grau. D
 
 **Bei einem bestehenden Flow:** Die bisherige Kategorie `Avise` in Outlook unter **Kategorien verwalten** in `Avis` umbenennen und das Skript `AvisV2` wie in Schritt 3 beschrieben aktualisieren. Wird **Plan B** verwendet, zusätzlich in `Kategorie_Kopie` das Feld **Text** durch die aktuelle Formel aus `dist/avis-flow.html` ersetzen (Plan B einschalten → Karte **Kategorie Kopie**). Sie verwendet die Kategorie `Avis` und erkennt das `?` im neuen Betreffformat. Die sechs TXT-Formeln in `formeln/` bleiben für diese Umstellung unverändert.
 
+Die Reihenfolge „erst Betreff, dann Kategorie“ erfordert zusätzlich einen Umbau des Flows; dafür ist kein weiteres Skriptupdate nötig. Die Schritte stehen unter „Bestehenden Flow auf die neue Reihenfolge umstellen“ nach Schritt 5.9.
+
 ## Schritt 3: Skript AvisV2 in Excel anlegen (einmalig)
 
 1. Die Arbeitsmappe `AvisParser.xlsx` aus Version 1 in OneDrive öffnen. Gibt es sie noch nicht: OneDrive im Browser → **Erstellen oder hochladen** → **Excel-Arbeitsmappe** → oben auf den Namen „Mappe" klicken → `AvisParser` eintippen → Enter. Die Mappe bleibt leer.
@@ -80,8 +87,8 @@ Damit prüfst du vorab, ob Vollzugriff und Betreffänderung im Postfach funktion
 3. **+** unter dem Trigger → Suche `HTTP-Anforderung senden Office 365 Outlook` → **HTTP-Anforderung senden** (Office 365 Outlook):
    - **URI**: ins Feld klicken → **fx** → Formel aus `formeln/URI_Kategorie_und_Betreff.txt` (mit eurer Adresse) → **Hinzufügen**
    - **Methode**: `PATCH`
-   - **Erweiterte Parameter** → **Alle anzeigen** → **Text**: `{"categories":["Avis"]}`
-4. Zweite gleiche Aktion, nur **Text**: `{"subject":"2.601,35 PATCHTEST Zahlungsavis"}`.
+   - **Erweiterte Parameter** → **Alle anzeigen** → **Text**: `{"subject":"2.601,35 PATCHTEST Zahlungsavis"}`
+4. Zweite gleiche Aktion unter der ersten, nur **Text**: `{"categories":["Avis"]}`. Bei dieser zweiten Aktion unter **Einstellungen → Ausführen nach** für die erste Aktion **Ist erfolgreich**, **Timeout** und **Ist fehlgeschlagen** anhaken. So wird zuerst der Betreff geändert und danach die Kategorie gesetzt, auch wenn die Betreffänderung nicht erlaubt ist.
 5. **Speichern**. Aus dem eigenen Postfach eine Mail mit Betreff `PATCHTEST Zahlungsavis` an `avis@firma.de` schicken und 1 bis 5 Minuten warten.
 6. Richtig: In Outlook hat die Mail den neuen Betreff und die Kategorie „Avis", im Ausführungsverlauf sind beide Aktionen grün. Fehler: siehe Fehlertabelle (403, 404, 400).
 7. Danach den Testflow ausschalten: Meine Flows → `PATCHTEST` → **⋯** → **Deaktivieren**.
@@ -162,36 +169,48 @@ Im Lasttest mit 40 Mails brauchte ein Lauf meist 8 bis 20 Sekunden, auch für ei
 3. Eine angehängte leere Zeile löschen (⋯ → Löschen).
 4. Reiter **Einstellungen** → **Ausführen nach** → **Run script** aufklappen → **Ist erfolgreich**, **Timeout** und **Ist fehlgeschlagen** anhaken. So bekommt auch eine Mail, bei der das Skript nicht laufen konnte, die Kategorie „Avis prüfen".
 
-### 5.6 Kategorie_setzen
+### 5.6 Bedingung Betreff_noetig
 
-1. Im Zweig **Wahr** von Kategorie_noetig: **+** → Suche `HTTP-Anforderung senden Office 365 Outlook` → **HTTP-Anforderung senden** (Office 365 Outlook) → umbenennen in `Kategorie_setzen`.
-2. Felder:
-   - **URI**: **fx** → Formel aus `formeln/URI_Kategorie_und_Betreff.txt`, mit eurer Postfachadresse statt `avis@firma.de`
-   - **Methode**: **PATCH**
-   - **Erweiterte Parameter** → **Alle anzeigen** → **Text**: **fx** → Formel aus `formeln/Kategorie_setzen_Text.txt`
-   - **Content-Type**: `application/json` (steht schon da)
-
-Die Aktion setzt die Kategorie, die das Skript liefert, z. B. `{"categories":["Avis"]}`. Kategorien, die schon an der Mail hingen, bleiben erhalten. Ist das Skript gescheitert, setzt sie „Avis prüfen".
-
-### 5.7 Bedingung Betreff_noetig
-
-1. **+** unter Kategorie_setzen (noch im Zweig Wahr von Kategorie_noetig) → **Bedingung** → umbenennen in `Betreff_noetig`.
+1. Als erste Karte im Zweig **Wahr** von Kategorie_noetig: **+** → **Bedingung** → umbenennen in `Betreff_noetig`.
 2. Eine Zeile: links **fx** → Formel aus `formeln/Betreff_noetig_links.txt`, Mitte **ist gleich**, rechts **fx** → `true`. Leere Zeile löschen.
+3. Der Zweig **Falsch** bleibt leer. Als erste Karte im Wahr-Zweig von Kategorie_noetig hat Betreff_noetig keinen Vorgänger unter **Ausführen nach** (Codeansicht: `"runAfter": {}`).
 
-Bei „mehrere Avise", unklaren Fällen und schon bearbeiteten Betreffs liefert das Skript keinen neuen Betreff. Dann bleibt es bei der Kategorie.
+Bei „mehrere Avise", unklaren Fällen und schon bearbeiteten Betreffs liefert das Skript keinen neuen Betreff. Auch wenn das Skript gescheitert ist, bleibt der Betreff unverändert. In diesen Fällen wird der leere Falsch-Zweig durchlaufen; danach folgt trotzdem Kategorie_setzen.
 
-### 5.8 Betreff_setzen
+### 5.7 Betreff_setzen
 
 1. Im Zweig **Wahr** von Betreff_noetig: **+** → **HTTP-Anforderung senden** (Office 365 Outlook) → umbenennen in `Betreff_setzen`.
 2. Felder:
-   - **URI**: **fx** → dieselbe Formel wie bei Kategorie_setzen
+   - **URI**: **fx** → Formel aus `formeln/URI_Kategorie_und_Betreff.txt`, mit eurer Postfachadresse statt `avis@firma.de`
    - **Methode**: **PATCH**
    - **Text**: **fx** → Formel aus `formeln/Betreff_setzen_Text.txt`
    - **Content-Type**: `application/json`
 
+### 5.8 Kategorie_setzen
+
+1. Auf das **+ unter der gesamten Bedingung Betreff_noetig** klicken, noch innerhalb des Zweigs **Wahr** von Kategorie_noetig. Kategorie_setzen gehört auf dieselbe Ebene wie Betreff_noetig, außerhalb ihrer Wahr-/Falsch-Zweige.
+2. Suche `HTTP-Anforderung senden Office 365 Outlook` → **HTTP-Anforderung senden** (Office 365 Outlook) → umbenennen in `Kategorie_setzen`.
+3. Felder:
+   - **URI**: **fx** → Formel aus `formeln/URI_Kategorie_und_Betreff.txt`, mit eurer Postfachadresse statt `avis@firma.de`
+   - **Methode**: **PATCH**
+   - **Erweiterte Parameter** → **Alle anzeigen** → **Text**: **fx** → Formel aus `formeln/Kategorie_setzen_Text.txt`
+   - **Content-Type**: `application/json` (steht schon da)
+4. **Einstellungen → Ausführen nach → Betreff noetig**: **Ist erfolgreich**, **Timeout** und **Ist fehlgeschlagen** anhaken. Die Abhängigkeit muss auf die ganze Bedingung zeigen, nicht auf die darin liegende Aktion Betreff_setzen. In der Codeansicht steht `"runAfter": {"Betreff_noetig": ["Succeeded", "TimedOut", "Failed"]}`.
+
+Die Aktion setzt erst nach der Betreff-Bedingung die Kategorie, die das Skript liefert, z. B. `{"categories":["Avis"]}`. Kategorien, die das Skript an der Mail gelesen hat, bleiben erhalten. Ist das Skript gescheitert, setzt die Ersatzformel „Avis prüfen". Ein Fehler oder Timeout beim Ändern des Betreffs verhindert die Kategorisierung nicht; das Skriptergebnis bestimmt weiterhin die Kategorie.
+
 ### 5.9 Speichern
 
 Oben **Speichern**. Die Meldung „Ihr Flow ist fertiggestellt" erscheint. Der Flow ist sofort eingeschaltet und bearbeitet jede neue Mail im Posteingang des Postfachs (ältere Mails nicht).
+
+### Bestehenden Flow auf die neue Reihenfolge umstellen
+
+1. Den Flow bearbeiten und im Wahr-Zweig von **Kategorie_noetig** die Karten **Kategorie_setzen** und **Betreff_noetig** öffnen.
+2. Bei **Betreff_noetig → Einstellungen → Ausführen nach** die bisherige Abhängigkeit von **Kategorie_setzen** entfernen. Die ganze Bedingung einschließlich Betreff_setzen an die erste Position im Wahr-Zweig von Kategorie_noetig verschieben. Danach hat Betreff_noetig dort keinen Vorgänger (`"runAfter": {}`). Falls der Designer die Reihenfolge nur gemeinsam mit dem Verschieben ändert, die Abhängigkeit direkt danach kontrollieren; sie darf nicht mehr auf Kategorie_setzen zeigen.
+3. **Kategorie_setzen** unter die gesamte Bedingung **Betreff_noetig** verschieben, auf dieselbe Ebene. Unter **Ausführen nach** alle bisherigen Abhängigkeiten entfernen und **Betreff noetig** mit **Ist erfolgreich**, **Timeout** und **Ist fehlgeschlagen** setzen. Kategorie_setzen darf weder in einem Zweig von Betreff_noetig liegen noch direkt von Betreff_setzen abhängen.
+4. Die äußere Bedingung **Kategorie_noetig** und ihre Abhängigkeit von Run_script bleiben wie in Schritt 5.5. Auch alle sechs TXT-Formeln und das Office-Skript bleiben für diesen Umbau unverändert.
+5. Bei **Plan B** bleiben Kopie_anlegen, Kopie_anpassen und Kopie_senden im Wahr-Zweig von Betreff_noetig. Original_verschieben dort herausnehmen und seine bisherige Abhängigkeit von Kopie_senden entfernen. Nach Kategorie_setzen die neue Bedingung **Original_verschieben_noetig** einfügen und Original_verschieben in deren Wahr-Zweig verschieben. Die Einstellungen stehen im Abschnitt „Plan B: Reihenfolge und Verschieben“.
+6. Speichern, den Aufbau mit `dist/avis-flow.html` vergleichen und die Fälle aus Schritt 6 prüfen. Ein Skriptupdate allein ändert diese Reihenfolge im Flow nicht.
 
 ## Schritt 6: Testen
 
@@ -201,6 +220,20 @@ Oben **Speichern**. Die Meldung „Ihr Flow ist fertiggestellt" erscheint. Der F
 
    Wichtig für eigene Tests: Eine Mail aus dem eigenen Postfach kommt aus derselben Domain wie `avis@firma.de` und gilt als interne Mail einer Kollegin oder eines Kollegen. Ein Avis als PDF-Anhang wird trotzdem erkannt. Steht das Avis aber nur im Mailtext („wir haben heute 2.601,35 EUR überwiesen"), bekommt eine interne Mail keine Kategorie, weil das Skript dann eine eigene Zahlung der Firma annimmt. Avise im Mailtext deshalb von einer externen Adresse aus testen (z. B. einem privaten Postfach).
 4. Ausführungsverlauf: Power Automate → **Meine Flows** → **Avis V2** → unten die Läufe. Einen Lauf anklicken → **Keine Automatik** aufklappen → **Run script** anklicken → unter **Ausgaben** stehen `result.verdict`, `result.category`, `result.newSubject`, `result.verdictWhy` und je Dokument `result.documents`.
+
+Für die neue Reihenfolge zusätzlich diese Fälle prüfen. Fehlerfälle nur in einer Testkopie des Flows mit Testmails auslösen, z. B. durch einen absichtlich ungültigen Text im Betreff-PATCH. Danach die korrekte Formel wieder einsetzen.
+
+| Testfall | Erwarteter Ablauf |
+| --- | --- |
+| Ein Avis, dessen Betrag noch nicht im Betreff steht | Erst Betreff_setzen, danach Kategorie_setzen. Im Ausführungsverlauf beginnt die Kategorie-Aktion erst nach Abschluss von Betreff_noetig. |
+| Ein Avis mit bereits ergänztem, gleichem Betrag | Betreff_noetig ist Falsch; der Betreff bleibt erhalten, Kategorie_setzen läuft trotzdem. |
+| Mehrere Avise mit verschiedenen Beträgen oder unlesbares Avis | Kein Betreff-PATCH; danach Kategorie „mehrere Avise“ bzw. „Avis prüfen“. |
+| Skript fehlgeschlagen oder mit Timeout | Kategorie_noetig läuft, Betreff_noetig ist Falsch, danach setzt Kategorie_setzen „Avis prüfen“. |
+| Betreff-PATCH fehlgeschlagen oder mit Timeout | Erst nach Abschluss der fehlgeschlagenen Betreff-Bedingung läuft Kategorie_setzen; die vom Skript bestimmte Kategorie wird weiterhin gesetzt. |
+| Kein Avis | Kategorie_noetig ist Falsch; weder Betreff noch Kategorie ändern sich. |
+| Plan B: Kopie erfolgreich versandt und Kategorie gesetzt | Erst Kopie_anlegen → Kopie_anpassen → Kopie_senden, danach Kategorie_setzen, anschließend Original_verschieben_noetig = Wahr und Original_verschieben. |
+| Plan B: Versand fehlgeschlagen oder ohne nötige Kopie | Kategorie_setzen läuft nach Betreff_noetig; Original_verschieben_noetig ist Falsch, das Original bleibt im Posteingang. |
+| Plan B: Kategorie_setzen fehlgeschlagen | Original_verschieben_noetig wird übersprungen; das Original bleibt im Posteingang, auch wenn die Kopie bereits versandt wurde. |
 
 Was das Skript zurückgibt:
 
@@ -245,7 +278,8 @@ Was das Skript zurückgibt:
 | Run_script: „We couldn't find the script" oder „BadGateway" | Skript nicht gespeichert, anders benannt oder andere Datei gewählt | In Excel prüfen, dass das Skript **AvisV2** heißt und gespeichert ist; in Run_script Datei und Skript neu wählen |
 | Run_script: Zeitüberschreitung | Sehr große Mail | Die Mail bekommt „Avis prüfen"; von Hand bearbeiten |
 | Kategorie grau statt farbig | Kategorie nicht im Postfach angelegt | Schritt 2 |
-| Betreff_setzen rot, Kategorie gesetzt, ab Januar 2027 | Microsofts Betreff-Sperre ist aktiv | Abschnitt „Ab Januar 2027" |
+| Betreff_setzen rot, Kategorie anschließend gesetzt, ab Januar 2027 | Microsofts Betreff-Sperre ist aktiv | Abschnitt „Ab Januar 2027" |
+| Betreff_setzen rot und Kategorie_setzen übersprungen | Fehlerpfad nach dem Umbau fehlt | Kategorie_setzen → Ausführen nach → Betreff noetig: Ist erfolgreich, Timeout und Ist fehlgeschlagen anhaken (Schritt 5.8) |
 | Abwesenheitsnotiz bekommt eine Kategorie | Text der Notiz nicht in Keine_Automatik | Zeile in Keine_Automatik ergänzen; das Skript erkennt die meisten automatischen Antworten auch selbst |
 
 ## Ab Januar 2027: Betreff-Sperre prüfen
@@ -254,7 +288,29 @@ Microsoft hat angekündigt, ab dem 31.12.2026 Änderungen an Betreff und Text em
 
 1. In der ersten Januarwoche den 5-Minuten-Test (Schritt 4) wiederholen.
 2. Sind beide Aktionen grün: nichts tun.
-3. Ist die Kategorie-Aktion grün und die Betreff-Aktion rot (meist 403): Die Sperre greift. Dann auf Plan B umstellen. Plan B legt statt der Betreffänderung eine Weiterleitung als Entwurf an, setzt dort den Betreff, schickt sie an das Postfach und verschiebt das Original in einen Ordner „Avis-Original". Alle Aktionen und Formeln dazu stehen in `dist/avis-flow.html` (oben auf „Plan B" umschalten). Plan B braucht zusätzlich „Senden als" (Schritt 1 gibt das schon).
+3. Ist die Betreff-Aktion rot (meist 403) und die anschließende Kategorie-Aktion grün: Die Sperre greift. Dann auf Plan B umstellen. Plan B legt statt der Betreffänderung eine Weiterleitung als Entwurf an, setzt dort den Betreff und schickt sie an das Postfach. Danach wird das Original kategorisiert und erst dann in einen Ordner „Avis-Original" verschoben. Alle Aktionen und Formeln dazu stehen in `dist/avis-flow.html` (oben auf „Plan B" umschalten). Plan B braucht zusätzlich „Senden als" (Schritt 1 gibt das schon).
+
+### Plan B: Reihenfolge und Verschieben
+
+Plan B ist noch nicht live im Testzugang gebaut; der aktuelle Aufbau wurde lokal geprüft. Die Reihenfolge im Wahr-Zweig von Kategorie_noetig lautet:
+
+```
+Betreff_noetig
+├─ Wahr: Kopie_anlegen → Kopie_anpassen → Kopie_senden
+└─ Falsch: leer
+danach: Kategorie_setzen
+danach: Original_verschieben_noetig
+        ├─ Wahr: Original_verschieben
+        └─ Falsch: leer
+```
+
+1. **Betreff_setzen** durch **Kopie_anlegen → Kopie_anpassen → Kopie_senden** ersetzen, alle innerhalb des Wahr-Zweigs von Betreff_noetig. Die Parameter stehen in der HTML. Kopie_anpassen läuft nur nach erfolgreichem Kopie_anlegen, Kopie_senden nur nach erfolgreichem Kopie_anpassen.
+2. **Kategorie_setzen** bleibt unter der gesamten Bedingung Betreff_noetig. Unter **Ausführen nach** weiterhin **Ist erfolgreich**, **Timeout** und **Ist fehlgeschlagen** für Betreff noetig auswählen. So wird das Original auch nach einem Fehler beim Anlegen, Anpassen oder Senden kategorisiert.
+3. Auf das **+ unter Kategorie_setzen** klicken, noch im Wahr-Zweig von Kategorie_noetig: **Bedingung** erstellen und **Original_verschieben_noetig** nennen. Links über **fx** `equals(actions('Kopie_senden')?['status'], 'Succeeded')`, Mitte **ist gleich**, rechts über **fx** `true`. Unter **Einstellungen → Ausführen nach → Kategorie setzen** ausschließlich **Ist erfolgreich** auswählen.
+4. **Original_verschieben** in den Wahr-Zweig dieser neuen Bedingung setzen. Es ist dort die erste Aktion und hat innerhalb des Zweigs keinen Vorgänger (`"runAfter": {}`); eine alte Abhängigkeit von Kopie_senden entfernen. Nachrichten-ID und ursprüngliche Postfachadresse bleiben die des Originals, Zielordner ist **Avis-Original**. Der Falsch-Zweig bleibt leer.
+5. Die Erkennung **Eigene_Kopie** mit **Kategorie_Kopie** am Anfang des Flows bleibt bestehen. Eine beim Versand entstandene Kopie wird in ihrem eigenen Lauf nur kategorisiert.
+
+Das Original wird damit nur verschoben, wenn die Kopie erfolgreich versandt und das Original erfolgreich kategorisiert wurde. Schlägt Kategorie_setzen fehl, wird die Verschiebe-Bedingung übersprungen. Ohne erfolgreiche Kopie ist sie Falsch. In beiden Fällen bleibt das Original im Posteingang.
 
 ## Grenzen
 
