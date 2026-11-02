@@ -146,6 +146,7 @@ function describeInput(s: string): string {
 
 function decodeBase64Range(s: string, start: number, end: number): Uint8Array {
   // Base64 digits of s[start, end); other characters (line breaks, '=') are skipped, '-' / '_' are url-safe digits
+  checkRunDeadline();
   const lookup = new Int16Array(256);
   for (let i = 0; i < 256; i++) lookup[i] = -1;
   for (let i = 0; i < 64; i++) lookup[B64_ALPHABET.charCodeAt(i)] = i;
@@ -154,6 +155,7 @@ function decodeBase64Range(s: string, start: number, end: number): Uint8Array {
   const out = new Uint8Array(Math.floor((Math.max(0, end - start) * 3) / 4) + 3);
   let acc = 0, bits = 0, o = 0;
   for (let i = start; i < end; i++) {
+    if (((i - start) & 4095) === 4095) checkRunDeadline();
     const c = s.charCodeAt(i);
     if (c > 255) continue;
     // padding ends a quantum: the bits left over are dropped (separately encoded chunks joined into one body)
@@ -268,6 +270,11 @@ const MAX_TOTAL_DECODED = 256 * 1024 * 1024; // decoded size of all streams toge
 let totalDecoded = 0;
 let runDeadline = 0; // Date.now() value after which decoding and interpretation stop (set in main)
 
+function checkRunDeadline(): void {
+  // Called at coarse loop intervals, never by a per-byte try/catch or on every token.
+  if (runDeadline > 0 && Date.now() > runDeadline) throw new Error("time budget exhausted");
+}
+
 class ByteSink {
   buf: Uint8Array;
   len: number;
@@ -300,13 +307,16 @@ class ByteSink {
 interface Decoded { data: Uint8Array; complete: boolean }
 
 function inflateRaw(data: Uint8Array, pos: number): Decoded {
+  checkRunDeadline();
   // inflate raw deflate data starting at `pos`; complete = the final block was decoded to its end
   const br = new BitReader(data, pos);
   const out = new ByteSink(data.length * 4);
   let last = 0;
   let broken = false;
   let finished = false; // final block decoded to its end-of-block code
+  let blocks = 0, symbols = 0;
   while (!last && !broken) {
+    if ((++blocks & 4095) === 0) checkRunDeadline();
     last = br.bits(1);
     const type = br.bits(2);
     if (last < 0 || type < 0) break;
@@ -319,6 +329,7 @@ function inflateRaw(data: Uint8Array, pos: number): Decoded {
       br.pos += 4;
       out.ensure(len);
       for (let i = 0; i < len; i++) {
+        if ((i & 4095) === 4095) checkRunDeadline();
         if (br.pos >= data.length) { broken = true; break; }
         out.buf[out.len++] = data[br.pos++];
       }
@@ -380,6 +391,7 @@ function inflateRaw(data: Uint8Array, pos: number): Decoded {
     }
     // decode compressed block
     for (;;) {
+      if ((++symbols & 4095) === 0) checkRunDeadline();
       let sym = huffDecode(br, lit);
       if (sym < 0) { broken = true; break; }
       if (sym < 256) {
@@ -409,9 +421,13 @@ function inflateRaw(data: Uint8Array, pos: number): Decoded {
 }
 
 function inflate(data: Uint8Array): Decoded {
+  checkRunDeadline();
   let p = 0;
   // skip leading whitespace/garbage some producers emit before the zlib header
-  while (p < data.length && (data[p] === 0x0a || data[p] === 0x0d || data[p] === 0x20 || data[p] === 0x09)) p++;
+  while (p < data.length && (data[p] === 0x0a || data[p] === 0x0d || data[p] === 0x20 || data[p] === 0x09)) {
+    p++;
+    if ((p & 4095) === 0) checkRunDeadline();
+  }
   if (p + 2 <= data.length) {
     const cmf = data[p], flg = data[p + 1];
     if ((cmf & 0x0f) === 8 && ((cmf << 8) | flg) % 31 === 0) {
@@ -429,28 +445,41 @@ function inflate(data: Uint8Array): Decoded {
 
 function applyPredictor(data: Uint8Array, predictor: number, colors: number, bpc: number, columns: number): Uint8Array {
   // Predictors (PNG / TIFF) for FlateDecode & LZWDecode
+  checkRunDeadline();
   if (predictor <= 1) return data;
+  if (!isFinite(predictor) || !isFinite(colors) || !isFinite(bpc) || !isFinite(columns)
+    || colors < 1 || bpc < 1 || columns < 1 || colors !== Math.floor(colors) || bpc !== Math.floor(bpc) || columns !== Math.floor(columns)) {
+    throw new Error("invalid PDF predictor parameters");
+  }
   const bpp = Math.ceil((colors * bpc) / 8);
   const rowLen = Math.ceil((colors * bpc * columns) / 8);
+  if (!isFinite(rowLen) || rowLen < 1 || rowLen > MAX_STREAM_BYTES) throw new Error("invalid PDF predictor row size");
   if (predictor === 2) {
     if (bpc === 8) {
       const rows = Math.floor(data.length / rowLen);
       for (let r = 0; r < rows; r++) {
+        if ((r & 4095) === 4095) checkRunDeadline();
         const off = r * rowLen;
-        for (let i = bpp; i < rowLen; i++) data[off + i] = (data[off + i] + data[off + i - bpp]) & 0xff;
+        for (let i = bpp; i < rowLen; i++) {
+          if ((i & 4095) === 4095) checkRunDeadline();
+          data[off + i] = (data[off + i] + data[off + i - bpp]) & 0xff;
+        }
       }
     }
     return data;
   }
   // PNG predictors: each row prefixed with a filter type byte
   const rows = Math.floor(data.length / (rowLen + 1));
+  if (rows === 0) return new Uint8Array(0);
   const out = new Uint8Array(rows * rowLen);
   const prev = new Uint8Array(rowLen);
   for (let r = 0; r < rows; r++) {
+    if ((r & 4095) === 4095) checkRunDeadline();
     const ft = data[r * (rowLen + 1)];
     const inOff = r * (rowLen + 1) + 1;
     const outOff = r * rowLen;
     for (let i = 0; i < rowLen; i++) {
+      if ((i & 4095) === 4095) checkRunDeadline();
       const raw = data[inOff + i];
       const left = i >= bpp ? out[outOff + i - bpp] : 0;
       const up = prev[i];
@@ -473,9 +502,11 @@ function applyPredictor(data: Uint8Array, predictor: number, colors: number, bpc
 
 function asciiHexDecode(data: Uint8Array): Uint8Array {
   // ASCIIHexDecode (the other filters follow: ASCII85, RunLength, LZW)
+  checkRunDeadline();
   const out = new ByteSink(data.length >> 1);
   let digit = -1;
   for (let i = 0; i < data.length; i++) {
+    if ((i & 4095) === 4095) checkRunDeadline();
     const c = data[i];
     if (c === 0x3e) break; // '>'
     let v = -1;
@@ -494,11 +525,13 @@ function asciiHexDecode(data: Uint8Array): Uint8Array {
 }
 
 function ascii85Decode(data: Uint8Array): Uint8Array {
+  checkRunDeadline();
   const out = new ByteSink(data.length);
   let i = 0;
   if (data[0] === 0x3c && data[1] === 0x7e) i = 2; // '<~'
   const tuple: number[] = [];
   for (; i < data.length; i++) {
+    if ((i & 4095) === 4095) checkRunDeadline();
     const c = data[i];
     if (c === 0x7e) break; // '~'
     if (c === 0x20 || c === 0x0a || c === 0x0d || c === 0x09 || c === 0x0c || c === 0) continue;
@@ -527,9 +560,12 @@ function ascii85Decode(data: Uint8Array): Uint8Array {
 }
 
 function runLengthDecode(data: Uint8Array): Uint8Array {
+  checkRunDeadline();
   const out = new ByteSink(data.length * 2);
   let i = 0;
+  let runs = 0;
   while (i < data.length) {
+    if ((++runs & 4095) === 0) checkRunDeadline();
     const l = data[i++];
     if (l === 128) break;
     if (l < 128) {
@@ -544,6 +580,7 @@ function runLengthDecode(data: Uint8Array): Uint8Array {
 
 function lzwDecode(data: Uint8Array, earlyChange: number): Decoded {
   // LZW; complete = the end-of-data code was reached
+  checkRunDeadline();
   const out = new ByteSink(data.length * 3);
   // no local reset helper: the table is built here once and cut back to 258 entries on a clear code
   const dict: number[][] = [];
@@ -554,7 +591,9 @@ function lzwDecode(data: Uint8Array, earlyChange: number): Decoded {
   let prev: number[] | null = null;
   let bitBuf = 0, bitCnt = 0, pos = 0;
   let complete = false;
+  let codes = 0;
   while (true) {
+    if ((++codes & 4095) === 0) checkRunDeadline();
     while (bitCnt < codeLen) {
       if (pos >= data.length) return { data: out.result(), complete: false };
       bitBuf = ((bitBuf << 8) | data[pos++]) >>> 0;
@@ -999,13 +1038,18 @@ const MAIL_IGNORE_NAME = /\.(?:jpe?g|jfif|png|gif|bmp|tiff?|heic|heif|webp|svg|e
 
 function decodeQuotedPrintable(s: string, start: number, end: number): Uint8Array {
   // quoted-printable (RFC 2045): "=XX" is one byte, "=" at the end of a line is a soft line break
+  checkRunDeadline();
   const out = new Uint8Array(Math.max(0, end - start));
-  let o = 0;
+  let o = 0, tokens = 0;
   for (let i = start; i < end; i++) {
+    if ((++tokens & 4095) === 0) checkRunDeadline();
     const c = s.charCodeAt(i);
     if (c !== 61) { out[o++] = c & 0xff; continue; }
     let j = i + 1;
-    while (j < end && (s.charCodeAt(j) === 32 || s.charCodeAt(j) === 9)) j++;
+    while (j < end && (s.charCodeAt(j) === 32 || s.charCodeAt(j) === 9)) {
+      j++;
+      if (((j - i) & 4095) === 0) checkRunDeadline();
+    }
     if (j >= end) { i = j; continue; }
     const n1 = s.charCodeAt(j);
     if (n1 === 13 || n1 === 10) {
@@ -5684,6 +5728,7 @@ class PdfDoc {
     let num = 0;
     let after = 0;
     for (;;) {
+      checkRunDeadline();
       try {
         while ((m = re.exec(s)) !== null) {
           if (++guard > 500000) { this.flagIncomplete("too many objects"); break; }
@@ -6928,6 +6973,7 @@ class ContentInterpreter {
     let ai = 0;
     let inRun = false;
     for (;;) {
+      checkRunDeadline();
       try {
         for (; ai < annots.length; ai++) {
           const a = annots[ai];
@@ -7122,6 +7168,7 @@ class ContentInterpreter {
     let formId = -1;
     let formSaved: GState = gs;
     for (;;) {
+      checkRunDeadline();
       try {
         for (;;) {
           if (++guard > 5000000) { doc.flagIncomplete("operator limit reached"); break; }
@@ -8780,6 +8827,8 @@ function newCandidate(a: AmountMatch, line: string, lineIdx: number, pos: number
 
 function deductionChain(all: Candidate[], infos: LineInfo[], candAt: Candidate[][], pairs: number[]): void {
   // Total T, deduction D, payment P with |T - |D| - P| < 0.015 -> prefer P, demote T. pairs receives (P, T) values.
+  checkRunDeadline();
+  let budgetSteps = 0;
   const ts: Candidate[] = [];
   const ps: Candidate[] = [];
   const ds: Candidate[] = [];
@@ -8795,6 +8844,7 @@ function deductionChain(all: Candidate[], infos: LineInfo[], candAt: Candidate[]
   const payValues: number[] = [];
   const totValues: number[] = [];
   for (const p of ps) {
+    checkRunDeadline();
     const pPay = p.label.payment || p.col === "pay";
     // candidate totals: strong totals, or (for a payment line) a single amount up to 3 lines above
     const tlist: Candidate[] = [];
@@ -8807,6 +8857,7 @@ function deductionChain(all: Candidate[], infos: LineInfo[], candAt: Candidate[]
       }
     }
     for (const t of tlist) {
+      if ((++budgetSteps & 63) === 0) checkRunDeadline();
       if (t.lineIdx === p.lineIdx || t.value <= p.value + 0.005) continue;
       const after = p.lineIdx > t.lineIdx;
       if (!pPay && !(after && p.lineIdx - t.lineIdx <= 4)) continue;
@@ -11660,16 +11711,22 @@ function ediLines(lines: string[]): string[] {
 }
 
 function pickAmount(lines0: string[], extraKeywords: string): AmountPick {
+  checkRunDeadline();
+  let budgetSteps = 0;
   const lines = ediLines(lines0);
   const normLines: string[] = [];
   // a real text line is short; capping keeps the (super)linear regexes below cheap on garbage lines
-  for (const l of lines) normLines.push(normalizeLine(l.length > 2000 ? l.substring(0, 2000) : l));
+  for (const l of lines) {
+    if ((++budgetSteps & 255) === 0) checkRunDeadline();
+    normLines.push(normalizeLine(l.length > 2000 ? l.substring(0, 2000) : l));
+  }
   const english = detectEnglishFormat(normLines);
   let extra: RegExp | null = null;
   const ek: string[] = [];
   for (const part of extraKeywords.split(/[,;|]/)) { const t = part.trim(); if (t.length > 0) ek.push(t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")); }
   if (ek.length > 0) extra = new RegExp(ek.join("|"), "i");
 
+  checkRunDeadline();
   // ---- per-line analysis: amounts and the label of each amount
   // a document without any amount with decimals ("Amount: $4,397", "Invoice ... $2,107"): whole amounts next to a
   // currency sign are read instead, never trusted (low)
@@ -11684,6 +11741,7 @@ function pickAmount(lines0: string[], extraKeywords: string): AmountPick {
   // other than in a reference line, which then has no amount of its own)
   let zeroDecimals = false, centAmount = false;
   for (let i = 0; i < normLines.length && !decimals; i++) {
+    if ((++budgetSteps & 255) === 0) checkRunDeadline();
     if (ZERO_DECIMAL_CUR.test(normLines[i])) zeroDecimals = true;
     if (CENT_CUR_AMOUNT.test(normLines[i]) && !CONVERSION_REF.test(normLines[i])) centAmount = true;
   }
@@ -11691,6 +11749,7 @@ function pickAmount(lines0: string[], extraKeywords: string): AmountPick {
   let wholeAmounts = false;
   const infos: LineInfo[] = [];
   for (let i = 0; i < normLines.length; i++) {
+    if ((++budgetSteps & 255) === 0) checkRunDeadline();
     const ln = normLines[i];
     const inf = emptyInfo(ln);
     inf.amounts = decimals ? findAmountsInLine(ln, english) : zeroDecimals ? (CONVERSION_REF.test(ln) ? [] : groupedWholeAmounts(ln)) : wholeAmountsInLine(ln);
@@ -11790,6 +11849,7 @@ function pickAmount(lines0: string[], extraKeywords: string): AmountPick {
   }
   // wrapped letter text "... einen Betrag von 3.454,00 EUR" / "an Sie überwiesen haben.": the verb at the start of the next line belongs to the amount ending this line
   for (let i = 0; i + 1 < infos.length; i++) {
+    if ((++budgetSteps & 255) === 0) checkRunDeadline();
     const inf = infos[i], nx = infos[i + 1];
     const k = inf.amounts.length;
     if (k === 0) continue;
@@ -11813,6 +11873,7 @@ function pickAmount(lines0: string[], extraKeywords: string): AmountPick {
   // a payer's sentence that ends the line with a colon, the amount opens the next line ("... überweisen wir die vereinbarte
   // Anzahlung von 30 % des Bruttobetrags:" / "16.993,20 EUR, Valuta 03.11.2026"): the sentence labels that amount
   for (let i = 0; i + 1 < infos.length; i++) {
+    if ((++budgetSteps & 255) === 0) checkRunDeadline();
     const inf = infos[i], nx = infos[i + 1];
     const k = inf.amounts.length;
     if (k === 0 || nx.amounts.length === 0 || nx.labels[0].payment || nx.quoted || inf.quoted) continue;
@@ -11827,11 +11888,13 @@ function pickAmount(lines0: string[], extraKeywords: string): AmountPick {
   mapTableColumns(infos);
   // table headers written with single spaces ("Rechnung   Datum Betrag Skonto Zahlbetrag")
   for (const inf of infos) {
+    if ((++budgetSteps & 255) === 0) checkRunDeadline();
     if (inf.amounts.length === 0 && !inf.header && (inf.text.match(/datum|date|betrag|skonto|rechnung|beleg|amount|invoice|discount/gi) || []).length >= 3) inf.header = true;
   }
   markInvoiceCopies(infos);
   // label wrapped around its value in a narrow column: "Überwei-" / "3.454,00 €" / "sungsbetrag"
   for (let i = 1; i + 1 < infos.length; i++) {
+    if ((++budgetSteps & 255) === 0) checkRunDeadline();
     const inf = infos[i];
     if (inf.amounts.length !== 1 || hasWords(inf.text)) continue;
     const up = infos[i - 1], down = infos[i + 1];
@@ -11844,13 +11907,16 @@ function pickAmount(lines0: string[], extraKeywords: string): AmountPick {
     inf.label = inf.labels[0];
     inf.wrapped = joined;
   }
+  checkRunDeadline();
   // ---- document type (title area, strong phrases), quoted e-mail part, bank transfer forms
   const doc = classifyDocument(infos, lastLineHeights.length === lines.length ? lastLineHeights : null);
   for (let i = doc.quoteStart; i < infos.length; i++) infos[i].quoted = true;
+  checkRunDeadline();
   // ---- a payment register with several payees: the line of the mailbox owner is the payment, else no advice of its own
   const reg = payeeRegister(infos, doc.quoteStart);
   if (reg.payees >= 2 && reg.line >= 0) doc.payee = reg.name;
   else if (reg.payees >= 2) doc.doubt = "payment register with " + reg.payees + " payees, " + (reg.matches > 1 ? reg.matches + " lines named like the recipient" : reg.matches === 1 ? "no total for the recipient's block" : "no line named like the recipient") + " - which payment is ours?";
+  checkRunDeadline();
   // ---- letter text across wrapped lines: payment verbs on the next line, computations and totals in payment sentences
   const sents = proseSentences(infos, doc.quoteStart);
   const prosePairs: number[] = [];
@@ -11862,11 +11928,14 @@ function pickAmount(lines0: string[], extraKeywords: string): AmountPick {
   proseRules(infos, sents, prosePairs, unsettled, sumProps, partOpen);
   // the sentence around an amount is the whole sentence when it runs over several lines
   for (const st of sents) {
+    if ((++budgetSteps & 255) === 0) checkRunDeadline();
     if (st.first === st.last || st.text.length > 400) continue;
     for (let m = 0; m < st.li.length; m++) infos[st.li[m]].sents[st.aj[m]] = st.text;
   }
+  checkRunDeadline();
   // ---- the payment amount named in the writer's own sentences
   payerAmounts(infos, doc, english);
+  checkRunDeadline();
   // ---- earlier, current and later payments in the writer's own sentences ("Die erste Rate über 2.500,00 € haben wir
   // bereits am 01.10.2026 überwiesen. Heute überweisen wir den Restbetrag von 3.450,00 €."): an earlier payment is no
   // candidate for the current one when another payment sentence names a different amount; a payment announced for later
@@ -12085,12 +12154,14 @@ function pickAmount(lines0: string[], extraKeywords: string): AmountPick {
     }
   }
 
+  checkRunDeadline();
   // ---- the part payment the writer says was paid ("haben wir die Anzahlung in Höhe von 30 % angewiesen:" above the lines
   // "Auftragswert brutto: 39.579,40 EUR" / "Anzahlung 30 %: 11.873,82 EUR"; "We've paid the 50% deposit of $15,385.00
   // against ... order total $30,770.00"): the amount named as that part payment is the payment, not the order value
   const partPaid = paidPartWord(doc.ownText);
   const partVals: number[] = [];
   for (let i = 0; i < doc.quoteStart && partPaid !== ""; i++) {
+    if ((++budgetSteps & 255) === 0) checkRunDeadline();
     const inf = infos[i];
     if (inf.copy) continue;
     for (let j = 0; j < inf.amounts.length; j++) {
@@ -12108,6 +12179,7 @@ function pickAmount(lines0: string[], extraKeywords: string): AmountPick {
   // Restbetrag sprechen wir nach Prüfung": a manual check like above; a rest that is simply paid later is none)
   const restHeld = partVals.length > 0 && REST_HELD.test(flatDots(doc.ownText));
   for (const a of partVals) {
+    if ((++budgetSteps & 255) === 0) checkRunDeadline();
     if (!restHeld) break;
     let shown = false;
     for (const ri of infos) {
@@ -12119,23 +12191,29 @@ function pickAmount(lines0: string[], extraKeywords: string): AmountPick {
     }
     if (shown && partOpen.length < 20) partOpen.push(a);
   }
+  checkRunDeadline();
   // ---- rows marked paid and rows marked open (an instalment plan, "1 ... 9.000,00 bezahlt am 28.10.2026" / "2 ...
   // 9.625,00 offen"): their total and the open rest are no payment, the rows marked paid are
   statusRows(infos, doc.quoteStart, sumProps);
+  checkRunDeadline();
   // ---- a list of payments of one invoice with the row of the payment made now ("Instalment 3 - this payment") and a total
   // over all of them ("Total paid to date"): that row is the payment
   const curRow = currentRow(infos, doc.quoteStart);
+  checkRunDeadline();
   // ---- the payer's own debit in its book currency while the document names another currency as the transfer's ("Payment
   // amount in base currency (GBP)" beside "The transfer was made in euro"): no payment
   bookRows(infos, doc.quoteStart);
+  checkRunDeadline();
   // ---- a ledger extract (the payer's vendor account): the payment line that clears the items listed with it
   clearingRow(infos, doc);
 
+  checkRunDeadline();
   // ---- candidates
   const all: Candidate[] = [];
   const candAt: Candidate[][] = [];
   const n = Math.max(1, normLines.length);
   for (let i = 0; i < infos.length; i++) {
+    if ((++budgetSteps & 255) === 0) checkRunDeadline();
     const inf = infos[i];
     const row: Candidate[] = [];
     const k = inf.amounts.length;
@@ -12183,6 +12261,7 @@ function pickAmount(lines0: string[], extraKeywords: string): AmountPick {
   const listHead: boolean[] = [];
   for (let i = 0; i < infos.length; i++) listHead.push(false);
   for (let i = 0; i + 2 < infos.length && sumProps.length < 20; i++) {
+    if ((++budgetSteps & 255) === 0) checkRunDeadline();
     const inf = infos[i];
     if (inf.amounts.length > 0 || inf.header || inf.quoted || inf.copy || !/[:\u2013\u2014-]\s*$/.test(inf.text) || !hasWords(inf.text)) continue;
     if (!(inf.label.payment || POST_PAYMENT.test(inf.text)) || inf.label.neg || NOT_YET.test(inf.text) || TERMS.test(inf.text)) continue;
@@ -12214,6 +12293,7 @@ function pickAmount(lines0: string[], extraKeywords: string): AmountPick {
   }
   // label line without amount: amount may be on the next line(s)
   for (let i = 0; i < infos.length; i++) {
+    if ((++budgetSteps & 255) === 0) checkRunDeadline();
     const inf = infos[i];
     if (inf.amounts.length > 0 || !inf.label.strong || inf.header || inf.quoted || listHead[i]) continue;
     // an advice title ("Avviso di bonifico") is no label for the first table row
@@ -12262,8 +12342,10 @@ function pickAmount(lines0: string[], extraKeywords: string): AmountPick {
     }
   }
 
+  checkRunDeadline();
   // ---- column sum: a total equals a run of 2+ rows directly above (same column, counted from the right)
   for (let i = 0; i < infos.length; i++) {
+    if ((++budgetSteps & 255) === 0) checkRunDeadline();
     const k = infos[i].amounts.length;
     for (let r = 0; r < k; r++) {
       const c = candAt[i][k - 1 - r];
@@ -12299,6 +12381,7 @@ function pickAmount(lines0: string[], extraKeywords: string): AmountPick {
   }
   // total row "Summe 3.570,00 71,40 3.498,60": gross = deduction + payment, deduction small (Skonto) -> reward the payment
   for (let i = 0; i < infos.length; i++) {
+    if ((++budgetSteps & 255) === 0) checkRunDeadline();
     const inf = infos[i];
     const k = inf.amounts.length;
     if (k < 3 || !inf.label.strong) continue;
@@ -12327,6 +12410,7 @@ function pickAmount(lines0: string[], extraKeywords: string): AmountPick {
   // when a part is a deduction or the total an invoice amount. sentParts: (total, part) value pairs
   const sentParts: number[] = [];
   for (let i = 0; i < infos.length; i++) {
+    if ((++budgetSteps & 255) === 0) checkRunDeadline();
     const inf = infos[i];
     const k = inf.amounts.length;
     if (k < 3 || inf.quoted || inf.copy || lineCells(inf.text).length !== 2) continue;
@@ -12357,6 +12441,7 @@ function pickAmount(lines0: string[], extraKeywords: string): AmountPick {
   // überwiesen:" / "RE 26101223 über 5.477,48 EUR abzüglich 3 % Skonto (164,32 EUR) = 5.313,16 EUR" / "RE 26101864 über
   // 1.228,25 EUR netto"): when the last amounts of the rows add up to it, it is the payment and the rows are its parts
   for (let i = 0; i + 2 < infos.length && i < doc.quoteStart; i++) {
+    if ((++budgetSteps & 255) === 0) checkRunDeadline();
     const inf = infos[i];
     if (inf.amounts.length !== 1 || inf.copy || inf.quoted || !inf.labels[0].payment || inf.labels[0].neg || inf.amounts[0].value <= 0 || !/:\s*$/.test(inf.text)) continue;
     let sum = 0, rows = 0, k = i + 1;
@@ -12379,6 +12464,7 @@ function pickAmount(lines0: string[], extraKeywords: string): AmountPick {
   // the only data row (or the total row) of a table reconciles itself: gross - deduction columns = payment column;
   // the gross is then no competitor of the payment
   for (let i = 0; i < infos.length; i++) {
+    if ((++budgetSteps & 255) === 0) checkRunDeadline();
     const inf = infos[i];
     const k = inf.amounts.length;
     if (k < 3 || !inf.payBonus || inf.quoted) continue;
@@ -12433,6 +12519,7 @@ function pickAmount(lines0: string[], extraKeywords: string): AmountPick {
   // parts (also the deduction among them) are no competitors
   const brokenDown: number[] = [];
   for (let i = 0; i + 2 < infos.length; i++) {
+    if ((++budgetSteps & 255) === 0) checkRunDeadline();
     const inf = infos[i];
     const k = inf.amounts.length;
     if (k === 0 || inf.quoted || inf.copy || !/:\s*$/.test(inf.text.substring(inf.amounts[k - 1].end))) continue;
@@ -12453,6 +12540,7 @@ function pickAmount(lines0: string[], extraKeywords: string): AmountPick {
       break;
     }
   }
+  checkRunDeadline();
   deductionChain(all, infos, candAt, chainPairs);
   nettingChain(infos, candAt, chainPairs);
   // a total that equals the sum of several payment lines ("Zahlbetrag" per invoice, then "Gesamt") is the grand total
@@ -12495,6 +12583,7 @@ function pickAmount(lines0: string[], extraKeywords: string): AmountPick {
   // two different strong lines naming the same value confirm each other
   const strongLines = new Map<number, number[]>();
   for (const c of all) {
+    if ((++budgetSteps & 255) === 0) checkRunDeadline();
     if (!(c.label.strong || c.method === "keyword-next-line") || c.label.neg || c.copy || c.value === 0) continue;
     const key = Math.round(c.value * 100);
     let arr = strongLines.get(key);
@@ -12502,6 +12591,7 @@ function pickAmount(lines0: string[], extraKeywords: string): AmountPick {
     if (arr.indexOf(c.lineIdx) < 0) arr.push(c.lineIdx);
   }
   for (const c of all) {
+    if ((++budgetSteps & 255) === 0) checkRunDeadline();
     if (!(c.label.strong || c.method === "keyword-next-line") || c.label.neg || c.copy || c.value === 0) continue;
     const arr = strongLines.get(Math.round(c.value * 100));
     if (!arr || arr.length > 3) continue; // a value repeated on many rows is a per-invoice amount, not a confirmation
@@ -12807,8 +12897,10 @@ function pickAmount(lines0: string[], extraKeywords: string): AmountPick {
   }
   const cur = chooseCurrency(best, infos, best !== null ? infos[best.lineIdx].text : "");
   const out: AmountPick = { best: best, candidates: all.slice(0, 8), currency: cur.code, curHow: cur.how, curSplit: cur.split, curAmounts: cur.amounts, confidence: "low", reason: "", doc: doc, ev: adviceEvidence(infos, doc, best) };
+  checkRunDeadline();
   if (best === null) return out;
 
+  checkRunDeadline();
   // ---- confidence: rule quality + distance to the next different amount + absolute score floors
   const text = normLines.join("\n");
   const avisTitle = doc.kind === "advice";
@@ -12817,6 +12909,7 @@ function pickAmount(lines0: string[], extraKeywords: string): AmountPick {
   let singleValue = true;
   let firstValue = -1;
   for (const inf of infos) {
+    if ((++budgetSteps & 255) === 0) checkRunDeadline();
     if (inf.copy || inf.quoted) continue;
     for (const a of inf.amounts) {
       if (a.value <= 0) continue;
@@ -12833,6 +12926,7 @@ function pickAmount(lines0: string[], extraKeywords: string): AmountPick {
   const bestParts: number[] = [];
   for (let q = 0; q + 1 < sentParts.length; q += 2) if (Math.abs(sentParts[q] - best.value) < 0.005) bestParts.push(sentParts[q + 1]);
   for (const c of all) {
+    if ((++budgetSteps & 255) === 0) checkRunDeadline();
     if (Math.abs(c.value - best.value) < 0.005) continue;
     let chained = false;
     for (let q = 0; q + 1 < chainPairs.length; q += 2) if (Math.abs(chainPairs[q] - best.value) < 0.005 && Math.abs(chainPairs[q + 1] - c.value) < 0.005) chained = true;
@@ -12896,6 +12990,7 @@ function pickAmount(lines0: string[], extraKeywords: string): AmountPick {
   const dedValues: number[] = [];
   const pctValues: number[] = [];
   for (const d of all) {
+    if ((++budgetSteps & 255) === 0) checkRunDeadline();
     if (!((d.label.ded && !d.label.payment) || d.col === "ded" || d.col === "prev") || d.value === 0) continue;
     const v = Math.abs(d.value);
     let dup = false;
@@ -12905,6 +13000,7 @@ function pickAmount(lines0: string[], extraKeywords: string): AmountPick {
   for (const inf of infos) for (const pc of inf.pcts) if (pctValues.indexOf(pc) < 0) pctValues.push(pc);
   let nearDed = false;
   for (const s of all) {
+    if ((++budgetSteps & 255) === 0) checkRunDeadline();
     if (nearDed) break;
     if (s.value <= 0 || s.value >= best.value - 0.005 || s.label.neg || !(s.label.strong || s.label.payment || s.method === "keyword-next-line")) continue;
     for (const v of dedValues) if (Math.abs(best.value - v - s.value) < 0.015) nearDed = true;
@@ -13013,11 +13109,13 @@ function pickAmount(lines0: string[], extraKeywords: string): AmountPick {
   }
   // a payment sentence with an amount without decimals ("überwiesen haben wir 1.000 EUR"): that value is not read
   for (let i = 0; i < doc.quoteStart && conf !== "low" && !wholeAmounts; i++) {
+    if ((++budgetSteps & 255) === 0) checkRunDeadline();
     const t = infos[i].text;
     if ((PAYMENT_KEYWORDS.test(t) || POST_PAYMENT.test(t)) && integerCurrencyAmount(t)) { conf = "low"; reasons.push("payment amount without decimals"); }
   }
   // (c) a payment label whose amount could not be read
   for (let i = 0; i < infos.length; i++) {
+    if ((++budgetSteps & 255) === 0) checkRunDeadline();
     const inf = infos[i];
     if (inf.amounts.length > 0 || inf.header) continue;
     const pm = PAYMENT_LABEL.exec(inf.text);
@@ -13062,6 +13160,7 @@ function pickAmount(lines0: string[], extraKeywords: string): AmountPick {
   // the chosen payment in its own sentence do not count
   const payVals: number[] = [];
   for (const x of curPayVals) {
+    if ((++budgetSteps & 255) === 0) checkRunDeadline();
     let part = false;
     for (const v of bestParts) if (Math.abs(v - x) < 0.005) part = true;
     if (!part) payVals.push(x);
@@ -13116,6 +13215,7 @@ function pickAmount(lines0: string[], extraKeywords: string): AmountPick {
     if (reasons.length === 0) reasons.push("weak signals");
     out.reason = reasons.slice(0, 2).join("; ");
   }
+  checkRunDeadline();
   return out;
 }
 
@@ -14993,6 +15093,7 @@ function extractPdf(bytes: Uint8Array): ExtractInfo {
   let i = 0;
   let inPage = false;
   for (;;) {
+    checkRunDeadline();
     try {
       for (; i < pages.length; i++) {
         boxes.push(pages[i].box);
@@ -15454,7 +15555,8 @@ function paymentParts(lines: string[], kw: string, split: boolean, complete: boo
   const out: string[] = [];
   for (let s = 0; s < vals.length; s++) {
     const a = germanAmount(vals[s]) + " " + curs[s];
-    if (out.indexOf(a) < 0) out.push(a);
+    // Each parsed block is a separate payment, even when two blocks name the same amount.
+    out.push(a);
   }
   if (complete[0] && out.length >= 2) confidence[0] = partConfidence.every((c) => c === "high") ? "high" : partConfidence.every((c) => c === "high" || c === "medium") ? "medium" : "low";
   return out.length >= 2 ? out : [];
@@ -17577,7 +17679,7 @@ function combinedPaymentConfidence(docs: DocResult[], groups: AmountGroup[], amo
   for (const d of docs) {
     if (d.body && d.res.ok && d.verdict !== "other") {
       const paid = paidSentence(d.res);
-      if (paid !== "" && !ADDITIONAL_PAYMENT.test(d.res.text) && (actualPaid(paid) || PART_PAID.test(paid))) {
+      if (paid !== "" && !ADDITIONAL_PAYMENT.test(paid) && (actualPaid(paid) || PART_PAID.test(paid))) {
         // "Actually sent" or "only paid" can contradict a complete list even when the body was not an advice
         // on its own. A matching combined total is a cover-note echo, not a contradiction or another payment.
         let sum = 0, count = 0;
@@ -17731,6 +17833,14 @@ function subjectFields(res: AvisResult, subject: string, keywords: string): void
 }
 
 function finishResult(res: AvisResult, subject: string, keywords: string): AvisResult {
+  // Never authorize updates from a partial run, even if a previously completed document was confident.
+  // This final guard must not throw: main also calls finishResult from its error handler.
+  if (runDeadline > 0 && Date.now() > runDeadline && (res.verdict === "advice" || res.verdict === "several")) {
+    res.verdict = "unclear";
+    res.confidence = "low";
+    res.verdictWhy = "time budget exhausted";
+    res.error = "time budget exhausted" + (res.error !== "" ? "; " + res.error : "");
+  }
   // category and subject fields; the text is capped for the run history (textLength keeps the real length)
   subjectFields(res, subject, keywords);
   if (res.textLength < res.text.length) res.textLength = res.text.length;

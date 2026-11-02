@@ -135,6 +135,17 @@ check("several document duplicate copy counted once", () =>
     three,
   ),
 );
+for (const values of [["1.200,30", "1.200,30"], ["1.200,30", "5.632,21", "5.632,21"]]) {
+  for (const asPdf of [false, true]) {
+    check(`equal amounts in separate ${asPdf ? "PDF" : "text"} payment blocks: ${values.join(" + ")}`, () => {
+      const text = "Zahlungsavis\n" + values.map((value, index) =>
+        `Zahlung ${index + 1} von ${values.length}\nWir haben Ihre Rechnungen heute bezahlt.\nZahlbetrag: ${value} EUR`
+      ).join("\n");
+      const attachment = { name: asPdf ? "avis.pdf" : "avis.txt", type: asPdf ? "application/pdf" : "text/plain; charset=utf-8", text: asPdf ? pdf(text) : text };
+      multiple({ attachments: [attachment, { ...attachment, name: "avis-kopie." + (asPdf ? "pdf" : "txt") }] }, values.join(" + "), values.map(value => value + " EUR"));
+    });
+  }
+}
 check("cover note aggregate is not another payment", () =>
   multiple(
     {
@@ -180,6 +191,10 @@ for (const usePdf of [false, true]) {
 for (const source of ["pdf", "pdfParts"]) {
   check(`conflicting amount actually paid blocks ${source} list`, () => {
     const r = run({ ...fixtures[source], body: "Attached are the remittance advices. The payment actually sent today is EUR 1,000.00." });
+    assertReview(r);
+  });
+  check(`unrelated additional request cannot hide conflicting ${source} payment`, () => {
+    const r = run({ ...fixtures[source], body: "Attached are the remittance advices. The payment actually sent today is EUR 1,000.00. In addition, please confirm receipt." });
     assertReview(r);
   });
 }

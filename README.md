@@ -24,6 +24,7 @@ Avis-Ergebnisse mit `confidence = medium` oder `low` und alle anderen Prüffäll
 - **Plan B:** Falls Microsoft Betreffänderungen an empfangenen Mails sperrt, bekommen nur sichere Avise (`high`) bei nötiger Betreffänderung eine Kopie. Erst nach erfolgreichem Versand wird das Original kategorisiert; nach erfolgreicher Kategorisierung wird es nach `Avis-Original` verschoben. Prüffälle gehen direkt in den Prüfordner; noch eintreffende ältere eigene Kopien mit `?` oder `(prüfen)` werden ebenfalls dorthin verschoben.
 - **Eigene Tests:** Ein Avis nur im Mailtext von einer externen Adresse senden. Interne Mails aus derselben Domain können als eigene Zahlung erkannt werden. Avis-Dateien und weitergeleitete Kunden-Avise werden normal gelesen.
 - **Gelesene Anlagen:** PDF, Excel (.xlsx/.xlsm), CSV, OpenDocument-Tabellen (.ods), RTF, Text, HTML, XML, JSON, angehängte Mails (.eml) und Outlook-Elemente (.msg). Reine Scans, verschlüsselte Dokumente und andere nicht lesbare Avis-Anlagen gehen zur Prüfung.
+- **Laufzeit:** Das Skript prüft regelmäßig sein internes 90-Sekunden-Budget; das ist kein garantierter Abbruch genau nach 90 Sekunden. Für einen Office-Script-Aufruf gilt zusätzlich die externe 120-Sekunden-Grenze. `Run_script` hat höchstens drei Wiederholungen mit je einer Minute Abstand, also vier Anläufe insgesamt. Die gebündelten `try/catch`-Blöcke im Parser sind Fehlerbehandlung, keine weiteren Flow-Wiederholungen.
 - **Voraussetzungen:** Freigegebenes Exchange-Postfach und Vollzugriff für das Verbindungskonto; für Plan B zusätzlich „Senden als“. Je Mail höchstens 30 Anlagen. Der Flow verarbeitet Mails nacheinander.
 - **Ab 31.12.2026:** Microsoft hat eine Sperre für Betreffänderungen an empfangenen Mails angekündigt. Im Januar den Test aus der Anleitung wiederholen und bei Bedarf Plan B verwenden.
 
@@ -41,6 +42,6 @@ Die folgenden Berichte beschreiben den Stand vom 30./31.10.2026. Damalige Hinwei
 
 ## Lokal prüfen
 
-Mit Node.js 24 oder neuer: `node tests/multiple-advices.cjs` und `node tests/review-routing.cjs`. Die Tests verwenden erfundene Mail-, PDF- und CSV-Beispiele, prüfen mehrere Zahlungen, Betreff-Wiederholungen, die Beschränkung auf `high`, unvollständige Betragslisten und den Ablauf zum Verschieben von Prüffällen. Es werden keine Mails versendet und keine Microsoft-365-Verbindungen benötigt.
+Mit Node.js 24 oder neuer: `node tests/multiple-advices.cjs`, `node tests/review-routing.cjs` und `node tests/runtime-budget.cjs`. Die Tests verwenden erfundene Mail-, PDF- und CSV-Beispiele, prüfen mehrere Zahlungen, Betreff-Wiederholungen, die Beschränkung auf `high`, unvollständige Betragslisten und den Ablauf zum Verschieben von Prüffällen sowie Budgetprüfungen und beschädigte PDF-Daten. Es werden keine Mails versendet und keine Microsoft-365-Verbindungen benötigt. Gemessene Node.js-Laufzeiten sind keine Laufzeiten aus Microsoft 365; die aktuellen Änderungen wurden nicht erneut live dort gemessen.
 
 Version 1 mit Ergebnis-Mails für PDFs: [Gerinst/1](https://github.com/Gerinst/1).
