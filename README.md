@@ -1,12 +1,14 @@
 # Avis-Flow Version 2
 
+**Aktuelle Sicherheitsprüfung (02.11.2026):** Der [Testbericht](docs/TESTBERICHT.md) beschreibt die reproduzierbaren lokalen Tests, behobene Fehler und offene Betriebsrisiken. Der aktuelle Gesamtstand ist noch nicht in Microsoft 365 abgenommen. Plan B ist wegen fehlender zuverlässiger Erkennung eigener Kopien und möglicher Doppelversendungen **nicht für den Produktivbetrieb freigegeben**. `high` ist eine regelbasierte Einstufung, kein Nachweis eines Zahlungseingangs und keine Grundlage für eine ungeprüfte Buchung.
+
 Erkennt Zahlungsavise in einem freigegebenen Postfach am Inhalt von PDF, Excel/CSV, SAP-Exporten oder Mailtext. Nur als **sicher (`confidence = high`)** eingestufte Avise bekommen zuerst den Zahlbetrag vor den ursprünglichen Betreff und danach die Kategorie **Avis**. Bei mehreren sicheren Avisen stehen alle erkannten einzelnen Zahlbeträge mit ` + ` getrennt davor: `1.200,30 + 5.632,21 + 500,42 Abrechnung Oktober`. Währungskürzel werden nicht ergänzt, die Beträge nicht zu einer Gesamtsumme addiert.
 
 Avis-Ergebnisse mit `confidence = medium` oder `low` und alle anderen Prüffälle werden in den vorhandenen Ordner **Posteingang → Archive → Avisbetrag fehlt** des freigegebenen Postfachs verschoben. Dazu zählen fehlende oder unsichere Beträge, unvollständige Betragslisten und Fehler beim Export oder Skriptlauf. Der Flow setzt dafür keine neue Kategorie. Bei einem solchen Prüffall bleibt der ursprüngliche Betreff vollständig unverändert, auch wenn das Skript einen möglichen Betrag erkannt hat. Das gilt im normalen Flow und in Plan B; es wird keine neue Kopie erzeugt. Die bisher mit `(prüfen)` gekennzeichnete Ergebnisstufe gehört bei neuen Verarbeitungen ebenfalls in diesen Prüfordner. `high` ist die höchste vorhandene regelbasierte Stufe, keine Garantie für einen fehlerfreien Betrag.
 
 „Zahlungsavis“ ist in Beispielen nur ein möglicher Originalbetreff und wird nicht automatisch angehängt. Rechnungen, Reklamationen und andere Mails ohne Avis bleiben unverändert. Das Skript läuft als Office Script über Excel Online (Business), ohne AI-Builder-Credits oder Drittanbieter.
 
-**Bestehenden Flow aktualisieren:** Skript, Flow-Aufbau und Formeln gemäß [Anleitung](docs/ANLEITUNG.md) aktualisieren. Das Skriptupdate allein baut die Verschiebeaktionen nicht ein. Ist der Prüfordner bereits eingerichtet, das aktuelle `AvisV2` und die aktuellen Bedingungsformeln einspielen. Vor **Kategorie_setzen** die neue Bedingung **Kategorie_erlaubt** einbauen; sie verlangt den Erfolg einer nötigen Betreffänderung, in Plan B den erfolgreichen Versand der nötigen Kopie. Den bereits vorhandenen Ordner über den Ordnerwähler auswählen, nachdem die Adresse des freigegebenen Postfachs eingetragen wurde. `Archive` endet mit **e**, `Avisbetrag fehlt` enthält genau ein Leerzeichen. Der Trigger bleibt auf den Posteingang begrenzt. Alte Mails und Kategorien werden nicht gesammelt nachträglich geändert.
+**Bestehenden Flow aktualisieren:** Skript, Flow-Aufbau und Formeln gemäß [Anleitung](docs/ANLEITUNG.md) aktualisieren. Das Skriptupdate allein baut keine Flow-Aktionen ein. In **Run_script** die tatsächliche Postfachadresse als **mailboxAddress** setzen. Vor Betreff- und Kategorieänderungen kommen frische Leseaktionen und Betreffvergleiche hinzu; die Kategorieformel übernimmt die aktuell gelesenen Kategorien. **Kategorie_erlaubt** verlangt weiterhin den Erfolg einer nötigen Betreffänderung. Den vorhandenen Prüfordner über den Ordnerwähler auswählen, nachdem die Adresse des freigegebenen Postfachs eingetragen wurde. `Archive` endet mit **e**, `Avisbetrag fehlt` enthält genau ein Leerzeichen. Der Trigger bleibt auf den Posteingang begrenzt. Alte Mails und Kategorien werden nicht gesammelt nachträglich geändert.
 
 ## Diese Dateien brauchst du
 
@@ -14,19 +16,20 @@ Avis-Ergebnisse mit `confidence = medium` oder `low` und alle anderen Prüffäll
 | --- | --- |
 | [docs/ANLEITUNG.md](docs/ANLEITUNG.md) | Einrichtung, Migration, Testfälle, Fehlerhilfe und deutsche Erklärungen der Skriptergebnisse. |
 | [dist/AvisV2.ts](dist/AvisV2.ts) | Office-Skript. Auf GitHub **Copy raw file**, anschließend den gesamten Inhalt des Skripts `AvisV2` in Excel ersetzen und speichern. |
-| [formeln/](formeln) | Elf TXT-Formeln für den aktuellen Flow einschließlich Prüfung und Plan B. `Bearbeitung_noetig_links.txt` ersetzt `Kategorie_noetig_links.txt`. Die Zuordnung steht in Anhang A der Anleitung. |
+| [formeln/](formeln) | TXT-Formeln für den aktuellen Flow einschließlich Prüfung und den Plan-B-Entwurf. Die Zuordnung steht in Anhang A der Anleitung. |
 | [dist/avis-flow.html](dist/avis-flow.html) | Klickbarer Nachbau mit Parametern, Einstellungen, Codeansicht und Formeln. **Download raw file**, dann im Browser öffnen. |
 
 ## Im Betrieb
 
 - **Sichere Avise (`high`):** Betrag oder Betragsliste vor dem Originalbetreff, danach Kategorie `Avis`. Schlägt eine nötige Betreffänderung fehl, wird keine Kategorie gesetzt. Bereits vollständig ergänzte Betreffzeilen bekommen keine zweite gleiche Liste und dürfen `Avis` erhalten.
 - **Prüffälle (`medium`, `low` und andere unklare Ergebnisse):** Im Ordner **Posteingang → Archive → Avisbetrag fehlt** ansehen. Im Skriptergebnis kennzeichnet `needsReview = true` diese Fälle; `category`, `patchCategory`, `subjectPrefix`, `newSubject` und `patchSubject` sind dann leer. Fehler beim Verschieben stehen im Ausführungsverlauf und setzen keine Ersatzkategorie.
-- **Plan B:** Falls Microsoft Betreffänderungen an empfangenen Mails sperrt, bekommen nur sichere Avise (`high`) bei nötiger Betreffänderung eine Kopie. Erst nach erfolgreichem Versand wird das Original kategorisiert; nach erfolgreicher Kategorisierung wird es nach `Avis-Original` verschoben. Prüffälle gehen direkt in den Prüfordner; noch eintreffende ältere eigene Kopien mit `?` oder `(prüfen)` werden ebenfalls dorthin verschoben.
+- **Plan B:** Nur ein lokal simulierter Entwurf, nicht produktiv freigegeben. Nachrichten vom eigenen Postfach werden ohne Änderung übersprungen; der Absender allein beweist keine automatisch erzeugte Kopie. Fehlende Versandkorrelation kann bei Wiederholung weiterhin doppelte Kopien verursachen.
 - **Eigene Tests:** Ein Avis nur im Mailtext von einer externen Adresse senden. Interne Mails aus derselben Domain können als eigene Zahlung erkannt werden. Avis-Dateien und weitergeleitete Kunden-Avise werden normal gelesen.
-- **Gelesene Anlagen:** PDF, Excel (.xlsx/.xlsm), CSV, OpenDocument-Tabellen (.ods), RTF, Text, HTML, XML, JSON, angehängte Mails (.eml) und Outlook-Elemente (.msg). Reine Scans, verschlüsselte Dokumente und andere nicht lesbare Avis-Anlagen gehen zur Prüfung.
+- **Gelesene Anlagen:** PDF, Excel (.xlsx/.xlsm), CSV, OpenDocument-Tabellen (.ods), RTF, Text, HTML, XML, JSON, angehängte Mails (.eml) und Outlook-Elemente (.msg). Unlesbare mögliche Avis-Anlagen sperren auch neben einem lesbaren Avis die automatische Freigabe. Das setzt voraus, dass der Mailtrigger die Nachricht überhaupt liefert.
 - **Laufzeit:** Das Skript prüft regelmäßig sein internes 90-Sekunden-Budget; das ist kein garantierter Abbruch genau nach 90 Sekunden. Für einen Office-Script-Aufruf gilt zusätzlich die externe 120-Sekunden-Grenze. `Run_script` hat höchstens drei Wiederholungen mit je einer Minute Abstand, also vier Anläufe insgesamt. Die gebündelten `try/catch`-Blöcke im Parser sind Fehlerbehandlung, keine weiteren Flow-Wiederholungen.
 - **Voraussetzungen:** Freigegebenes Exchange-Postfach und Vollzugriff für das Verbindungskonto; für Plan B zusätzlich „Senden als“. Je Mail höchstens 30 Anlagen. Der Flow verarbeitet Mails nacheinander.
-- **Ab 31.12.2026:** Microsoft hat eine Sperre für Betreffänderungen an empfangenen Mails angekündigt. Im Januar den Test aus der Anleitung wiederholen und bei Bedarf Plan B verwenden.
+- **Posteingang kontrollieren:** Der Microsoft-Trigger kann etwa geschützte, zu große oder beschädigte Nachrichten überspringen. Auch fehlgeschlagene Verschiebungen bleiben ein Betriebsfall. Posteingang, Prüfordner und fehlgeschlagene/ausgebliebene Flow-Läufe müssen deshalb abgeglichen werden.
+- **Bei gesperrter Betreffänderung:** Keine Kategorie als Ersatz setzen. Den Fehler prüfen; Plan B erst nach Behebung der offenen Punkte und einer Live-Abnahme einsetzen.
 
 ## Historische Tests
 
@@ -42,6 +45,6 @@ Die folgenden Berichte beschreiben den Stand vom 30./31.10.2026. Damalige Hinwei
 
 ## Lokal prüfen
 
-Mit Node.js 24 oder neuer: `node tests/multiple-advices.cjs`, `node tests/review-routing.cjs` und `node tests/runtime-budget.cjs`. Die Tests verwenden erfundene Mail-, PDF- und CSV-Beispiele, prüfen mehrere Zahlungen, Betreff-Wiederholungen, die Beschränkung auf `high`, unvollständige Betragslisten und den Ablauf zum Verschieben von Prüffällen sowie Budgetprüfungen und beschädigte PDF-Daten. Es werden keine Mails versendet und keine Microsoft-365-Verbindungen benötigt. Gemessene Node.js-Laufzeiten sind keine Laufzeiten aus Microsoft 365; die aktuellen Änderungen wurden nicht erneut live dort gemessen.
+Mit Node.js 24 oder neuer: `node tests/run-all.cjs`. Die zehn Suiten prüfen echte, künstlich erzeugte Mail- und Dateiinhalte sowie ein ausdrücklich simuliertes Flow-Modell. Ein separater Typcheck ist mit `npx --yes --package typescript tsc --noEmit --target es2020 --skipLibCheck tests/excel-script-stub.d.ts dist/AvisV2.ts` möglich. Umfang und verbleibende Grenzen stehen im [Testbericht](docs/TESTBERICHT.md). Es werden keine Mails versendet und keine Microsoft-365-Verbindungen benötigt. Node.js-Laufzeiten sind keine Office-Script-Laufzeiten.
 
 Version 1 mit Ergebnis-Mails für PDFs: [Gerinst/1](https://github.com/Gerinst/1).

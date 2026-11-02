@@ -1399,16 +1399,17 @@ function berNode(b: Uint8Array, p: number, limit: number, depth: number, st: Mai
 }
 
 function berChildren(b: Uint8Array, node: BerNode, st: MailScan): BerNode[] {
-  // the elements inside a constructed element (stops at the first malformed one)
+  // the elements inside a constructed element; malformed content must not silently drop later payments
   const out: BerNode[] = [];
   const stop = node.indef ? node.end - 2 : node.end;
   let p = node.body;
   while (p < stop && out.length < 200000) {
     const c = berNode(b, p, stop, 0, st);
-    if (c === null) break;
+    if (c === null) throw new Error("malformed or truncated CMS element");
     out.push(c);
     p = c.end;
   }
+  if (p !== stop) throw new Error("CMS content read incompletely (element limit)");
   return out;
 }
 
@@ -1444,7 +1445,13 @@ function joinPieces(pieces: Uint8Array[]): Uint8Array {
 function scanCms(b: Uint8Array, depth: number, st: MailScan): boolean {
   // b is a CMS ContentInfo (DER or BER): opened and true; false when b is not CMS
   const root = berNode(b, 0, b.length, 0, st);
-  if (root === null || root.tag !== 0x30) return false;
+  if (root === null) {
+    // A truncated outer length still leaves the PKCS content-type OID visible in the header.
+    const head = bytesToLatin1(b, 0, Math.min(b.length, 32));
+    if (head.indexOf("\x2a\x86\x48\x86\xf7\x0d\x01\x07") >= 0) throw new Error("malformed or truncated CMS content");
+    return false;
+  }
+  if (root.tag !== 0x30) return false;
   const kids = berChildren(b, root, st);
   if (kids.length < 1 || kids[0].tag !== 0x06) return false;
   const oid = berOid(b, kids[0]);
@@ -1664,19 +1671,23 @@ function scanMimeEntity(s: string, start: number, end: number, depth: number, st
   }
   if (type === "message/rfc822" || type === "message/global" || lname.endsWith(".eml")) {
     // an attached mail: its subject, keywords and body belong to a mail of their own
+    const read = st.pdfs.length + st.atts.length + st.texts.length + st.ignored.length;
     const prev = st.cur;
     st.msgs.push({ subject: "", keywords: "", name: name !== "" ? name : "attached mail", seen: false, auto: "", from: "", to: "", env: "", day: 0, cc: "" });
     st.cur = st.msgs.length - 1;
     if (cte === "base64" || cte === "quoted-printable") scanMailBytes(mimeBody(s, b0, end, cte), name, depth + 1, st);
     else scanMimeEntity(s, b0, end, depth + 1, st, false);
     st.cur = prev;
+    if (!st.encrypted && !st.rpmsg && st.pdfs.length + st.atts.length + st.texts.length + st.ignored.length === read) throw new Error("attached mail content missing or unreadable");
     return;
   }
   if (type === "application/x-microsoft-rpmsg-message" || lname.endsWith(".rpmsg")) { st.rpmsg = true; return; }
   if (type === "application/pkcs7-mime" || type === "application/x-pkcs7-mime" || lname.endsWith(".p7m")) {
     const sm = (ct.params.get("smime-type") || "").toLowerCase();
     if (sm === "enveloped-data" || sm === "authenveloped-data") { st.encrypted = true; return; }
+    const read = st.pdfs.length + st.atts.length + st.texts.length;
     scanMailBytes(mimeBody(s, b0, end, cte), name, depth + 1, st);
+    if (!st.encrypted && !st.rpmsg && st.pdfs.length + st.atts.length + st.texts.length === read) throw new Error("S/MIME content missing or unreadable");
     return;
   }
   // the text of the mail (not an attached text file)
@@ -1714,7 +1725,7 @@ function scanMimeEntity(s: string, start: number, end: number, depth: number, st
   // an Outlook item (.msg) attached as a file: scanned as an attached mail of its own
   if (data.length >= 512 && data[0] === 0xd0 && data[1] === 0xcf && data[2] === 0x11 && data[3] === 0xe0 && scanMsg(data, name, depth, st)) return;
   // an empty attachment is kept when it has a name (it may be the advice that the sender failed to attach)
-  if (data.length > 0 || name !== "") addAtt(st, name, pdfType ? "application/pdf" : type, mimeParam(ct, "charset"), data);
+  if (data.length > 0 || name !== "" || pdfType) addAtt(st, name, pdfType ? "application/pdf" : type, mimeParam(ct, "charset"), data);
 }
 
 function unwrapMail(b: Uint8Array): MailScan {
@@ -2745,11 +2756,13 @@ function shZip64(b: Uint8Array, p: number, len: number, e: ShZipEntry): void {
 }
 
 function shZipEntries(b: Uint8Array): ShZipEntry[] {
+  checkRunDeadline();
   // central directory (found through the end record), else the local headers one after the other
   const out: ShZipEntry[] = [];
   const n = b.length;
   let eocd = -1;
   for (let p = n - 22; p >= 0 && p >= n - 22 - 65535; p--) {
+    if ((p & 4095) === 0) checkRunDeadline();
     if (b[p] === 0x50 && b[p + 1] === 0x4b && b[p + 2] === 5 && b[p + 3] === 6) { eocd = p; break; }
   }
   if (eocd >= 0) {
@@ -2760,6 +2773,7 @@ function shZipEntries(b: Uint8Array): ShZipEntry[] {
       if (z + 56 <= n && shU32(b, z) === 0x06064b50) { count = shU32(b, z + 32); p = shU32(b, z + 48); }
     }
     for (let i = 0; i < count && i < 65535 && p + 46 <= n; i++) {
+      if ((i & 255) === 255) checkRunDeadline();
       if (shU32(b, p) !== 0x02014b50) break;
       const nl = shU16(b, p + 28), el = shU16(b, p + 30), cl = shU16(b, p + 32);
       const e: ShZipEntry = { name: shZipName(b, p + 46, nl), method: shU16(b, p + 10), flags: shU16(b, p + 8), csize: shU32(b, p + 20), usize: shU32(b, p + 24), offset: shU32(b, p + 42) };
@@ -2771,6 +2785,7 @@ function shZipEntries(b: Uint8Array): ShZipEntry[] {
   if (out.length > 0) return out;
   let p = 0;
   for (let i = 0; i < 65535 && p + 30 <= n && shU32(b, p) === 0x04034b50; i++) {
+    if ((i & 255) === 255) checkRunDeadline();
     const flags = shU16(b, p + 6), nl = shU16(b, p + 26), el = shU16(b, p + 28);
     const csize = shU32(b, p + 18);
     const desc = (flags & 8) !== 0 && csize === 0;
@@ -2778,7 +2793,10 @@ function shZipEntries(b: Uint8Array): ShZipEntry[] {
     if (!desc) { p += 30 + nl + el + csize; continue; }
     // size only in the data descriptor: continue at the next local header signature
     let q = p + 30 + nl + el;
-    while (q + 4 <= n && !(b[q] === 0x50 && b[q + 1] === 0x4b && b[q + 2] === 3 && b[q + 3] === 4)) q++;
+    while (q + 4 <= n && !(b[q] === 0x50 && b[q + 1] === 0x4b && b[q + 2] === 3 && b[q + 3] === 4)) {
+      if ((q & 4095) === 0) checkRunDeadline();
+      q++;
+    }
     if (q + 4 > n) break;
     p = q;
   }
@@ -4324,7 +4342,9 @@ function rtfToLines(rtf: string): string[] {
   // split by revision marks ("{\insrsid1 12.6}{\insrsid2 03,20}") join again; headers stay in front, footers go to the end;
   // the text of a text box ("{\*\shpinst ... {\shptxt Überweisungsbetrag: 10.483,35 EUR}}") is read where it is anchored,
   // text deleted with tracked changes ("{\deleted ... EUR 7,683.35}") is not read
-  const n = Math.min(rtf.length, RTF_MAX_CHARS);
+  checkRunDeadline();
+  if (rtf.length > RTF_MAX_CHARS) throw new Error("RTF read incompletely (size limit)");
+  const n = rtf.length;
   const body: string[] = [];
   const foot: string[] = [];
   let cur: string[] = [];
@@ -4340,6 +4360,7 @@ function rtfToLines(rtf: string): string[] {
   let skipChars = 0;
   let i = 0;
   for (let guard = 0; i < n && guard < RTF_MAX_CHARS; guard++) {
+    if ((guard & 4095) === 0) checkRunDeadline();
     const c = rtf.charAt(i);
     const top = skipSt.length - 1;
     // bytes of the code page end at anything else
@@ -4357,7 +4378,8 @@ function rtfToLines(rtf: string): string[] {
       continue;
     }
     if (c === "}") {
-      if (skipSt.length > 1) { skipSt.pop(); footSt.pop(); ucSt.pop(); delSt.pop(); }
+      if (skipSt.length === 1) throw new Error("malformed RTF closing group");
+      skipSt.pop(); footSt.pop(); ucSt.pop(); delSt.pop();
       fresh = false;
       i++;
       continue;
@@ -4374,6 +4396,7 @@ function rtfToLines(rtf: string): string[] {
     }
     const c1 = rtf.charAt(i + 1);
     if (c1 === "'") {
+      if (!/^[0-9a-fA-F]{2}$/.test(rtf.substring(i + 2, i + 4))) throw new Error("malformed RTF hex escape");
       const h = parseInt(rtf.substring(i + 2, i + 4), 16);
       i += 4;
       fresh = false;
@@ -4403,7 +4426,11 @@ function rtfToLines(rtf: string): string[] {
       if (m[2] !== undefined) num = parseInt(m[2], 10);
       const wasFresh = fresh;
       fresh = false;
-      if (word === "bin") { i += isNaN(num) ? 0 : Math.max(0, num); continue; }
+      if (word === "bin") {
+        if (!isFinite(num) || num < 0 || num > n - i) throw new Error("RTF read incompletely (binary data)");
+        i += num;
+        continue;
+      }
       if (wasFresh && RTF_SKIP.test(word)) { skipSt[top] = true; continue; }
       if (wasFresh && /^footer[lrf]?$/.test(word)) footSt[top] = true;
       if (word === "uc") { ucSt[top] = isNaN(num) ? 1 : Math.max(0, Math.min(num, 8)); continue; }
@@ -4448,6 +4475,7 @@ function rtfToLines(rtf: string): string[] {
     else if (word === "rdblquote") cur.push("\u201d");
     else if (word === "emspace" || word === "enspace" || word === "qmspace") cur.push(" ");
   }
+  if (skipSt.length !== 1 || i !== n) throw new Error("RTF read incompletely (unclosed group or escape)");
   if (bytes.length > 0) cur.push(singleByteDecode(new Uint8Array(bytes), false));
   const rest = cells.concat([cur.join("")]).filter((x) => x.trim() !== "").join("   ");
   if (rest.trim() !== "") body.push(rest);
@@ -4601,31 +4629,35 @@ function jsonFill(parent: DataNode, key: string, v: unknown, count: number[], de
 
 function xmlTree(xml: string): DataNode | null {
   // an XML document -> tree of its elements (local names) with their attributes (no namespace declarations) and texts
+  checkRunDeadline();
   const root: DataNode = { key: "", text: "", kids: [], list: false };
   const stack: DataNode[] = [root];
+  const names: string[] = [""];
   const texts: string[][] = [[]];
   const re = /<!--[\s\S]*?-->|<!\[CDATA\[([\s\S]*?)\]\]>|<[?!][^>]*>|<(\/?)([A-Za-z_][\w.:-]*)((?:[^>"']|"[^"]*"|'[^']*')*)>/g;
   const ar = /([A-Za-z_][\w.:-]*)\s*=\s*(?:"([^"]*)"|'([^']*)')/g;
   let m: RegExpExecArray | null;
   let last = 0, count = 0;
   while ((m = re.exec(xml)) !== null && count < DATA_MAX_NODES) {
-    if (m.index > last) texts[texts.length - 1].push(decodeEntities(xml.substring(last, m.index)));
+    if ((count & 255) === 0) checkRunDeadline();
+    if (m.index > last) {
+      const gap = xml.substring(last, m.index);
+      if (gap.indexOf("<") >= 0 || (stack.length === 1 && gap.trim() !== "")) throw new Error("malformed XML content");
+      texts[texts.length - 1].push(decodeEntities(gap));
+    }
     last = re.lastIndex;
     if (m[1] !== undefined) { texts[texts.length - 1].push(m[1]); continue; }
     if (m[3] === undefined) continue;
     const name = m[3].replace(/^[\w.-]*:/, "");
     if (m[2] === "/") {
-      for (let k = stack.length - 1; k > 0; k--) {
-        if (stack[k].key !== name) continue;
-        while (stack.length > k) {
-          const t = (texts.pop() || []).join("").replace(/\s+/g, " ").trim();
-          const top = stack.pop();
-          if (top !== undefined && t !== "") top.text = t;
-        }
-        break;
-      }
+      if (stack.length === 1 || names[names.length - 1] !== m[3] || m[4].trim() !== "") throw new Error("malformed XML closing tag");
+      const t = (texts.pop() || []).join("").replace(/\s+/g, " ").trim();
+      const top = stack.pop();
+      names.pop();
+      if (top !== undefined && t !== "") top.text = t;
       continue;
     }
+    if (stack.length >= 100 || (stack.length === 1 && root.kids.length > 0)) throw new Error("XML structure incomplete or out of bounds");
     count++;
     const node: DataNode = { key: name, text: "", kids: [], list: false };
     ar.lastIndex = 0;
@@ -4636,13 +4668,9 @@ function xmlTree(xml: string): DataNode | null {
       if (val !== "") node.kids.push({ key: am[1].replace(/^[\w.-]*:/, ""), text: val, kids: [], list: false });
     }
     stack[stack.length - 1].kids.push(node);
-    if (!/\/\s*$/.test(m[4]) && stack.length < 100) { stack.push(node); texts.push([]); }
+    if (!/\/\s*$/.test(m[4])) { stack.push(node); names.push(m[3]); texts.push([]); }
   }
-  while (stack.length > 1) {
-    const t = (texts.pop() || []).join("").replace(/\s+/g, " ").trim();
-    const top = stack.pop();
-    if (top !== undefined && t !== "") top.text = t;
-  }
+  if (stack.length !== 1 || xml.substring(last).trim() !== "") throw new Error("XML read incompletely or truncated");
   return root.kids.length > 0 ? root.kids[0] : null;
 }
 
@@ -4946,13 +4974,18 @@ function cfbOpen(b: Uint8Array): CfbFile | null {
 
 function cfbChain(cf: CfbFile, start: number, size: number, mini: boolean): Uint8Array {
   // the bytes of a sector chain (FAT sectors of the file, or mini sectors of the mini stream)
+  checkRunDeadline();
   const src = mini ? cf.miniData : cf.b;
   const secSize = mini ? 64 : cf.ss;
   const table = mini ? cf.mini : cf.fat;
-  if (size > MSG_MAX_STREAM || size > src.length) size = Math.min(src.length, MSG_MAX_STREAM);
+  if (size > MSG_MAX_STREAM || size > src.length) throw new Error("damaged Outlook/Office file: stream size exceeds available data or limit");
   const out = new Uint8Array(size);
   let sec = start, pos = 0;
+  const seen = new Map<number, boolean>();
   for (let guard = 0; sec < CFB_END && pos < size && guard < 2000000; guard++) {
+    if ((guard & 255) === 0) checkRunDeadline();
+    if (seen.has(sec)) throw new Error("damaged Outlook/Office file: cyclic stream chain");
+    seen.set(sec, true);
     const off = mini ? sec * secSize : (sec + 1) * secSize;
     const n = Math.min(secSize, size - pos);
     if (off + n > src.length) break;
@@ -4960,7 +4993,8 @@ function cfbChain(cf: CfbFile, start: number, size: number, mini: boolean): Uint
     pos += n;
     sec = sec < table.length ? table[sec] : CFB_END;
   }
-  return pos === size ? out : out.subarray(0, pos);
+  if (pos !== size) throw new Error("damaged Outlook/Office file: truncated stream chain");
+  return out;
 }
 
 function cfbStream(cf: CfbFile, e: CfbEntry): Uint8Array {
@@ -5418,18 +5452,23 @@ class Lexer {
   s: string;
   pos: number;
   unterminated: boolean;
+  tokens: number;
   constructor(s: string, pos: number) {
+    checkRunDeadline();
     this.s = s;
     this.pos = pos;
     this.unterminated = false;
+    this.tokens = 0;
   }
   skipWs(): void {
     const s = this.s;
     while (this.pos < s.length) {
+      if ((this.pos & 4095) === 4095) checkRunDeadline();
       const c = s.charCodeAt(this.pos);
       if (isWs(c)) this.pos++;
       else if (c === 37) { // % comment
         while (this.pos < s.length) {
+          if ((this.pos & 4095) === 4095) checkRunDeadline();
           const d = s.charCodeAt(this.pos);
           if (d === 10 || d === 13) break;
           this.pos++;
@@ -5442,14 +5481,24 @@ class Lexer {
   }
   readRegular(): string {
     const start = this.pos;
-    while (this.pos < this.s.length && isRegular(this.s.charCodeAt(this.pos))) this.pos++;
+    while (this.pos < this.s.length && isRegular(this.s.charCodeAt(this.pos))) {
+      if ((this.pos & 4095) === 4095) checkRunDeadline();
+      this.pos++;
+    }
     return this.s.substring(start, this.pos);
   }
   parse(depth: number): PObj | null {
     // Parses one object. Keywords are returned as PKw. Returns null at EOF.
-    this.skipWs();
+    if ((++this.tokens & 4095) === 0) checkRunDeadline();
     const s = this.s;
-    if (this.pos >= s.length) return null;
+    // Recovery from stray closing delimiters must not recurse at the same depth.
+    for (;;) {
+      this.skipWs();
+      if (this.pos >= s.length) return null;
+      const c = s.charCodeAt(this.pos);
+      if (c !== 93 && c !== 62 && c !== 41 && c !== 123 && c !== 125) break;
+      this.pos++;
+    }
     if (depth > 300) throw new Error("nesting too deep");
     const c = s.charCodeAt(this.pos);
     if (c === 47) { // '/' name
@@ -5458,6 +5507,7 @@ class Lexer {
       if (raw.indexOf("#") >= 0) {
         let dec = "";
         for (let i = 0; i < raw.length; i++) {
+          if ((i & 4095) === 4095) checkRunDeadline();
           const h = raw.substring(i + 1, i + 3);
           if (raw.charAt(i) === "#" && /^[0-9A-Fa-f]{2}$/.test(h)) { dec += String.fromCharCode(parseInt(h, 16)); i += 2; }
           else dec += raw.charAt(i);
@@ -5476,25 +5526,21 @@ class Lexer {
       const arr: PObj[] = [];
       for (;;) {
         this.skipWs();
-        if (this.pos >= s.length) break;
+        if (this.pos >= s.length) { this.unterminated = true; break; }
         if (s.charCodeAt(this.pos) === 93) { this.pos++; break; }
         const o = this.parse(depth + 1);
-        if (o === null) { if (this.pos >= s.length) break; arr.push(null); continue; }
+        if (o === null) { if (this.pos >= s.length) { this.unterminated = true; break; } arr.push(null); continue; }
         if (isKw(o)) {
           if (o.v === "R" && arr.length >= 2) {
             const g = arr.pop(), n = arr.pop();
             if (n !== undefined && g !== undefined && isNum(n) && isNum(g)) { arr.push({ t: "ref", n: n, g: g }); continue; }
           }
-          if (o.v === "endobj" || o.v === "endstream" || o.v === "stream") { break; }
+          if (o.v === "endobj" || o.v === "endstream" || o.v === "stream") { this.unterminated = true; break; }
           continue; // ignore stray keywords inside arrays
         }
         arr.push(o);
       }
       return { t: "arr", v: arr };
-    }
-    if (c === 93 || c === 62 || c === 41 || c === 123 || c === 125) { // stray delimiters
-      this.pos++;
-      return this.parse(depth);
     }
     if ((c >= 48 && c <= 57) || c === 43 || c === 45 || c === 46) { // number
       const tok = this.readRegular();
@@ -5517,14 +5563,14 @@ class Lexer {
     // (the key/value bookkeeping stays inline: a local helper could run out of order when the runtime makes it async)
     for (;;) {
       this.skipWs();
-      if (this.pos >= s.length) break;
+      if (this.pos >= s.length) { this.unterminated = true; break; }
       if (s.charCodeAt(this.pos) === 62) { // '>'
         this.pos++;
         if (s.charCodeAt(this.pos) === 62) this.pos++;
         break;
       }
       const o = this.parse(depth + 1);
-      if (o === null) { if (this.pos >= s.length) break; vals.push(null); continue; }
+      if (o === null) { if (this.pos >= s.length) { this.unterminated = true; break; } vals.push(null); continue; }
       if (isName(o) && (pendingKey === null || vals.length > 0)) {
         if (pendingKey !== null) d.m.set(pendingKey, vals.length > 0 ? vals[vals.length - 1] : null);
         vals.length = 0;
@@ -5539,6 +5585,7 @@ class Lexer {
         if (o.v === "endobj" || o.v === "stream" || o.v === "endstream") {
           // malformed dict without closing >> – rewind so the caller sees the keyword
           this.pos -= o.v.length;
+          this.unterminated = true;
           break;
         }
         continue;
@@ -5553,7 +5600,9 @@ class Lexer {
     this.pos++;
     let depth = 1;
     let out = "";
+    let scanned = 0;
     while (this.pos < s.length) {
+      if ((++scanned & 4095) === 0) checkRunDeadline();
       const c = s.charCodeAt(this.pos++);
       if (c === 92) { // backslash
         const e = s.charCodeAt(this.pos++);
@@ -5586,9 +5635,11 @@ class Lexer {
     this.pos++;
     let out = "";
     let digit = -1;
+    let closed = false;
     while (this.pos < s.length) {
+      if ((this.pos & 4095) === 4095) checkRunDeadline();
       const c = s.charCodeAt(this.pos++);
-      if (c === 62) break;
+      if (c === 62) { closed = true; break; }
       let v = -1;
       if (c >= 48 && c <= 57) v = c - 48;
       else if (c >= 65 && c <= 70) v = c - 55;
@@ -5598,6 +5649,7 @@ class Lexer {
       else { out += String.fromCharCode((digit << 4) | v); digit = -1; }
     }
     if (digit >= 0) out += String.fromCharCode(digit << 4);
+    if (!closed) this.unterminated = true;
     return { t: "str", v: out };
   }
 }
@@ -5758,7 +5810,7 @@ class PdfDoc {
             // an unbalanced "(" must not swallow the rest of the file: rescan right after the header, or
             // after the first "endobj" when the parse ran past it (a later ")" closed the broken string)
             const ej = isStream(obj) ? -1 : s.indexOf("endobj", after);
-            if (lx.unterminated) { /* keep after */ }
+            if (lx.unterminated) { this.flagIncomplete("object " + num + " is unterminated"); }
             else if (ej >= 0 && ej + 6 < end) { after = ej + 6; this.flagIncomplete("object " + num + " is malformed"); }
             else after = Math.max(after, end);
           }
@@ -6000,6 +6052,7 @@ class PdfDoc {
   }
 
   private expandObjectStreams(): void {
+    checkRunDeadline();
     const stms: { entry: ObjEntry; num: number }[] = [];
     for (const [num, e] of Array.from(this.objs.entries())) {
       if (isStream(e.obj)) {
@@ -6009,23 +6062,29 @@ class PdfDoc {
     }
     stms.sort((a, b) => a.entry.pos - b.entry.pos);
     for (const st of stms) {
+      checkRunDeadline();
       try {
         const stream = st.entry.obj as PStream;
         const data = this.streamData(stream);
         const text = bytesToLatin1(data, 0, data.length);
-        const n = this.num(stream.d.m.get("N"), 0);
-        const first = this.num(stream.d.m.get("First"), 0);
+        const n = this.num(stream.d.m.get("N"), -1);
+        const first = this.num(stream.d.m.get("First"), -1);
+        if (!Number.isInteger(n) || n < 0 || !Number.isInteger(first) || first < 0 || first > text.length) throw new Error("invalid object stream header");
         const hdr = new Lexer(text, 0);
         const pairs: number[] = [];
         for (let i = 0; i < n * 2; i++) {
           const v = hdr.parse(0);
-          if (!isNum(v)) break;
+          if (!isNum(v) || !Number.isInteger(v) || v < 0 || hdr.pos > first) throw new Error("invalid object stream index");
           pairs.push(v);
         }
         for (let i = 0; i + 1 < pairs.length; i += 2) {
           const onum = pairs[i], off = pairs[i + 1];
+          if (onum === 0 || first + off >= text.length) throw new Error("invalid object stream offset");
           const lx = new Lexer(text, first + off);
+          lx.skipWs();
+          const start = lx.pos;
           const obj = lx.parse(0);
+          if ((obj === null && text.substring(start, lx.pos) !== "null") || isKw(obj) || lx.unterminated) throw new Error("invalid object stream object");
           const existing = this.objs.get(onum);
           const def: ObjEntry = { obj: obj === null || isKw(obj) ? null : obj, pos: st.entry.pos, gen: 0 };
           // position rule: the definition that appears later in the file wins
@@ -6036,6 +6095,8 @@ class PdfDoc {
         }
       } catch (e) {
         this.warnings.push("ObjStm " + st.num + ": " + String(e));
+        this.flagIncomplete("object stream " + st.num + " could not be read");
+        checkRunDeadline();
       }
     }
   }
@@ -6323,7 +6384,7 @@ class PdfDoc {
   }
 
   private walkPages(node: PDict, inherited: PDict | null, depth: number, out: PageRef[], seen: Set<PDict>): void {
-    if (depth > 64 || seen.has(node)) return;
+    if (depth > 64 || seen.has(node)) { this.flagIncomplete("page tree is cyclic or nested too deeply"); return; }
     seen.add(node);
     const res = this.dictOf(node.m.get("Resources")) || inherited;
     const type = this.nameOf(node.m.get("Type"));
@@ -6400,6 +6461,7 @@ function utf16beToString(s: string): string {
   if (s.length === 1) return s; // single byte destination
   let out = "";
   for (let i = 0; i + 1 < s.length; i += 2) {
+    if ((i & 4095) === 4094) checkRunDeadline();
     const cu = ((s.charCodeAt(i) & 0xff) << 8) | (s.charCodeAt(i + 1) & 0xff);
     out += String.fromCharCode(cu);
   }
@@ -6415,33 +6477,34 @@ function stringIncrement(s: string, by: number): string {
 }
 
 function parseCMap(text: string, mode: "uni" | "cid"): CMapData {
+  checkRunDeadline();
   // mode "uni": destinations are UTF-16BE strings; mode "cid": destinations are integers
   const cm: CMapData = { ranges: [], single: new Map<number, string>(), rangeList: [], vertical: false };
   const lx = new Lexer(text, 0);
   const stack: PObj[] = [];
   let guard = 0;
-  // one try for the whole CMap (each executed try costs milliseconds in Office Scripts): a token that cannot be
-  // read ends the CMap as before, other exceptions propagate
-  let reading = false;
+  let rangeSteps = 0;
+  // One try for the whole CMap: malformed syntax and deadline errors reject the entire mapping.
   try {
     for (;;) {
-      if (++guard > 2000000) break;
-      reading = true;
+      if (++guard > 2000000) throw new Error("CMap token limit reached");
+      if ((guard & 255) === 0) checkRunDeadline();
       const o = lx.parse(0);
-      reading = false;
       if (o === null) { if (lx.pos >= text.length) break; continue; }
       if (!isKw(o)) { stack.push(o); if (stack.length > 64) stack.shift(); continue; }
       const kw = o.v;
       if (kw === "begincodespacerange") {
         for (;;) {
-          const a = lx.parse(0); if (a === null || isKw(a)) break;
-          const b = lx.parse(0); if (b === null || isKw(b)) break;
+          const a = lx.parse(0); if (isKw(a) && a.v === "endcodespacerange") break;
+          if (a === null || isKw(a)) throw new Error("unterminated CMap codespace");
+          const b = lx.parse(0); if (b === null || isKw(b)) throw new Error("incomplete CMap codespace");
           if (isStr(a) && isStr(b)) cm.ranges.push({ nBytes: Math.max(1, Math.min(4, a.v.length)), lo: hexStrToInt(a.v), hi: hexStrToInt(b.v) });
         }
       } else if (kw === "beginbfchar" || kw === "begincidchar") {
         for (;;) {
-          const a = lx.parse(0); if (a === null || isKw(a)) break;
-          const b = lx.parse(0); if (b === null || isKw(b)) break;
+          const a = lx.parse(0); if (isKw(a) && a.v === (kw === "beginbfchar" ? "endbfchar" : "endcidchar")) break;
+          if (a === null || isKw(a)) throw new Error("unterminated CMap character map");
+          const b = lx.parse(0); if (b === null || isKw(b)) throw new Error("incomplete CMap character map");
           if (!isStr(a)) continue;
           const code = hexStrToInt(a.v);
           if (mode === "uni") {
@@ -6451,9 +6514,10 @@ function parseCMap(text: string, mode: "uni" | "cid"): CMapData {
         }
       } else if (kw === "beginbfrange" || kw === "begincidrange") {
         for (;;) {
-          const a = lx.parse(0); if (a === null || isKw(a)) break;
-          const b = lx.parse(0); if (b === null || isKw(b)) break;
-          const c = lx.parse(0); if (c === null || isKw(c)) break;
+          const a = lx.parse(0); if (isKw(a) && a.v === (kw === "beginbfrange" ? "endbfrange" : "endcidrange")) break;
+          if (a === null || isKw(a)) throw new Error("unterminated CMap range map");
+          const b = lx.parse(0); if (b === null || isKw(b)) throw new Error("incomplete CMap range map");
+          const c = lx.parse(0); if (c === null || isKw(c)) throw new Error("incomplete CMap range destination");
           if (!isStr(a) || !isStr(b)) continue;
           const lo = hexStrToInt(a.v), hi = hexStrToInt(b.v);
           if (hi < lo || hi - lo > 65535) continue;
@@ -6461,9 +6525,13 @@ function parseCMap(text: string, mode: "uni" | "cid"): CMapData {
             if (isStr(c)) {
               const dst = utf16beToString(c.v);
               if (dst.length === 1) cm.rangeList.push({ lo: lo, hi: hi, dst: dst.charCodeAt(0), nBytes: a.v.length });
-              else for (let k = 0; k <= hi - lo; k++) cm.single.set(lo + k, stringIncrement(dst, k));
+              else for (let k = 0; k <= hi - lo; k++) {
+                if ((++rangeSteps & 255) === 0) checkRunDeadline();
+                cm.single.set(lo + k, stringIncrement(dst, k));
+              }
             } else if (isArr(c)) {
               for (let k = 0; k < c.v.length && lo + k <= hi; k++) {
+                if ((++rangeSteps & 255) === 0) checkRunDeadline();
                 const d = c.v[k];
                 if (isStr(d)) cm.single.set(lo + k, utf16beToString(d.v));
               }
@@ -6480,8 +6548,10 @@ function parseCMap(text: string, mode: "uni" | "cid"): CMapData {
       }
     }
   } catch (e) {
-    if (!reading) throw e;
+    // A partially parsed map must never silently fall back to another digit mapping.
+    throw e;
   }
+  if (lx.unterminated) throw new Error("unterminated CMap object");
   return cm;
 }
 
@@ -6489,6 +6559,7 @@ function cmapLookup(cm: CMapData, code: number): string | null {
   const s = cm.single.get(code);
   if (s !== undefined) return s;
   for (let i = cm.rangeList.length - 1; i >= 0; i--) {
+    if ((i & 4095) === 4095) checkRunDeadline();
     const r = cm.rangeList[i];
     if (code >= r.lo && code <= r.hi) return String.fromCharCode(r.dst + (code - r.lo));
   }
@@ -6498,6 +6569,7 @@ function cmapLookupCid(cm: CMapData, code: number): number {
   const s = cm.single.get(code);
   if (s !== undefined) return parseInt(s, 10);
   for (let i = cm.rangeList.length - 1; i >= 0; i--) {
+    if ((i & 4095) === 4095) checkRunDeadline();
     const r = cm.rangeList[i];
     if (code >= r.lo && code <= r.hi) return r.dst + (code - r.lo);
   }
@@ -6533,8 +6605,15 @@ function glyphNameToUnicode(name: string): string {
 interface TtMaps { gidToUni: Map<number, number>; codeToGid: Map<number, number>; hasUni: boolean }
 
 function parseTrueTypeCmap(data: Uint8Array): TtMaps | null {
-  const u16 = (p: number): number => (data[p] << 8) | data[p + 1];
-  const u32 = (p: number): number => ((data[p] << 24) | (data[p + 1] << 16) | (data[p + 2] << 8) | data[p + 3]) >>> 0;
+  checkRunDeadline();
+  const u16 = (p: number): number => {
+    if (p < 0 || p + 2 > data.length) throw new Error("truncated TrueType cmap");
+    return (data[p] << 8) | data[p + 1];
+  };
+  const u32 = (p: number): number => {
+    if (p < 0 || p + 4 > data.length) throw new Error("truncated TrueType cmap");
+    return ((data[p] << 24) | (data[p + 1] << 16) | (data[p + 2] << 8) | data[p + 3]) >>> 0;
+  };
   if (data.length < 12) return null;
   let base = 0;
   const tag = u32(0);
@@ -6549,12 +6628,14 @@ function parseTrueTypeCmap(data: Uint8Array): TtMaps | null {
     if (t === "cmap") { cmapOff = u32(rec + 8); cmapLen = u32(rec + 12); }
   }
   if (cmapOff < 0 || cmapOff + 4 > data.length || cmapLen < 4) return null;
+  if (cmapOff + cmapLen > data.length) throw new Error("truncated TrueType cmap table");
   const maps: TtMaps = { gidToUni: new Map<number, number>(), codeToGid: new Map<number, number>(), hasUni: false };
   const n = u16(cmapOff + 2);
   // (code, glyph) pairs of one subtable, stored in the loop body below (no local helper: keeps the
   // "first code point wins" order intact when the runtime makes helpers async)
   const pc: number[] = [], pg: number[] = [];
   for (let i = 0; i < n && i < 32; i++) {
+    checkRunDeadline();
     const rec = cmapOff + 4 + i * 8;
     if (rec + 8 > data.length) break;
     const pid = u16(rec), eid = u16(rec + 2), off = u32(rec + 4);
@@ -6568,19 +6649,22 @@ function parseTrueTypeCmap(data: Uint8Array): TtMaps | null {
     pc.length = 0;
     pg.length = 0;
     if (format === 0) {
+      if (sub + 262 > data.length) throw new Error("truncated TrueType format 0");
       for (let c = 0; c < 256; c++) { pc.push(c); pg.push(data[sub + 6 + c]); }
     } else if (format === 4) {
       const segX2 = u16(sub + 6);
+      if ((segX2 & 1) !== 0) throw new Error("invalid TrueType segment count");
       const endP = sub + 14, startP = endP + segX2 + 2, deltaP = startP + segX2, rangeP = deltaP + segX2;
       for (let s = 0; s < segX2 / 2; s++) {
         const end = u16(endP + s * 2), start = u16(startP + s * 2), delta = u16(deltaP + s * 2), ro = u16(rangeP + s * 2);
         if (start > end) continue;
         for (let c = start; c <= end && c !== 0xffff; c++) {
+          if ((c & 4095) === 0) checkRunDeadline();
           let gid: number;
           if (ro === 0) gid = (c + delta) & 0xffff;
           else {
             const gp = rangeP + s * 2 + ro + (c - start) * 2;
-            if (gp + 2 > data.length) continue;
+            if (gp + 2 > data.length) throw new Error("truncated TrueType glyph array");
             gid = u16(gp);
             if (gid !== 0) gid = (gid + delta) & 0xffff;
           }
@@ -6590,17 +6674,25 @@ function parseTrueTypeCmap(data: Uint8Array): TtMaps | null {
       }
     } else if (format === 6) {
       const first = u16(sub + 6), cnt = u16(sub + 8);
-      for (let k = 0; k < cnt; k++) { pc.push(first + k); pg.push(u16(sub + 10 + k * 2)); }
+      for (let k = 0; k < cnt; k++) {
+        if ((k & 4095) === 0) checkRunDeadline();
+        pc.push(first + k); pg.push(u16(sub + 10 + k * 2));
+      }
     } else if (format === 12) {
       const nGroups = u32(sub + 12);
       for (let g = 0; g < nGroups && g < 100000 && pc.length < 300000; g++) {
+        if ((g & 255) === 0) checkRunDeadline();
         const gp = sub + 16 + g * 12;
-        if (gp + 12 > data.length) break;
+        if (gp + 12 > data.length) throw new Error("truncated TrueType groups");
         const sc = u32(gp), ec = u32(gp + 4), sg = u32(gp + 8);
-        for (let c = sc; c <= ec && c - sc < 65536; c++) { pc.push(c); pg.push(sg + (c - sc)); }
+        for (let c = sc; c <= ec && c - sc < 65536; c++) {
+          if ((c & 4095) === 0) checkRunDeadline();
+          pc.push(c); pg.push(sg + (c - sc));
+        }
       }
     }
     for (let q = 0; q < pc.length; q++) {
+      if ((q & 4095) === 0) checkRunDeadline();
       const code = pc[q], gid = pg[q];
       if (isUni) {
         maps.hasUni = true;
@@ -6645,12 +6737,18 @@ class FontLoader {
   }
 
   load(fontObj: PObj | undefined): FontInfo | null {
+    checkRunDeadline();
     const d = this.doc.dictOf(fontObj);
     if (!d) return null;
     const hit = this.cache.get(d);
     if (hit !== undefined) return hit;
     let f: FontInfo;
-    try { f = this.build(d); } catch (e) { this.doc.warnings.push("font: " + String(e)); f = this.build(mkDict()); }
+    try { f = this.build(d); } catch (e) {
+      checkRunDeadline();
+      this.doc.warnings.push("font: " + String(e));
+      this.doc.flagIncomplete("font could not be read");
+      f = this.build(mkDict());
+    }
     this.cache.set(d, f);
     return f;
   }
@@ -6689,7 +6787,11 @@ class FontLoader {
     // ToUnicode
     const tu = doc.resolve(d.m.get("ToUnicode"));
     if (isStream(tu)) {
-      try { f.toUni = parseCMap(doc.streamText(tu), "uni"); } catch (e) { doc.warnings.push("ToUnicode: " + String(e)); }
+      try { f.toUni = parseCMap(doc.streamText(tu), "uni"); } catch (e) {
+        checkRunDeadline();
+        doc.warnings.push("ToUnicode: " + String(e));
+        doc.flagIncomplete("ToUnicode CMap could not be read");
+      }
     }
     let descriptor: PDict | null = null;
     if (f.composite) {
@@ -6698,7 +6800,10 @@ class FontLoader {
       descriptor = cid ? doc.dictOf(cid.m.get("FontDescriptor")) : null;
       const enc = doc.resolve(d.m.get("Encoding"));
       if (isStream(enc)) {
-        try { f.encCMap = parseCMap(doc.streamText(enc), "cid"); } catch (e) { /* ignore */ }
+        try { f.encCMap = parseCMap(doc.streamText(enc), "cid"); } catch (e) {
+          checkRunDeadline();
+          doc.flagIncomplete("encoding CMap could not be read");
+        }
         if (f.encCMap && f.encCMap.ranges.length > 0) f.ranges = f.encCMap.ranges.slice(0);
       } else if (isName(enc) && enc.v.indexOf("Identity") !== 0) {
         // predefined (CJK) CMaps are not embedded; we can only use ToUnicode
@@ -6717,7 +6822,10 @@ class FontLoader {
       const ff3 = descriptor ? doc.resolve(descriptor.m.get("FontFile3")) : null;
       const prog = isStream(ff) ? ff : isStream(ff3) ? ff3 : null;
       if (prog && (!f.toUni || f.toUni.single.size + f.toUni.rangeList.length === 0)) {
-        try { f.tt = parseTrueTypeCmap(doc.streamData(prog)); } catch (e) { /* ignore */ }
+        try { f.tt = parseTrueTypeCmap(doc.streamData(prog)); } catch (e) {
+          checkRunDeadline();
+          doc.flagIncomplete("TrueType cmap could not be read");
+        }
       }
       f.spaceWidth = this.cidWidth(f, 32) || 250;
     } else {
@@ -6739,7 +6847,9 @@ class FontLoader {
       for (let c = 0; c < 256; c++) f.simple.push(base[c] ? String.fromCharCode(base[c]) : "");
       if (f.type3) for (let c = 0; c < 256; c++) f.simple[c] = "";
       let code = 0;
+      let encodingSteps = 0;
       for (const x of diffs) {
+        if ((++encodingSteps & 255) === 0) checkRunDeadline();
         const r = doc.resolve(x);
         if (isNum(r)) code = r | 0;
         else if (isName(r)) { if (code >= 0 && code < 256) f.simple[code] = glyphNameToUnicode(r.v); code++; }
@@ -6747,7 +6857,12 @@ class FontLoader {
       // embedded TrueType cmap for symbolic fonts without usable encoding
       if (subtype === "TrueType" && descriptor && !isDict(enc) && (!f.toUni || f.toUni.single.size + f.toUni.rangeList.length === 0)) {
         const ff = doc.resolve(descriptor.m.get("FontFile2"));
-        if (isStream(ff)) { try { f.tt = parseTrueTypeCmap(doc.streamData(ff)); } catch (e) { /* ignore */ } }
+        if (isStream(ff)) {
+          try { f.tt = parseTrueTypeCmap(doc.streamData(ff)); } catch (e) {
+            checkRunDeadline();
+            doc.flagIncomplete("TrueType cmap could not be read");
+          }
+        }
       }
       // widths
       if (f.type3) {
@@ -6757,6 +6872,7 @@ class FontLoader {
       const firstChar = doc.num(d.m.get("FirstChar"), 0);
       const widths = doc.arrOf(d.m.get("Widths"));
       for (let i = 0; i < widths.length; i++) {
+        if ((i & 4095) === 4095) checkRunDeadline();
         const w = doc.num(widths[i], -1);
         if (w >= 0) f.widths.set(firstChar + i, f.type3 ? w * f.fontMatrix[0] * 1000 : w);
       }
@@ -6774,18 +6890,28 @@ class FontLoader {
   }
 
   private parseW(w: PObj[], out: Map<number, number>): void {
+    checkRunDeadline();
     const doc = this.doc;
     let i = 0;
     while (i < w.length) {
+      if ((i & 255) === 0) checkRunDeadline();
       const a = doc.resolve(w[i]);
       if (!isNum(a)) { i++; continue; }
+      if (!Number.isInteger(a) || a < 0 || a > 65535) throw new Error("invalid CID width start");
       const b = doc.resolve(w[i + 1]);
       if (isArr(b)) {
-        for (let k = 0; k < b.v.length; k++) out.set(a + k, doc.num(b.v[k], 1000));
+        for (let k = 0; k < b.v.length; k++) {
+          if ((k & 4095) === 4095) checkRunDeadline();
+          out.set(a + k, doc.num(b.v[k], 1000));
+        }
         i += 2;
       } else if (isNum(b)) {
+        if (!Number.isInteger(b) || b < a || b > 65535) throw new Error("invalid CID width range");
         const wv = doc.num(w[i + 2], 1000);
-        if (b >= a && b - a < 65536) for (let c = a; c <= b; c++) out.set(c, wv);
+        if (b >= a && b - a < 65536) for (let c = a; c <= b; c++) {
+          if ((c & 4095) === 0) checkRunDeadline();
+          out.set(c, wv);
+        }
         i += 3;
       } else i++;
     }
@@ -6807,10 +6933,12 @@ class FontLoader {
   }
 
   decode(f: FontInfo, s: string): Glyph[] {
+    checkRunDeadline();
     // Splits a PDF string into glyphs (code, unicode, width/1000).
     const out: Glyph[] = [];
     if (!f.composite) {
       for (let i = 0; i < s.length; i++) {
+        if ((i & 4095) === 4095) checkRunDeadline();
         const code = s.charCodeAt(i) & 0xff;
         let u: string | null = f.toUni ? cmapLookup(f.toUni, code) : null;
         if (u === null) {
@@ -6828,7 +6956,9 @@ class FontLoader {
     }
     // composite: segment by codespace ranges
     let i = 0;
+    let glyphSteps = 0;
     while (i < s.length) {
+      if ((++glyphSteps & 4095) === 0) checkRunDeadline();
       let n = 0, code = 0;
       let matched = false;
       for (const r of f.ranges) {
@@ -6976,6 +7106,7 @@ class ContentInterpreter {
       checkRunDeadline();
       try {
         for (; ai < annots.length; ai++) {
+          if ((ai & 255) === 255) checkRunDeadline();
           const a = annots[ai];
           const ad = doc.dictOf(a);
           if (!ad) continue;
@@ -7248,7 +7379,9 @@ class ContentInterpreter {
                 const subtype = doc.nameOf(xo.d.m.get("Subtype"));
                 if (subtype === "Image") {
                   if (this.ocHidden === 0) this.paintImage(gs, xo.d);
-                } else if (subtype === "Form" && !visited.has(xo.id)) {
+                } else if (subtype === "Form" && visited.has(xo.id)) {
+                  doc.flagIncomplete("cyclic form XObject");
+                } else if (subtype === "Form") {
                   if (this.formDepth >= 12) { doc.flagIncomplete("form XObjects nested too deeply"); break; }
                   // many small forms calling each other never reach the per-stream check below
                   if (Date.now() > this.deadline) { doc.flagIncomplete("time budget exhausted"); break; }
@@ -14451,11 +14584,107 @@ function adviceEvidence(infos: LineInfo[], doc: DocInfo, best: Candidate | null)
   return ev;
 }
 
+// Explicit execution status is evidence about whether money moved, independent of an advice title or total label.
+// Match assertions, not bare words in invoice references ("previously unpaid invoices") or boilerplate.
+const EXECUTION_TOPIC = /\b(?:payment|transfer|wire|remittance|funds|zahlung(?:sanweisung|sauftrag)?|[üu]e?berweisung(?:sauftrag)?|geld)\b/i;
+const EXECUTION_NEGATIVE = /\b(?:not|never|nicht|nie)\s+(?:(?:yet|been|actually|noch|bisher|bereits|ausgef[üu]e?hrt)\s+){0,3}(?:paid|transferred|remitted|settled|executed|made|approved|released|bezahlt|gezahlt|[üu]e?berwiesen|beglichen|ausgef[üu]e?hrt|freigegeben|genehmigt)\b|\b(?:no|kein(?:e|en)?)\s+(?:payment|transfer|funds|zahlung|[üu]e?berweisung|geld)\b[^.!?\n]{0,60}\b(?:made|executed|transferred|sent|erfolgt|geleistet|ausgef[üu]e?hrt|[üu]e?berwiesen)\b/i;
+const EXECUTION_FAILED = /\b(?:failed|unsuccessful|cancell?ed|voided|recalled|revoked|rejected|declined|storniert|annulliert|fehlgeschlagen|zur[üu]e?ckgerufen|widerrufen|abgelehnt)\b/i;
+const EXECUTION_PENDING = /\b(?:pending|awaiting|waiting for)\s+(?:approval|authori[sz]ation|execution|release)\b|\b(?:wartet|warten)\s+auf\s+(?:freigabe|genehmigung|ausf[üu]e?hrung)\b/i;
+const EXECUTION_STATUS_FIELD = /^\s*(?:(?:payment|transfer|execution)\s+status|status|zahlungsstatus|ausf[üu]e?hrungsstatus)\s*:\s*(?:pending|scheduled|queued|awaiting\b|draft|unpaid|not\s+(?:yet\s+)?(?:paid|executed|approved)|ausstehend|vorgemerkt|geplant|entwurf|unbezahlt|nicht\s+(?:ausgef[üu]e?hrt|freigegeben))\b/i;
+
+function executedPaymentStatement(s: string): boolean {
+  // A positive resumption must itself state execution; "no payment was executed" and "will be re-sent" do not.
+  if (EXECUTION_NEGATIVE.test(s) || PAID_NOT.test(s) || PAID_LATER.test(s) || PAYER_COND.test(s)) return false;
+  return PAYER_DONE.test(s) || PAYER_DONE_MORE.test(s) || (RESENT.test(s) && DONE_VERB.test(s))
+    || (EXECUTION_TOPIC.test(s) && /\b(?:was|were|has been|have been|wurde|wurden|ist|sind)\b[^.!?\n]{0,50}\b(?:executed|completed|sent|paid|transferred|ausgef[üu]e?hrt|[üu]e?berwiesen|bezahlt)\b/i.test(s));
+}
+
+function paymentExecutionProblem(pick: AmountPick): string {
+  // ownText already excludes a recognized reply history. Inspect clauses separately so a cancelled old invoice does
+  // not negate an explicitly different paid invoice, and a later completed retry can supersede its failed attempt.
+  const clauses = pick.doc.ownText.split(/\n+|[.!?;]\s+/);
+  let problem = "", problemRefs: string[] = [];
+  let historical = false;
+  const paidRefs: string[] = [];
+  for (const raw of clauses) {
+    const s = raw.trim();
+    if (s === "" || /^>/.test(s)) continue;
+    const selected = pick.best !== null && s.indexOf(pick.best.amount) >= 0;
+    if ((selected || problem !== "") && executedPaymentStatement(s)) {
+      const refs = refNumbers(s, true);
+      if (selected) for (const ref of refs) if (paidRefs.indexOf(ref) < 0) paidRefs.push(ref);
+      const sameRef = refs.some((r) => problemRefs.indexOf(r) >= 0);
+      if (problem !== "" && (RESENT.test(s) || (historical && TODAY_WORD.test(s)))
+        && (selected || sameRef || (problemRefs.length === 0 && RESENT.test(s)))) problem = "";
+      continue;
+    }
+    const topic = EXECUTION_TOPIC.test(s) || AVIS_TITLE.test(s);
+    const failed = EXECUTION_FAILED.exec(s);
+    // "not cancelled" asserts the absence of a failure. A quoted conditional describes no actual failure either.
+    const deniedFailure = failed !== null && /\b(?:not|never|nicht|nie)\s+(?:been\s+)?$/i.test(s.substring(0, failed.index));
+    const draft = topic && s.length < 160 && /\b(?:draft|entwurf)\b/i.test(s)
+      && !/\b(?:not|kein(?:e|en)?|nicht)\s+(?:a\s+)?(?:draft|entwurf)\b/i.test(s);
+    const future = topic && FUTURE_PAY.test(s) && (POSTPONE_COND.test(s) || POSTPONE_LATER.test(s) || NEXT_RUN.test(s));
+    const pending = EXECUTION_PENDING.exec(s);
+    const deniedPending = pending !== null && /\b(?:not|no longer|nicht|nicht mehr)\s*$/i.test(s.substring(0, pending.index));
+    const bad = EXECUTION_NEGATIVE.test(s) || EXECUTION_STATUS_FIELD.test(s) || (topic && pending !== null && !deniedPending) || draft || future
+      || (topic && failed !== null && !deniedFailure && !PAYER_COND.test(s.substring(0, failed.index)));
+    if (!bad) continue;
+    const refs = refNumbers(s, true);
+    // A named unpaid invoice different from the explicitly paid chosen invoice does not invalidate that payment.
+    if (refs.length > 0 && paidRefs.length > 0 && refs.every((r) => paidRefs.indexOf(r) < 0)) continue;
+    problem = shortQuote(s);
+    problemRefs = refs;
+    historical = /\b(?:previously|earlier|yesterday|last\s+(?:week|month)|zuvor|vorher|gestern|letzte[nr]?\s+(?:woche|monat))\b/i.test(s)
+      || (mailDay > 0 && earlierDay(s, mailDay));
+  }
+  return problem;
+}
+
+function unconfirmedTransferPayee(doc: DocInfo): string {
+  // A bank form's explicit beneficiary must be attributable to the mailbox owner. An unknown owner is uncertainty,
+  // not evidence that an arbitrary beneficiary is the recipient. General "To:" lines are not beneficiary fields.
+  if (!doc.transferForm || doc.forOwner) return "";
+  const lines = doc.ownText.split("\n");
+  for (let i = 0; i < lines.length; i++) {
+    const m = /^\s*(beneficiary(?: name)?|payee(?: name)?|recipient|empf[äa]e?nger(?:name)?|zahlungsempf[äa]e?nger|beg[üu]e?nstigter?)(?:\s*:\s*|\s{2,}|\s*$)(.*)$/i.exec(lines[i]);
+    if (m === null) continue;
+    const name = (m[2].trim() || (i + 1 < lines.length ? lines[i + 1].trim() : "")).split(/\s{2,}/)[0];
+    if (name !== "" && !ownerName(name) && (COMPANY_FORM.test(name) || /@/.test(name))) return shortQuote(name);
+  }
+  return "";
+}
+
+function conflictingPaymentCurrency(pick: AmountPick): string {
+  // A currency explicitly assigned to the payment conflicts with another currency printed beside its chosen amount.
+  // Invoice-currency fields and documents already split into separate currency payments are not a global override.
+  if (pick.best === null || pick.curSplit !== "") return "";
+  const shown = new RegExp(CURRENCY_TOKEN.source, "i").exec(pick.best.line);
+  if (shown === null) return "";
+  const code = currencyCode(shown[0]);
+  if (code === "") return "";
+  for (const line of pick.doc.ownText.split("\n")) {
+    const field = /^\s*(?:(?:payment|transfer)\s+currency|currency\s+of\s+(?:the\s+)?payment|zahlungsw[äa]e?hrung|[üu]e?berweisungsw[äa]e?hrung)\s*:\s*(.+)$/i.exec(line);
+    if (field === null) continue;
+    const token = new RegExp(CURRENCY_TOKEN.source, "i").exec(field[1]);
+    const declared = token === null ? "" : currencyCode(token[0]);
+    if (declared !== "" && declared !== code) return code + " at the amount, " + declared + " in the payment currency field";
+  }
+  return "";
+}
+
 function judgeDocument(pick: AmountPick, hasAmount: boolean, reply: boolean, attachment: boolean): DocVerdict {
   // verdict of one readable document. hasAmount: an amount was found; reply: the writer's text of a reply, whose payment
   // words refer to the thread; attachment: a file, not the mail text. A trusted amount alone is no evidence; a negative
   // signal beats weak evidence and makes strong evidence unclear (never a silent loss of an advice)
   const doc = pick.doc, ev = pick.ev;
+  // A commercial credit note to offset an invoice records a price adjustment, not a bank credit. Do not let its
+  // "Gutschriftsbetrag" label alone turn the adjustment into a payment; an independently stated payment remains separate.
+  if (!ev.payer && !ev.strong && !doc.bankCredit && !doc.transferForm
+    && doc.ownText.split("\n").slice(0, 8).some((line) => CREDIT_TITLE.test(line.trim()))
+    && /(?:verrechnen|aufrechnen|offset|apply)[^.!?\n]{0,120}(?:rechnung|invoice)/i.test(doc.ownText)) {
+    return { verdict: "other", why: "commercial credit note to offset an invoice - not a payment" };
+  }
   // (a sample shows the layout of a document: its payment sentences are examples or general rules; a settlement of a claim
   // against the reader states the payment to the claimant)
   if (doc.kind === "other" && (!ev.payer || doc.sample || doc.bankOwn || doc.notReader || (!ev.strong && NOT_AN_ADVICE.test(doc.ownText)))) {
@@ -14491,6 +14720,14 @@ function judgeDocument(pick: AmountPick, hasAmount: boolean, reply: boolean, att
     // a payer statement beside a side note ("Betriebsferien", new bank details) or a complaint: never a silent "other"
     if (ev.payer && hasAmount) return { verdict: "unclear", why: (ev.positive !== "" ? ev.positive : "payer statement") + ", but " + ev.negative };
     return { verdict: "other", why: ev.negative };
+  }
+  if (ev.positive !== "" || ev.hint !== "") {
+    const execution = paymentExecutionProblem(pick);
+    if (execution !== "") return { verdict: "unclear", why: "payment execution not confirmed ('" + execution + "')" };
+    const payee = unconfirmedTransferPayee(doc);
+    if (payee !== "") return { verdict: "unclear", why: "transfer beneficiary not confirmed as the mailbox owner ('" + payee + "')" };
+    const currency = conflictingPaymentCurrency(pick);
+    if (currency !== "") return { verdict: "unclear", why: "conflicting payment currency (" + currency + ")" };
   }
   // a payment day more than a week (eight days) after the mail ("mit unserem Zahllauf am 13.11.2026", "Ausführungsdatum
   // 20.11.2026", "Planned payment date 20/11/2026", a "Valuta" column of the run): the payment is announced for later, also
@@ -15235,7 +15472,7 @@ function resultRank(r: AvisResult, score: number): number {
 // partsConfidence: confidence checked for every separate payment; low unless the individual parts prove otherwise
 interface DocResult { name: string; type: string; res: AvisResult; verdict: string; why: string; score: number; body: boolean; attachRef: boolean; positive: string; hint: string; strong: boolean; payer: boolean; against: string; alt: number; curHow: string; register: string; history: number; forOwner: boolean; note: boolean; partsConfidence: string }
 // advices with the same amount and currency (an advice PDF and the mail text that repeats its amount count once)
-interface AmountGroup { value: number; currency: string; docs: DocResult[] }
+interface AmountGroup { value: number; currency: string; docs: DocResult[]; reference?: string }
 
 function newDoc(name: string, type: string, res: AvisResult): DocResult {
   return { name: name, type: type, res: res, verdict: "unclear", why: "", score: -1, body: false, attachRef: false, positive: "", hint: "", strong: false, payer: false, against: "", alt: 0, curHow: "", register: "", history: 0, forOwner: false, note: false, partsConfidence: "low" };
@@ -16133,8 +16370,18 @@ function sheetDocuments(name: string, sh: SheetRead, kw: string, hintCtx: boolea
     const dn = sh.tables.length > 1 && t.name !== "" ? name + " [" + t.name + "]" : name;
     const d = linesDocument(dn, sh.type, t.lines, kw, false, false);
     let cut = false;
-    for (const w of sh.warnings) if (/only the first \d+ rows|time budget exhausted/.test(w) && (w.indexOf("sheet '") !== 0 || w.indexOf("sheet '" + t.name + "'") === 0)) cut = true;
+    let incomplete = "";
+    for (const w of sh.warnings) if (/only the first \d+ rows|time budget exhausted|formula cell\(s\) without a saved value|spreadsheet reader stopped/.test(w) && (w.indexOf("sheet '") !== 0 || w.indexOf("sheet '" + t.name + "'") === 0)) { cut = true; incomplete = w; }
     sheetExtras(d, t, hintCtx, true, cut, name);
+    if (cut) {
+      // A missing formula result can be the payment total. Never borrow its neighbouring invoice value.
+      d.verdict = "unclear";
+      d.why = "spreadsheet read incompletely: " + incomplete;
+      d.res.confidence = "low";
+      d.partsConfidence = "low";
+      d.res.paymentAmounts = [];
+      d.res.error = "uncertain: " + d.why;
+    }
     // what the reader skipped or could not read (hidden rows, formulas without a value, row limit) goes with the result
     if (sh.warnings.length > 0) d.res.warnings = sh.warnings.slice(0, 10).join(" | ");
     out.push(d);
@@ -16257,14 +16504,20 @@ function withdrawnPayment(text: string): string {
   // the replacement, "das Avis vom 20.10. ist hinfällig, anbei das korrigierte Avis")
   const flat = text.replace(/\s+/g, " ");
   const m = PAY_WITHDRAWN.exec(flat);
-  if (m === null || REPLACEMENT_SENT.test(flat)) return "";
+  if (m === null) return "";
+  // "No new advice is attached" and "a replacement will be sent" do not revoke a cancellation.
+  for (const s of flat.split(/[.!?;]\s+/)) {
+    if (REPLACEMENT_SENT.test(s) && !/\b(?:not|no|never|nicht|kein(?:e|en|er)?|will|shall|wird|werden|soll)\b/i.test(s)) return "";
+  }
   let a = m.index;
   while (a > 0 && !/[.!?]/.test(flat.charAt(a - 1))) a--;
   let e = m.index + m[0].length;
   while (e < flat.length && !/[.!?]/.test(flat.charAt(e))) e++;
   // (a payment made in another sentence, or the withdrawn one made again: "zurückgerufen und heute neu ausgeführt", "re-sent")
-  if (DONE_VERB.test(flat.substring(0, a) + " " + flat.substring(e)) || /ausgeführt|executed|completed/i.test(flat.substring(0, a) + " " + flat.substring(e))) return "";
-  if (/(?:^|[^a-zäöüß])(?:erneut|neu|nochmals|noch einmal|again)(?![a-zäöüß])[^.!?]{0,40}(?:ausgeführt|überwiesen|angewiesen|veranlasst|executed|sent|paid|transferred|issued)|\bre-?(?:sent|issued|executed|submitted)\b/i.test(flat.substring(a, e))) return "";
+  const beside = flat.substring(0, a) + " " + flat.substring(e);
+  for (const s of beside.split(/[.!?;]\s+/)) if (executedPaymentStatement(s)) return "";
+  const same = flat.substring(a, e);
+  if (executedPaymentStatement(same) && /(?:^|[^a-zäöüß])(?:erneut|neu|nochmals|noch einmal|again)(?![a-zäöüß])[^.!?]{0,40}(?:ausgeführt|überwiesen|angewiesen|veranlasst|executed|sent|paid|transferred|issued)|\bre-?(?:sent|issued|executed|submitted)\b/i.test(same)) return "";
   return shortQuote(m[0].replace(/^[^A-Za-zÄÖÜäöüß]+/, ""));
 }
 
@@ -16434,6 +16687,64 @@ function newsletterLike(r: AvisResult): boolean {
   return EXAMPLE_WORD.test(r.text.substring(Math.max(0, at - 300), at + r.line.length));
 }
 
+function documentPaymentReferences(d: DocResult): string[] {
+  if (d.body) return [];
+  const ids: string[][] = [[], [], []];
+  for (const line of d.res.text.split("\n")) {
+    PAY_NUMBER.lastIndex = 0;
+    let m = PAY_NUMBER.exec(line);
+    for (let guard = 0; m !== null && guard < 10; guard++) {
+      const id = m[2].replace(/[.\/_-]+$/, "").toUpperCase();
+      const kind = /avis|remittance|advice/i.test(m[1]) ? 1 : /^(?:che|scheck)/i.test(m[1]) ? 2 : 0;
+      if (id.replace(/\D/g, "").length >= 3 && !/^\d{1,2}[.\/]\d{1,2}[.\/]\d{2,4}$/.test(id) && ids[kind].indexOf(id) < 0) ids[kind].push(id);
+      m = PAY_NUMBER.exec(line);
+    }
+    const dated = PAY_REF_DATED.exec(line);
+    if (dated !== null) {
+      const id = dated[1].replace(/[.\/_-]+$/, "").toUpperCase();
+      if (id.replace(/\D/g, "").length >= 3 && ids[0].indexOf(id) < 0) ids[0].push(id);
+    }
+  }
+  PAY_NUMBER.lastIndex = 0;
+  for (let kind = 0; kind < ids.length; kind++) if (ids[kind].length > 0) return ids[kind].map((id) => kind + ":" + id);
+  return [];
+}
+
+function documentPaymentReference(d: DocResult): string {
+  // An explicitly additional body payment is distinct even if its amount equals an attachment's amount.
+  if (d.body) return ADDITIONAL_PAYMENT.test(paidSentence(d.res)) ? "additional:" + d.name : "";
+  const refs = documentPaymentReferences(d);
+  return refs.length === 1 ? refs[0] : "";
+}
+
+function paymentGroupRelation(g: AmountGroup, docs: DocResult[]): number {
+  // 1: an additional payment beside a multi-payment list, 0: a copy or no overlap, -1: identity unresolved.
+  const ref = g.reference || "";
+  if (ref === "") return 0;
+  const value = germanAmount(g.value) + " " + g.currency;
+  let overlap = false, unknown = false;
+  for (const d of docs) {
+    if (d.verdict !== "several" || d.res.paymentAmounts.indexOf(value) < 0) continue;
+    overlap = true;
+    if (ref.startsWith("additional:")) continue;
+    const refs = documentPaymentReferences(d);
+    // The reference and amount appearing somewhere in the same list do not prove their association.
+    if (refs.indexOf(ref) >= 0) return d.res.paymentAmounts.every((p) => p === value) ? 0 : -1;
+    if (refs.length === 0) unknown = true;
+  }
+  return !overlap ? 0 : unknown ? -1 : 1;
+}
+
+function unresolvedPaymentSource(d: DocResult): boolean {
+  // An unreadable PDF or supported document can contain another advice even when its name is neutral or absent.
+  if (d.verdict !== "unclear") return false;
+  // Explicit contradictions also apply when the sender states them in the mail body beside a readable advice.
+  if (/^(?:payment execution not confirmed|conflicting payment currency|transfer beneficiary not confirmed as the mailbox owner)/.test(d.why)) return true;
+  if (d.body) return false;
+  return UNREADABLE_TYPE.test(d.type) || d.type === "not-checked" ||
+    (!d.res.ok && (d.hint !== "" || d.strong || adviceHint(d.name) !== ""));
+}
+
 function decideMail(docs: DocResult[], hint: string, noDocError: string): AvisResult {
   // advices with the same amount count once; two or more amounts (or several payments in one table) -> several; one ->
   // advice (other documents beside it, e.g. invoice copies, do not count); none -> unclear (an unclear document or an
@@ -16517,9 +16828,17 @@ function decideMail(docs: DocResult[], hint: string, noDocError: string): AvisRe
     if (d.verdict === "several" && severalDoc === null) severalDoc = d;
     if (d.verdict !== "advice") continue;
     const cur = d.res.currency !== "" ? d.res.currency : "EUR";
+    const reference = documentPaymentReference(d);
     let g: AmountGroup | null = null;
-    for (const x of groups) if (Math.abs(x.value - d.res.amountNumber) < 0.005 && x.currency === cur) g = x;
-    if (g === null) { g = { value: d.res.amountNumber, currency: cur, docs: [] }; groups.push(g); }
+    for (const x of groups) {
+      if (Math.abs(x.value - d.res.amountNumber) >= 0.005 || x.currency !== cur) continue;
+      const other = x.reference || "";
+      const compatible = reference === other ||
+        ((reference === "" || other === "") && !reference.startsWith("additional:") && !other.startsWith("additional:"));
+      if (compatible) { g = x; break; }
+    }
+    if (g === null) { g = { value: d.res.amountNumber, currency: cur, docs: [], reference: reference }; groups.push(g); }
+    else if (!g.reference && reference !== "") g.reference = reference;
     g.docs.push(d);
   }
   // the mail text names another amount than the attached advice (invoice total, amount before Skonto) while it refers
@@ -16576,7 +16895,7 @@ function decideMail(docs: DocResult[], hint: string, noDocError: string): AvisRe
       if (!extra && !stated) continue;
       d.verdict = "advice";
       d.why = (extra ? "further payment named in the mail text" : "own payment, the mail text names several payments") + " (" + d.why + ")";
-      groups.push({ value: d.res.amountNumber, currency: cur, docs: [d] });
+      groups.push({ value: d.res.amountNumber, currency: cur, docs: [d], reference: documentPaymentReference(d) });
       break;
     }
   }
@@ -16618,7 +16937,14 @@ function decideMail(docs: DocResult[], hint: string, noDocError: string): AvisRe
     }
     res.paymentAmounts = collectPaymentAmounts(docs, groups);
     res.confidence = combinedPaymentConfidence(docs, groups, res.paymentAmounts);
-    if (conflict !== null) res.confidence = "low";
+    if (conflict !== null) {
+      let sum = 0;
+      for (const p of res.paymentAmounts) {
+        const m = PAYMENT_AMOUNT.exec(p);
+        if (m !== null && m[2] === (conflict.res.currency || "EUR")) sum += parseGermanAmount(m[1]);
+      }
+      if (Math.abs(sum - conflict.res.amountNumber) >= 0.005) res.confidence = "low";
+    }
     res.verdict = "several";
     const what = groups.length < 2 ? "several payments in one document" : allPdf ? "several PDFs in the mail with different amounts" : "several advices in the mail with different amounts";
     res.verdictWhy = (groups.length >= 2 ? groups.length + " advices with different amounts" : "several payments in one document") + " (" + list.join("; ") + ")";
@@ -16767,6 +17093,13 @@ function decideMail(docs: DocResult[], hint: string, noDocError: string): AvisRe
       for (const d of docs) if (d.why !== "" && whys.length < 3) whys.push(d.why + " (" + d.name + ")");
       const why = whys.join("; ");
       res.verdictWhy = docs.length === 0 ? "no document to check" : "no advice: " + (why.length > 400 ? why.substring(0, 397) + "..." : why);
+    }
+  }
+  if (res.verdict === "advice" || res.verdict === "several") {
+    for (const d of docs) if (unresolvedPaymentSource(d)) {
+      res.confidence = "low";
+      res.error = "uncertain: another possible advice could not be checked (" + d.name + ": " + d.why + ")";
+      break;
     }
   }
   // the quoted phrases of the reasons with the dots of their numbers and dates as written ("4.812,37", "29.10.2026")
@@ -17676,8 +18009,23 @@ function combinedPaymentConfidence(docs: DocResult[], groups: AmountGroup[], amo
   // amount, but one high-confidence occurrence cannot certify two identical payments from a weaker list.
   const high: { [amount: string]: number } = {};
   const medium: { [amount: string]: number } = {};
+  const multiple = docs.filter((d) => d.verdict === "several");
+  for (let i = 0; i < multiple.length; i++) {
+    const d = multiple[i];
+    const refs = documentPaymentReferences(d);
+    for (let j = i + 1; j < multiple.length; j++) {
+      const other = multiple[j];
+      if (d.res.text === other.res.text) continue;
+      const otherRefs = documentPaymentReferences(other);
+      if (refs.length === 0 && otherRefs.length === 0) continue;
+      // Different reference lists can contain distinct equal-value payments. Shared references can instead be
+      // corrected assignments. Without an amount-to-reference mapping, neither case certifies a merged list.
+      if (refs.some((ref) => otherRefs.indexOf(ref) >= 0) ||
+        d.res.paymentAmounts.some((p) => other.res.paymentAmounts.indexOf(p) >= 0)) return "low";
+    }
+  }
   for (const d of docs) {
-    if (d.body && d.res.ok && d.verdict !== "other") {
+    if (d.body && d.res.ok) {
       const paid = paidSentence(d.res);
       if (paid !== "" && !ADDITIONAL_PAYMENT.test(paid) && (actualPaid(paid) || PART_PAID.test(paid))) {
         // "Actually sent" or "only paid" can contradict a complete list even when the body was not an advice
@@ -17691,14 +18039,15 @@ function combinedPaymentConfidence(docs: DocResult[], groups: AmountGroup[], amo
       }
     }
     if (!d.body && d.verdict === "unclear") {
-      const relevant = d.hint !== "" || d.strong || adviceHint(d.name) !== "";
-      if (relevant && (UNREADABLE_TYPE.test(d.type) || d.type === "not-checked" || !d.res.ok)) return "low";
+      if (unresolvedPaymentSource(d)) return "low";
       if (d.res.ok && d.res.confidence !== "low") {
         const value = germanAmount(d.res.amountNumber) + " " + (d.res.currency || "EUR");
         if (amounts.indexOf(value) < 0) return "low";
       }
     }
-    const confidence = d.verdict === "several" ? d.partsConfidence : d.res.confidence;
+    // Individual advice groups are counted below, once per identity rather than once per file copy.
+    if (d.verdict !== "several") continue;
+    const confidence = d.partsConfidence;
     if (confidence !== "high" && confidence !== "medium") continue;
     const seen: { [amount: string]: number } = {};
     for (const p of documentPaymentAmounts(d, groups)) {
@@ -17707,6 +18056,34 @@ function combinedPaymentConfidence(docs: DocResult[], groups: AmountGroup[], amo
       if (confidence === "high") high[p] = Math.max(high[p] || 0, seen[p]);
     }
   }
+  // Distinct references are independent payments, not copies. Each group needs its own trusted source.
+  const groupHigh: { [amount: string]: number } = {};
+  const groupMedium: { [amount: string]: number } = {};
+  const extraHigh: { [amount: string]: number } = {};
+  const extraMedium: { [amount: string]: number } = {};
+  for (const g of groups) {
+    const relation = paymentGroupRelation(g, docs);
+    if (relation < 0) return "low";
+    if (g.reference && !g.reference.startsWith("additional:")) {
+      for (const other of groups) if (other !== g && other.reference === g.reference &&
+        (Math.abs(other.value - g.value) >= 0.005 || other.currency !== g.currency)) return "low";
+    }
+    const p = germanAmount(g.value) + " " + g.currency;
+    let hasHigh = false, hasMedium = false;
+    for (const d of g.docs) {
+      if (d.res.confidence === "high") hasHigh = true;
+      if (d.res.confidence === "high" || d.res.confidence === "medium") hasMedium = true;
+    }
+    if (relation > 0) {
+      if (hasHigh) extraHigh[p] = (extraHigh[p] || 0) + 1;
+      if (hasMedium) extraMedium[p] = (extraMedium[p] || 0) + 1;
+    } else {
+      if (hasHigh) { groupHigh[p] = (groupHigh[p] || 0) + 1; high[p] = Math.max(high[p] || 0, groupHigh[p]); }
+      if (hasMedium) { groupMedium[p] = (groupMedium[p] || 0) + 1; medium[p] = Math.max(medium[p] || 0, groupMedium[p]); }
+    }
+  }
+  for (const p of Object.keys(extraHigh)) high[p] = (high[p] || 0) + extraHigh[p];
+  for (const p of Object.keys(extraMedium)) medium[p] = (medium[p] || 0) + extraMedium[p];
   let result = amounts.length >= 2 ? "high" : "low";
   const used: { [amount: string]: number } = {};
   for (const p of amounts) {
@@ -17722,16 +18099,33 @@ function collectPaymentAmounts(docs: DocResult[], groups: AmountGroup[]): string
   // identical separate payments, retain that multiplicity rather than collapsing the payments into a single amount.
   const out: string[] = [];
   const counts: { [amount: string]: number } = {};
+  const groupCounts: { [amount: string]: number } = {};
+  const seenGroups: AmountGroup[] = [];
   for (const d of docs) {
-    const parts = documentPaymentAmounts(d, groups);
+    const parts: string[] = [];
+    const extraParts: string[] = [];
+    if (d.verdict === "several") {
+      for (const p of d.res.paymentAmounts) parts.push(p);
+    } else if (d.verdict === "advice") {
+      for (const g of groups) if (g.docs.indexOf(d) >= 0 && seenGroups.indexOf(g) < 0) {
+        seenGroups.push(g);
+        const value = germanAmount(g.value) + " " + g.currency;
+        if (paymentGroupRelation(g, docs) > 0) extraParts.push(value);
+        else parts.push(value);
+      }
+    }
     const seen: { [amount: string]: number } = {};
     for (const p of parts) {
-      seen[p] = (seen[p] || 0) + 1;
+      if (d.verdict === "advice") {
+        groupCounts[p] = (groupCounts[p] || 0) + 1;
+        seen[p] = groupCounts[p];
+      } else seen[p] = (seen[p] || 0) + 1;
       if (seen[p] > (counts[p] || 0)) {
         out.push(p);
         counts[p] = seen[p];
       }
     }
+    for (const p of extraParts) out.push(p);
   }
   return out;
 }
@@ -17848,12 +18242,13 @@ function finishResult(res: AvisResult, subject: string, keywords: string): AvisR
   return res;
 }
 
-function main(workbook: ExcelScript.Workbook, pdfBase64: string, extraKeywords?: string, mailSubject?: string): AvisResult {
+function main(workbook: ExcelScript.Workbook, pdfBase64: string, extraKeywords?: string, mailSubject?: string, mailboxAddress?: string): AvisResult {
   // Office Script entry point.
   // @param pdfBase64  Base64 content of the whole mail (.eml of "Export email (V2)"), of a PDF (contentBytes of "Get
   //                   attachment (V2)"), of an S/MIME "smime.p7m", a spreadsheet or an HTML / text document
   // @param extraKeywords  optional, comma separated extra keywords that mark the total line ("Auszahlung, Überweisungssumme"); may be ""
   // @param mailSubject  optional, the subject of the mail (else the Subject header of the .eml); needed for newSubject
+  // @param mailboxAddress  actual receiving mailbox from the flow configuration (not a sender-controlled MIME header)
   const res = emptyResult();
   totalDecoded = 0;
   mailOwner = [];
@@ -17866,6 +18261,13 @@ function main(workbook: ExcelScript.Workbook, pdfBase64: string, extraKeywords?:
   let subject = (mailSubject || "").replace(/[\r\n]+/g, " ");
   let keywords = "";
   try {
+    const mailbox = (mailboxAddress || "").trim().toLowerCase();
+    if (mailbox !== "" && mailAddresses(mailbox, 1) !== mailbox) {
+      res.error = "invalid receiving mailbox address";
+      res.verdict = "unclear";
+      res.verdictWhy = "receiving mailbox configuration must be checked";
+      return finishResult(res, subject, keywords);
+    }
     if (!pdfBase64 || pdfBase64.length < 16) {
       res.error = "no PDF content passed";
       res.verdict = "unclear";
@@ -17883,6 +18285,9 @@ function main(workbook: ExcelScript.Workbook, pdfBase64: string, extraKeywords?:
         return finishResult(inputNote(documentResult(bytes, pdfBase64, kw, subject), inp), subject, keywords);
       }
       if (mail.container) {
+        // To/Cc need not contain the receiving mailbox (BCC). Use the configured destination so an own outgoing
+        // payment copied to this mailbox cannot masquerade as an incoming customer's advice.
+        if (mailbox !== "") mail.msgs[0].env = mailbox;
         let patchable = true;
         if (subject.trim() === "") {
           subject = mail.msgs[0].subject;

@@ -1,10 +1,10 @@
 # Avis-Flow Version 2 Schritt für Schritt
 
-Diese Anleitung baut den Flow für ein **freigegebenes Postfach** (Exchange Shared Mailbox). Jede neue Mail geht als Ganzes an das Skript: PDF-Anlagen, Excel- und CSV-Dateien, SAP-Exporte und der Mailtext. Nur als **sicher (`confidence = high`)** eingestufte Avise bekommen zuerst den Betrag oder die Betragsliste vorne in den Betreff und danach die Kategorie **Avis**. Avis-Ergebnisse mit `confidence = medium` oder `low` und alle anderen Prüffälle werden in den vorhandenen Ordner **Posteingang → Archive → Avisbetrag fehlt** verschoben. Andere Mails bleiben unberührt.
+Diese Anleitung baut den Flow für ein **freigegebenes Postfach** (Exchange Shared Mailbox). Vom Trigger gelieferte und nicht ausgeschlossene Mails gehen als Ganzes an das Skript: PDF-Anlagen, Excel- und CSV-Dateien, SAP-Exporte und der Mailtext. Nur als **sicher (`confidence = high`)** eingestufte Avise bekommen zuerst den Betrag oder die Betragsliste vorne in den Betreff und danach die Kategorie **Avis**. Avis-Ergebnisse mit `confidence = medium` oder `low` und alle anderen Prüffälle sollen in den vorhandenen Ordner **Posteingang → Archive → Avisbetrag fehlt** verschoben werden. Andere Mails bleiben unberührt. Ein ausgebliebener Trigger oder eine fehlgeschlagene Verschiebeaktion muss im Betrieb gesondert erkannt werden.
 
 Im Folgenden heißt dieser Zielordner kurz **Prüfordner**. `Archive` endet mit **e**; `Avisbetrag fehlt` besteht aus dem Wort **Avisbetrag**, einem Leerzeichen und **fehlt**. Gemeint ist der Unterordner im freigegebenen Postfach.
 
-Die früheren Klickwege und Live-Tests vom 30./31.10.2026 beziehen sich auf den damaligen Stand. Die neueren Änderungen an Betreff, mehreren Beträgen und dem Verschieben in den Prüfordner werden lokal geprüft; sie sind noch nicht erneut live in Microsoft 365 getestet. Der aktuelle Nachbau mit Feldern, Einstellungen und Formeln steht in `dist/avis-flow.html` (herunterladen und im Browser öffnen). Ein GitHub-Update ändert einen bereits laufenden Power-Automate-Flow nicht automatisch.
+Die früheren Klickwege und Live-Tests vom 30./31.10.2026 beziehen sich auf den damaligen Stand. Die aktuelle Sicherheitsprüfung vom 02.11.2026 umfasst lokale Parsertests und simulierte Flow-Abläufe; der Gesamtstand ist **noch nicht in Microsoft 365 abgenommen**. Umfang, gefundene Fehler und verbleibende Risiken stehen im [Testbericht](TESTBERICHT.md). **Plan B ist nicht für den Produktivbetrieb freigegeben.** Der aktuelle Nachbau mit Feldern, Einstellungen und Formeln steht in `dist/avis-flow.html` (herunterladen und im Browser öffnen). Ein GitHub-Update ändert einen bereits laufenden Power-Automate-Flow nicht automatisch.
 
 ## Überblick
 
@@ -20,9 +20,9 @@ Die früheren Klickwege und Live-Tests vom 30./31.10.2026 beziehen sich auf den 
 
 „Zahlungsavis“ steht für den ursprünglichen Betreff und wird nicht automatisch hinzugefügt. Beispiel: Aus `Abrechnung Oktober` wird bei einem sicheren Betrag von 5.500,05 Euro `5.500,05 Abrechnung Oktober`. Die Beträge stehen im deutschen Format ohne Währungskürzel vor dem vollständigen Originalbetreff. Ein Leerzeichen trennt beide Teile. **Bei `medium`, `low` oder einem anderen Prüffall bleibt der ursprüngliche Betreff vollständig unverändert.** Es werden weder Betrag noch Prüfzeichen ergänzt. Die Mail wird nur in den Prüfordner verschoben; auch in Plan B entsteht keine Kopie.
 
-`high` ist die höchste vorhandene regelbasierte Stufe des Skripts, keine mathematische Garantie für einen fehlerfreien Betrag. Nur diese Stufe darf automatisch Betreff und Kategorie erhalten.
+`high` ist die höchste vorhandene regelbasierte Stufe des Skripts, keine mathematische Garantie für einen fehlerfreien Betrag. Nur diese Stufe darf automatisch Betreff und Kategorie erhalten. Das Skript führt keine Buchung aus und gleicht keinen tatsächlichen Bankeingang ab; eine Kategorie ist kein Zahlungsnachweis.
 
-Bei mehreren sicheren Avisen verbindet das Skript die einzelnen Zahlbeträge mit ` + `: `1.200,30 + 5.632,21 + 500,42 Abrechnung Oktober`. Es rechnet daraus keine Gesamtsumme. Eine Gesamtsumme im Begleittext, die nur die Zahlungen aus den Anlagen wiederholt, kommt nicht zusätzlich in die Liste. Eine ausdrücklich separat geleistete weitere Zahlung bleibt ein eigener Betrag. Jede einzelne Zahlung muss sicher belegt sein; ist eine Zahlung nur `medium` oder `low`, geht die gesamte Mail ohne Betreffänderung und ohne neue Kategorie in den Prüfordner. Eine unsichere Wiederholung eines bereits sicher belegten identischen Betrags zählt nicht als zusätzliche Zahlung.
+Bei mehreren sicheren Avisen verbindet das Skript die einzelnen Zahlbeträge mit ` + `: `1.200,30 + 5.632,21 + 500,42 Abrechnung Oktober`. Es rechnet daraus keine Gesamtsumme. Eine Gesamtsumme im Begleittext, die nur die Zahlungen aus den Anlagen wiederholt, kommt nicht zusätzlich in die Liste. Eine ausdrücklich separat geleistete weitere Zahlung bleibt ein eigener Betrag, auch wenn sie gleich hoch ist. Jede einzelne Zahlung muss sicher belegt und zugeordnet sein; ist eine Zahlung nur `medium` oder `low`, geht die gesamte Mail ohne Betreffänderung und ohne neue Kategorie zur Prüfung. Gleiche Beträge allein beweisen keine Dublette. Widersprüchliche Zahlungsreferenzen oder eine unklare Zuordnung von Einzelavis und Mehrfachliste sperren die automatische Freigabe.
 
 Der normale Flow in Kurzform:
 
@@ -32,16 +32,20 @@ Trigger: neue Mail im Posteingang
    ├─ Export_email → Run_script
    └─ danach: Bearbeitung_noetig → Wahr
       ├─ Betreff_noetig
-      │  ├─ Wahr: Betreff_setzen
+      │  ├─ Wahr: Nachricht_vor_Betreff_lesen
+      │  │        └─ Betreff_unveraendert → Wahr: Betreff_setzen
       │  └─ Falsch: leer
       └─ danach: Pruefung_noetig
          ├─ Wahr: Avisbetrag_fehlt_verschieben
          └─ Falsch: Kategorie_erlaubt
-                    ├─ Wahr: Kategorie_setzen
+                    ├─ Wahr: Nachricht_vor_Kategorie_lesen
+                    │        └─ Kategorie_Betreff_passt → Wahr: Kategorie_setzen
                     └─ Falsch: leer
 ```
 
-`Pruefung_noetig` wartet auf die gesamte Bedingung `Betreff_noetig`, auch bei deren Fehler oder Timeout. Prüffälle werden anschließend verschoben. Bei sicheren Avisen prüft **Kategorie_erlaubt** zusätzlich, ob die nötige Betreffänderung tatsächlich erfolgreich war. Bei einem nötigen Betreff-PATCH mit Fehler, Timeout oder übersprungener Aktion bleibt die Kategorie aus. Ist der Betreff schon vollständig richtig und kein PATCH nötig, darf `Avis` gesetzt werden. Schlägt das Verschieben selbst fehl, wird keine Ersatzkategorie gesetzt; der Fehler steht im Ausführungsverlauf und die Mail bleibt, sofern sie nicht anderweitig verschoben wurde, im Posteingang.
+`Pruefung_noetig` wartet auf die gesamte Bedingung `Betreff_noetig`, auch bei deren Fehler oder Timeout. Prüffälle werden anschließend verschoben. Bei sicheren Avisen prüft **Kategorie_erlaubt**, ob die nötige Betreffänderung tatsächlich erfolgreich war. Vor jedem Schreibschritt wird der Betreff frisch gelesen und verglichen. Ein Lesefehler oder ein abweichender Betreff verhindert den folgenden Schreibschritt. Vor der Kategorie werden außerdem die aktuellen Kategorien gelesen und um `Avis` ergänzt. Bei einem nötigen Betreff-PATCH mit Fehler, Timeout oder übersprungener Aktion bleibt die Kategorie aus. Ist der Betreff schon vollständig richtig und kein PATCH nötig, darf `Avis` nach erneuter Prüfung gesetzt werden. Die Falsch-Zweige der zusätzlichen Vergleiche bleiben leer. Schlägt das Verschieben selbst fehl, wird keine Ersatzkategorie gesetzt; den Fehler im Ausführungsverlauf und den tatsächlichen Nachrichtenort prüfen.
+
+GET, Vergleich und PATCH sind keine atomare Operation. Eine weitere Änderung genau zwischen Lesen und Schreiben kann weiterhin überschrieben werden. Auch ein grün beendeter Flow kann einen leeren Zweig durchlaufen haben; er beweist allein keine erfolgte Bearbeitung.
 
 **Ab 31.12.2026** will Microsoft das Ändern des Betreffs empfangener Mails sperren. Im Januar testen; das weitere Vorgehen steht unter „Ab Januar 2027: Betreff-Sperre prüfen“.
 
@@ -68,7 +72,7 @@ Trigger: neue Mail im Posteingang
 
 Die Kategorien `Avis prüfen` und `mehrere Avise` werden nicht mehr neu vergeben. Vorhandene Kategorien oder alte Mails müssen dafür nicht gelöscht werden. Ohne angelegte Kategorie erscheint `Avis` an normalen Avis-Mails nur grau; die Farbe ist für die Verarbeitung unerheblich.
 
-**Bestehenden Flow aktualisieren:** Das Skript `AvisV2` ersetzen **und** die neuen Bedingungen, Verschiebeaktionen und Formeln einbauen. Ein Skriptupdate allein reicht für den Prüfordner nicht. Die genaue Migration steht nach Schritt 5.12. Die elf aktuellen TXT-Dateien in `formeln/` ersetzen die bisherige Formelsammlung; `Kategorie_noetig_links.txt` heißt jetzt `Bearbeitung_noetig_links.txt`. Historische Mails werden durch das Update nicht automatisch nachträglich verarbeitet.
+**Bestehenden Flow aktualisieren:** Das Skript `AvisV2` ersetzen **und** den Parameter `mailboxAddress`, die Leseaktionen, Bedingungen, Verschiebeaktionen und Formeln einbauen. Ein Skriptupdate allein reicht nicht. Die genaue Migration steht nach Schritt 5.12. Die 14 aktuellen TXT-Dateien in `formeln/` ersetzen die bisherige Formelsammlung; `Kategorie_noetig_links.txt` heißt jetzt `Bearbeitung_noetig_links.txt`, `Kopie_pruefen_links.txt` entfällt. Historische Mails werden durch das Update nicht automatisch nachträglich verarbeitet.
 
 ## Schritt 3: Skript AvisV2 in Excel anlegen (einmalig)
 
@@ -81,9 +85,9 @@ Die Kategorien `Avis prüfen` und `mehrere Avise` werden nicht mehr neu vergeben
 
 Das alte Skript `AvisPdfAmount` bleibt, wie es ist. Excel speichert Skripte in OneDrive unter **Dokumente → Office-Skripts** (`AvisV2.osts`).
 
-**Später ein neues Skript einspielen:** Excel → Automatisieren → **Alle Skripts** → **AvisV2** → **Bearbeiten** → Strg+A, Strg+V mit dem neuen Inhalt → Speichern. Der Flow nimmt ab dem nächsten Lauf automatisch das neue Skript.
+**Später ein neues Skript einspielen:** Excel → Automatisieren → **Alle Skripts** → **AvisV2** → **Bearbeiten** → Strg+A, Strg+V mit dem neuen Inhalt → Speichern. Der nächste Aufruf verwendet den neuen Skriptinhalt. Für neue Parameter wie `mailboxAddress` das Skript in der Flow-Aktion erneut auswählen und die Felder gemäß Schritt 5.4 belegen; das aktualisiert der Skriptinhalt nicht selbst.
 
-**Nur sichere Avise automatisch bearbeiten:** Das aktuelle Skript `AvisV2` und die aktuellen Bedingungsformeln einspielen. Ergebnisse mit `medium` oder `low` sind jetzt ebenfalls `needsReview = true` und liefern weder Betreffänderung noch Kategorie. Vor **Kategorie_setzen** die neue Bedingung **Kategorie_erlaubt** einbauen (Schritt 5.10), mit der passenden Formel für Hauptflow oder Plan B. Sie verhindert die Kategorisierung, wenn eine nötige Betreffänderung beziehungsweise der Versand der nötigen Kopie nicht erfolgreich war. Ist der Prüfordner-Flow bereits eingerichtet, bleibt das Verschieben bestehen. Der ursprüngliche Betreff wird vollständig erhalten; auch darin vorhandene Fragezeichen oder ältere Betragspräfixe werden nicht entfernt.
+**Nur sichere Avise automatisch bearbeiten:** Das aktuelle Skript `AvisV2` und die aktuellen Formeln einspielen. Ergebnisse mit `medium` oder `low` sind `needsReview = true` und liefern weder Betreffänderung noch Kategorie. **Kategorie_erlaubt** verhindert die Kategorisierung nach einer nicht erfolgreichen nötigen Betreffänderung. Zusätzlich die frischen Leseaktionen und Betreffvergleiche aus Schritt 5.7 und 5.11 einbauen. Ist der Prüfordner-Flow bereits eingerichtet, bleibt das Verschieben bestehen. Bei Prüffällen bleibt der ursprüngliche Betreff einschließlich vorhandener Fragezeichen oder älterer Betragspräfixe erhalten.
 
 ## Schritt 4: 5-Minuten-Test (empfohlen, bevor der echte Flow gebaut wird)
 
@@ -161,10 +165,13 @@ Die Aktion gibt die ganze Mail als Datei (.eml) weiter: Text, alle Anlagen, auch
    - **Skript**: **AvisV2**
    - **pdfBase64**: **fx** → Formel aus `formeln/Run_script_pdfBase64.txt`: `base64(body('Export_email'))`
    - **Erweiterte Parameter** → **Alle anzeigen** → **mailSubject**: Blitz → **Betreff** (Trigger)
+   - **mailboxAddress**: die tatsächliche Adresse des freigegebenen Postfachs als festen Konfigurationswert eintragen, z. B. `avis@firma.de`. Nicht **An**, **Cc** oder einen anderen Wert aus der Mail verwenden. Bei Blindkopien kann dort eine fremde Adresse stehen. Fehlt das Feld, `AvisV2` in der Aktion nach dem Speichern des Skripts erneut auswählen.
    - **extraKeywords**: leer lassen
 4. Reiter **Einstellungen** → **Wiederholungsrichtlinie**: **Festes Intervall**, **Anzahl** `3`, **Intervall** `PT1M`. Das sind höchstens drei Wiederholungen mit je einer Minute Abstand, zusätzlich zum ersten Aufruf: maximal vier Anläufe von Run_script.
 
-Im historischen Lasttest vom 30./31.10.2026 mit 40 Mails brauchte ein Lauf meist 8 bis 20 Sekunden, auch für ein Avis mit 72 Seiten oder eine Mail mit 20 PDF-Anlagen; das meiste davon ist der Start von Excel.
+`mailboxAddress` ist im Skript aus Kompatibilitätsgründen optional, im aktuellen Flow aber auszufüllen. Ohne diesen Wert verwendet die Erkennung wieder die Mailkopf-Angaben; eine eigene ausgehende Zahlung in Blindkopie kann dann fälschlich wie ein Kunden-Avis aussehen. Ein ungültiger Konfigurationswert führt zur Prüfung.
+
+Im historischen Lasttest vom 30./31.10.2026 mit 40 Mails brauchte ein Lauf meist 8 bis 20 Sekunden, auch für ein Avis mit 72 Seiten oder eine Mail mit 20 PDF-Anlagen; das meiste davon ist der Start von Excel. Das ist kein Laufzeitnachweis für den aktuellen Stand.
 
 ### 5.5 Bedingung Bearbeitung_noetig
 
@@ -182,11 +189,15 @@ Die Bedingung lässt normale Avise, Prüffälle und Fehlerfälle weiterlaufen. �
 
 Nur bei sicheren Avisen (`confidence = high`) wird ein neuer Betrag oder eine neue vollständige Betragsliste vor den Betreff gesetzt. Bei `needsReview = true` gibt es keinen Betreff-PATCH; auch ein möglicherweise erkannter Betrag aus `medium` oder `low` wird nicht ergänzt. Der ursprüngliche Betreff bleibt erhalten und die Mail wird verschoben. Für Plan B die inhaltlich gleiche Formel `Betreff_noetig_Plan_B_links.txt` verwenden, damit Prüffälle keine Kopie erzeugen.
 
-### 5.7 Betreff_setzen
+### 5.7 Betreff frisch lesen, vergleichen und setzen
 
-1. Im Zweig **Wahr** von Betreff_noetig: **+ → HTTP-Anforderung senden** (Office 365 Outlook) → Name `Betreff_setzen`.
-2. **URI** über **fx**: `formeln/URI_Kategorie_und_Betreff.txt`, mit der Adresse des freigegebenen Postfachs.
-3. **Methode**: **PATCH**. **Erweiterte Parameter → Alle anzeigen → Text** über **fx**: `formeln/Betreff_setzen_Text.txt`. **Content-Type**: `application/json`.
+1. Als erste Aktion im Zweig **Wahr** von Betreff_noetig: **+ → HTTP-Anforderung senden** (Office 365 Outlook) → Name `Nachricht_vor_Betreff_lesen`.
+2. **URI** über **fx**: `formeln/Nachricht_lesen_URI.txt`, mit der Adresse des freigegebenen Postfachs. **Methode**: **GET**. Keinen Text/Body eintragen. Die Antwort enthält den aktuellen Betreff und die aktuellen Kategorien.
+3. Darunter eine **Bedingung** namens `Betreff_unveraendert` anlegen. Links **fx** → `formeln/Betreff_unveraendert_links.txt`, Mitte **ist gleich**, rechts **fx** → `true`. **Ausführen nach → Nachricht vor Betreff lesen**: nur **Ist erfolgreich**.
+4. Der **Falsch**-Zweig bleibt leer. In den **Wahr**-Zweig die HTTP-Aktion `Betreff_setzen` setzen. **URI** über **fx**: `formeln/URI_Kategorie_und_Betreff.txt`, mit derselben Postfachadresse.
+5. **Methode**: **PATCH**. **Erweiterte Parameter → Alle anzeigen → Text** über **fx**: `formeln/Betreff_setzen_Text.txt`. **Content-Type**: `application/json`. Als erste Aktion dieses Wahr-Zweigs hat Betreff_setzen keinen eigenen Vorgänger bei **Ausführen nach**.
+
+Der frisch gelesene Betreff muss exakt dem Betreff aus dem Trigger entsprechen. Hat inzwischen jemand die Mail umbenannt, bleibt die Betreff-Aktion aus; damit erlaubt auch Kategorie_erlaubt keine anschließende Kategorie. Einen Lesefehler oder abweichenden Betreff im Verlauf prüfen. Eine Änderung nach dem Vergleich und vor dem PATCH kann ohne atomare Versionsprüfung weiterhin passieren.
 
 ### 5.8 Bedingung Pruefung_noetig
 
@@ -214,14 +225,15 @@ Das Original wird mitsamt seinen vorhandenen Kategorien verschoben. Der Flow ver
 
 Die Formel lässt die Kategorie nur zu, wenn `patchSubject` leer ist (der Betreff ist bereits richtig) oder **Betreff_setzen** tatsächlich erfolgreich war. In Plan B muss stattdessen **Kopie_senden** erfolgreich sein, wenn eine Kopie nötig war. Eine fehlgeschlagene, abgelaufene oder übersprungene nötige Aktion erlaubt keine Kategorie.
 
-### 5.11 Kategorie_setzen
+### 5.11 Nachricht erneut lesen, Betreff prüfen und Kategorie setzen
 
-1. Im Zweig **Wahr** von Kategorie_erlaubt: **+ → HTTP-Anforderung senden** (Office 365 Outlook) → Name `Kategorie_setzen`.
-2. **URI** über **fx**: `formeln/URI_Kategorie_und_Betreff.txt`, mit der Adresse des freigegebenen Postfachs.
-3. **Methode**: **PATCH**. **Text** über **fx**: die aktuelle `formeln/Kategorie_setzen_Text.txt` (`outputs('Run_script')?['body/result/patchCategory']`). **Content-Type**: `application/json`.
-4. Als erste Aktion in diesem Wahr-Zweig hat Kategorie_setzen keinen Vorgänger bei **Ausführen nach** (`"runAfter": {}`). Eine alte direkte Abhängigkeit von Betreff_noetig entfernen.
+1. Als erste Aktion im Zweig **Wahr** von Kategorie_erlaubt: **+ → HTTP-Anforderung senden** (Office 365 Outlook) → Name `Nachricht_vor_Kategorie_lesen`.
+2. **URI** über **fx**: `formeln/Nachricht_lesen_URI.txt`, mit der Adresse des freigegebenen Postfachs. **Methode**: **GET**, kein Text/Body.
+3. Darunter eine **Bedingung** namens `Kategorie_Betreff_passt` anlegen. Links **fx** → `formeln/Kategorie_Betreff_passt_links.txt`, Mitte **ist gleich**, rechts **fx** → `true`. **Ausführen nach → Nachricht vor Kategorie lesen**: nur **Ist erfolgreich**. Der Falsch-Zweig bleibt leer.
+4. Im **Wahr**-Zweig HTTP-Aktion `Kategorie_setzen` anlegen. **URI** über **fx**: `formeln/URI_Kategorie_und_Betreff.txt`. **Methode**: **PATCH**. **Text** über **fx**: die aktuelle `formeln/Kategorie_setzen_Text.txt`. **Content-Type**: `application/json`.
+5. Als erste Aktion in diesem Wahr-Zweig hat Kategorie_setzen keinen Vorgänger bei **Ausführen nach** (`"runAfter": {}`). Alte direkte Abhängigkeiten entfernen.
 
-Sichere Avise (`high`) bekommen `Avis`; vorhandene andere Kategorien bleiben erhalten. Bei mehreren Avisen ersetzt das Skript nur die frühere Kategorie `mehrere Avise` durch `Avis`. Prüffälle und fehlgeschlagene nötige Betreffänderungen erreichen diese Aktion nicht.
+Der Betreff muss jetzt dem erfolgreich geschriebenen neuen Betreff entsprechen; war kein PATCH nötig, muss er noch dem Trigger entsprechen. Die neue Textformel übernimmt die **frisch per Graph gelesenen Kategorien** und ergänzt `Avis`, statt die beim Export gelesene Kategorienliste zurückzuschreiben. Auch alte Avis-Kategorien bleiben als vorhandene Kategorien erhalten. Prüffälle, Lesefehler, abweichende Betreffzeilen und fehlgeschlagene nötige Betreffänderungen erreichen diese Aktion nicht. Gleichzeitige Kategorieänderungen nach dem GET können weiterhin überschrieben werden.
 
 ### 5.12 Speichern
 
@@ -229,17 +241,19 @@ Oben **Speichern**. Der Flow bearbeitet neue Mails im ausgewählten **Posteingan
 
 ### Bestehenden Flow auf den Prüfordner umstellen
 
-1. Das Skript `AvisV2` durch den aktuellen Inhalt von `dist/AvisV2.ts` ersetzen und speichern. Die Eingabeparameter bleiben gleich; neu hinzu kommt das Ergebnisfeld `needsReview`.
+1. Das Skript `AvisV2` durch den aktuellen Inhalt von `dist/AvisV2.ts` ersetzen und speichern. `Run_script` erneut auf dieses Skript einstellen und den neuen Parameter **mailboxAddress** mit der tatsächlichen Postfachadresse belegen (Schritt 5.4).
 2. Die bisherige Bedingung **Kategorie_noetig** in **Bearbeitung_noetig** umbenennen, ihre Formel durch `Bearbeitung_noetig_links.txt` ersetzen und für Run_script alle vier Statuswerte aus Schritt 5.5 aktivieren.
-3. **Betreff_noetig** mit der darin liegenden Aktion Betreff_setzen als ersten Schritt im Wahr-Zweig lassen oder dorthin verschieben. Alte Abhängigkeiten von Kategorie_setzen entfernen. Im normalen Flow die aktuelle `Betreff_noetig_links.txt` verwenden; in Plan B `Betreff_noetig_Plan_B_links.txt`.
+3. **Betreff_noetig** als ersten Schritt im Wahr-Zweig lassen oder dorthin verschieben. Alte Abhängigkeiten von Kategorie_setzen entfernen. Die aktuelle `Betreff_noetig_links.txt` verwenden. In ihren Wahr-Zweig **Nachricht_vor_Betreff_lesen → Betreff_unveraendert** einbauen und **Betreff_setzen** in den Wahr-Zweig dieses Vergleichs verschieben (Schritt 5.7).
 4. **Pruefung_noetig** unter der gesamten Betreff-Bedingung einbauen, aktuelle Formel und drei Statuswerte gemäß Schritt 5.8 setzen.
 5. **Avisbetrag_fehlt_verschieben** in deren Wahr-Zweig einbauen und über den Ordnerwähler des freigegebenen Postfachs den vorhandenen Pfad **Posteingang → Archive → Avisbetrag fehlt** auswählen.
 6. **Kategorie_erlaubt** als erste Bedingung in den Falsch-Zweig von Pruefung_noetig einbauen, mit der passenden Hauptflow- oder Plan-B-Formel (Schritt 5.10). Ihr Falsch-Zweig bleibt leer.
-7. **Kategorie_setzen** in den Wahr-Zweig von Kategorie_erlaubt verschieben und dort alte Ausführen-nach-Abhängigkeiten entfernen. Das Textfeld durch die aktuelle `Kategorie_setzen_Text.txt` ersetzen; die bisherige Fehler-Ersatzformel muss weg.
-8. Bei **Plan B** auch die Prüfung der eigenen Kopien mit der aktuellen `Kopie_pruefen_links.txt` und die Verschiebeaktionen wie im Plan-B-Abschnitt umbauen. Kategorie_setzen, Original_verschieben_noetig und Original_verschieben liegen vollständig im Wahr-Zweig von Kategorie_erlaubt.
-9. Speichern, mit `dist/avis-flow.html` vergleichen und Schritt 6 testen. Vorhandene alte Kategorien oder alte Mails werden dabei nicht gesammelt gelöscht, verschoben oder neu verarbeitet.
+7. In den Wahr-Zweig von Kategorie_erlaubt **Nachricht_vor_Kategorie_lesen → Kategorie_Betreff_passt** einbauen. **Kategorie_setzen** in den Wahr-Zweig dieses Vergleichs verschieben. Das Textfeld durch die aktuelle `Kategorie_setzen_Text.txt` ersetzen; alte Fehler-Ersatzformeln oder der direkte Verweis auf `patchCategory` werden dort nicht mehr verwendet (Schritt 5.11).
+8. **Plan B nicht produktiv aktivieren.** Im Prüfentwurf bleibt der Wahr-Zweig von Eigene_Kopie leer. Alte Aktionen **Kopie_pruefen**, **Kopie_Pruefordner_verschieben** und **Kategorie_Kopie** entfernen; sie konnten eigene Nachrichten allein wegen des Absenders als sichere Avise behandeln. Weitere Grenzen stehen im Plan-B-Abschnitt.
+9. Speichern, mit `dist/avis-flow.html` vergleichen und Schritt 6 zunächst in einem Testpostfach durchführen. Vorhandene alte Kategorien oder alte Mails werden dabei nicht gesammelt gelöscht, verschoben oder neu verarbeitet. Erst eine erfolgreiche lokale Prüfung plus Live-Abnahme belegen den geprüften Aufbau.
 
 ## Schritt 6: Testen
+
+Zuerst lokal mit Node.js 24 oder neuer `node tests/run-all.cjs` ausführen. Die zehn Testsuiten prüfen künstlich erzeugte Mail- und Dateiinhalte sowie simulierte Flow-Abläufe. Das ersetzt keine Live-Abnahme der eingerichteten Verbindungen, Rechte und Ordner. Der [Testbericht](TESTBERICHT.md) trennt den lokal geprüften Umfang von offenen Integrationsrisiken.
 
 1. Eine sichere Avis-Mail (`high`) mit Datei und eine Mail ohne Avis an das freigegebene Postfach senden. Die Avis-Mail bekommt erst den Betrag, danach `Avis`; die andere bleibt unverändert.
 2. Einen Prüffall senden, zum Beispiel ein Avis als Scan ohne Text. Er muss im vorhandenen Ordner **Posteingang → Archive → Avisbetrag fehlt** ankommen und darf keine neue Kategorie `Avis prüfen` erhalten.
@@ -249,7 +263,7 @@ Ein Avis nur im Mailtext von einer externen Adresse testen. Mails aus derselben 
 
 | Testfall | Erwarteter Ablauf |
 | --- | --- |
-| Ein sicheres Avis (`confidence = high`) | Betreff_setzen erfolgreich, danach Pruefung_noetig = Falsch, Kategorie_erlaubt = Wahr und Kategorie_setzen = Avis. |
+| Ein sicheres Avis (`confidence = high`) | Frisches Lesen und Betreffvergleich erfolgreich, danach Betreff_setzen; Pruefung_noetig = Falsch, Kategorie_erlaubt = Wahr, erneutes Lesen und passender Betreff, erst dann Kategorie_setzen = Avis. |
 | Zwei oder drei sichere Avise (`high`) | Betragsliste mit ` + ` vor dem Originalbetreff, danach Kategorie Avis. |
 | Mehrere Zahlungen, mindestens eine nicht sicher (`medium` oder `low`) | Originalbetreff unverändert; nur in den Prüfordner verschieben, keine neue Kategorie. |
 | Schon vollständig ergänzter Betreff | Kein weiterer Betreff-PATCH. Bei `high` Kategorie_erlaubt = Wahr; bei Prüffällen stattdessen Verschieben. |
@@ -258,15 +272,20 @@ Ein Avis nur im Mailtext von einer externen Adresse testen. Mails aus derselben 
 | Export_email fehlgeschlagen; Run_script übersprungen | Bearbeitung_noetig läuft trotzdem; Original in den Prüfordner. |
 | Run_script fehlgeschlagen oder mit Timeout | Ohne Betreffänderung in den Prüfordner. |
 | Erforderlicher Betreff-PATCH fehlgeschlagen, mit Timeout oder übersprungen | Pruefung_noetig läuft weiter; Kategorie_erlaubt = Falsch. Keine neue Kategorie; Fehler im Ausführungsverlauf prüfen. |
+| Frische Leseaktion fehlgeschlagen | Der nachfolgende Vergleich und Schreibschritt bleiben aus. Nachricht und Fehler im Verlauf prüfen. |
+| Betreff zwischen Trigger/Export und frischem GET manuell geändert | Betreff_unveraendert = Falsch; keine Betreffänderung und keine Kategorie in diesem Lauf. |
+| Betreff nach erfolgreichem PATCH und vor dem zweiten GET geändert | Kategorie_Betreff_passt = Falsch; keine Kategorie in diesem Lauf. |
+| Kategorie nach dem Export, aber vor dem zweiten GET ergänzt | Die frisch gelesene Kategorie bleibt neben Avis erhalten. Änderungen erst nach diesem GET sind nicht atomar geschützt. |
 | Verschieben fehlgeschlagen | Rote Verschiebeaktion im Verlauf, keine Ersatzkategorie. Postfach und Zielordner prüfen. |
 | Kein Avis oder von Keine_Automatik ausgeschlossen | Keine Änderung und kein Verschieben. |
 | Mail im Prüfordner | Kein weiterer Lauf durch den auf Posteingang begrenzten Trigger. |
 | Plan B: sicherer neuer Betrag oder neue Betragsliste (`high`) | Kopie erfolgreich anlegen, anpassen und senden; danach Kategorie am Original und erst dann Original_verschieben. |
 | Plan B: nötiges Anlegen, Anpassen oder Senden der Kopie fehlgeschlagen, mit Timeout oder übersprungen | Keine Kategorie am Original und kein Verschieben nach Avis-Original. Fehler im Ausführungsverlauf prüfen. |
 | Plan B: Prüffall | Keine Kopie, keine Betreffänderung, Original direkt in den Prüfordner. |
-| Plan B: ältere eigene Kopie mit `?` oder `(prüfen)` im Betragspräfix | Kopie_pruefen = Wahr, Kopie_Pruefordner_verschieben; keine Kategorie-Aktion. |
+| Plan B: Mail vom eigenen Postfach, auch eine frühere Kopie | Eigene_Kopie = Wahr; Zweig bleibt leer, keine Änderung. Der Absender allein beweist keine sichere Kopie. |
+| Trigger liefert eine Nachricht überhaupt nicht | Kein Skriptlauf und keine automatische Verschiebung; der Abgleich des Posteingangs muss die Nachricht erfassen. |
 
-Fehlerfälle nur mit Testmails in einer Testkopie des Flows auslösen, zum Beispiel mit einem ungültigen Text im Betreff-PATCH. Danach die korrekten Formeln wieder einsetzen.
+Fehlerfälle nur mit Testmails in einer Testkopie des Flows auslösen, zum Beispiel mit einem ungültigen Text im Betreff-PATCH. Danach die korrekten Formeln wieder einsetzen. Die Plan-B-Zeilen beschreiben Erwartungen für einen Prüfentwurf, keine Produktivfreigabe. Auch erfolgreiche Einzelfälle lösen die offenen Risiken durch wiederholten Versand und fehlende sichere Kopienzuordnung nicht.
 
 Was das Skript zurückgibt:
 
@@ -279,7 +298,7 @@ Was das Skript zurückgibt:
 | `confidence` | `high`, `medium` oder `low`; nur `high` erlaubt automatische Betreff- und Kategorieänderungen. Bei mehreren Zahlungen muss jeder Betrag sicher belegt sein. |
 | `subjectPrefix` / `newSubject` | Nur bei sicheren Avisen (`high`) Betrag oder Betragsliste vor dem Betreff / fertiger neuer Betreff. Bei `needsReview = true` beide leer; der Originalbetreff bleibt unverändert. |
 | `paymentAmounts` | Bei `several`: einzelne Zahlbeträge mit Währung, z. B. `["1.200,30 EUR", "5.632,21 EUR"]`; sonst leer. `amountNumber` ist keine errechnete Gesamtsumme der Avise. |
-| `patchCategory` / `patchSubject` | Fertiger Text für die HTTP-Aktionen; bei Prüffällen sind beide leer |
+| `patchCategory` / `patchSubject` | Bei Prüffällen beide leer. `patchSubject` ist der Text für die Betreff-Aktion. `patchCategory` signalisiert dem Flow den Bearbeitungsbedarf; die aktuelle Kategorie-Aktion erstellt ihren Text aus frisch per Graph gelesenen Kategorien. |
 | `documents` | Je geprüftem Dokument eine Zeile: Name, Art, Urteil, Betrag, Sicherheit, Grund |
 | `amount`, `amountNumber`, `currency`, `line`, `method`, `candidates`, `pages`, `text`, `textLength`, `warnings`, `error` | Weitere Angaben zur Fehlersuche (Anhang B) |
 
@@ -291,29 +310,33 @@ Was das Skript zurückgibt:
 
 ## Im Alltag
 
-- **Avis:** Nur für die höchste regelbasierte Stufe `high`. Der Betrag steht vorne im Betreff; die Kategorie folgt erst nach erfolgreicher nötiger Betreffänderung. Neue Ergebnisse mit `medium` oder `low` bekommen keinen Betrag und kein `(prüfen)` im Betreff, sondern gehen in den Prüfordner. Vorhandene alte Betreffzusätze bleiben erhalten. In den ersten Wochen jede Avis-Mail kurz gegen das Dokument halten.
-- **Prüfordner:** Alle bisherigen Prüffälle liegen unter **Posteingang → Archive → Avisbetrag fehlt**. Der Originalbetreff bleibt bei allen Prüffällen vollständig erhalten. Ein möglicherweise erkannter Betrag steht nur im Skriptergebnis zur Prüfung; er wird nicht in den Betreff geschrieben. Den Grund zeigt Run_script im Ausführungsverlauf (`result.error`, `result.verdictWhy`, Anhang B).
+- **Avis:** Nur für die höchste regelbasierte Stufe `high`. Der Betrag steht vorne im Betreff; die Kategorie folgt erst nach erfolgreicher nötiger Betreffänderung und den frischen Betreffprüfungen. Neue Ergebnisse mit `medium` oder `low` bekommen keinen Betrag und kein `(prüfen)` im Betreff, sondern sollen in den Prüfordner. Vorhandene alte Betreffzusätze bleiben erhalten. Vor einer Buchung den Betrag und den tatsächlichen Zahlungseingang prüfen; die Kategorie ersetzt diese Prüfung nicht.
+- **Prüfordner:** Erfolgreich verschobene Prüffälle liegen unter **Posteingang → Archive → Avisbetrag fehlt**. Der Flow verändert ihren Originalbetreff nicht. Ein möglicherweise erkannter Betrag steht nur im Skriptergebnis zur Prüfung. Den Grund zeigt Run_script im Ausführungsverlauf (`result.error`, `result.verdictWhy`, Anhang B).
 - **Mehrere sichere Avise (`high`):** Die Mail enthält mehrere erkannte Zahlungen. Alle einzelnen Beträge stehen mit ` + ` getrennt vor dem Originalbetreff, die Kategorie ist „Avis“. Eine Wiederholung desselben Betrags mit derselben Währung, etwa im PDF und im Mailtext, wird wie bisher nur einmal gezählt. Eindeutig als getrennte Zahlungen erkannte gleich hohe Teilbeträge bleiben einzeln erhalten, auch in ausdrücklich getrennten Zahlungsblöcken eines Dokuments: etwa `1.200,30 + 1.200,30 Originalbetreff`.
 - **Keine neue Kategorie im Posteingang:** kein Avis oder der Flow ist nicht vollständig gelaufen (Ausführungsverlauf prüfen). Prüffälle bekommen ebenfalls keine neue Kategorie, liegen nach erfolgreicher Verarbeitung aber im Prüfordner.
+- **Vollständigkeit kontrollieren:** Posteingang, Prüfordner und Flow-Verlauf regelmäßig gegeneinander abgleichen. Ein nicht ausgelöster Trigger erscheint nicht als roter Lauf. Auch ein grün beendeter Lauf kann wegen eines geänderten Betreffs ohne Schreibaktion enden. Fehlgeschlagene Lese-/Schreib-/Verschiebeaktionen und liegengebliebene Nachrichten gezielt prüfen.
 - **Suchen:** Den Betrag ins Outlook-Suchfeld eintippen, z. B. `2.601,35`.
 - **Antworten und Weiterleitungen:** Kommt ein Avis als Antwort oder Weiterleitung, steht der Betrag ganz vorne, vor „AW:" oder „WG:" („2.601,35 AW: Ihre Zahlungserinnerung"). Wer auf eine schon bearbeitete Mail antwortet, schickt den Betrag im Betreff mit („AW: 2.601,35 Zahlungsavis"). Kommt in so einem Verlauf ein neues Avis mit einem anderen Betrag, steht der neue Betrag ganz vorne („12.347,80 AW: 2.601,35 Zahlungsavis").
 - Ein Betreff, der schon mit demselben Betrag beginnt (auch nach „AW:" oder „WG:") oder mit ihm endet (so haben ältere Versionen geschrieben), wird kein zweites Mal ergänzt. Das gilt auch für bisherige Ergänzungen mit Währung und Bindestrich wie `2.601,35 EUR - Zahlungsavis`: Bei demselben einzelnen Betrag bleibt der vorhandene Betreff erhalten. Bei mehreren Avisen muss die vollständige Betragsliste bereits vorhanden sein; derselbe erste Betrag allein reicht nicht aus. Ändert sich ein Betrag oder kommt ein weiterer hinzu, wird die neue vollständige Liste vor den bisherigen Betreff gesetzt.
 - **Mails von Kolleginnen und Kollegen:** Haben Absender und alle Empfänger dieselbe Domain und ist die Mail keine Weiterleitung („WG:"), gilt eine Zahlung im Mailtext als eigene Zahlung der Firma: keine Kategorie. Gibt jemand den Anruf eines Kunden weiter („hat gerade angerufen: hat heute 2.601,35 EUR überwiesen"), kommt die Mail in den Prüfordner. Weitergeleitete Kunden-Avise und Avise als Datei werden normal erkannt.
 - **Nur erwähnt:** Eine Mail, die ein Avis nur erwähnt, ohne Betrag und ohne Datei oder Foto, bekommt keine Kategorie. Beispiele: die Frage „kann ich euch das Avis per Mail schicken?", „wir schicken das Avis nächste Woche", ein Hinweis in einer Bestellung, ein Lieferavis einer Spedition, „anbei unser Avis" mit vergessenem Anhang. Ein Hinweis auf ein Avis im Kundenportal kommt in den Prüfordner.
 - Ein normales Avis ohne Betreff bekommt nur den Betrag oder die Betragsliste als Betreff („2.601,35" bzw. „1.200,30 + 5.632,21"; Outlook zeigt leere Betreffzeilen sonst als „(Kein Betreff)"). Sehr lange Betreffzeilen werden ebenfalls ergänzt (live getestet mit 250 Zeichen).
-- **Zwei Läufe für eine Mail:** Bei vielen gleichzeitig eintreffenden Mails startet Power Automate manchmal zwei Läufe für dieselbe Mail (im Lasttest bei 20 von 40 Mails). Bei normalen Avisen stehen Betrag oder Betragsliste dadurch nicht doppelt im Betreff. Wurde ein Prüffall schon verschoben, kann ein weiterer Lauf mit der alten Nachrichten-ID fehlschlagen; den Verlauf prüfen.
+- **Zwei Läufe für eine Mail:** Bei vielen gleichzeitig eintreffenden Mails startet Power Automate manchmal zwei Läufe für dieselbe Mail (historisch im Lasttest bei 20 von 40 Mails). Der Parser erkennt vorhandene Betragspräfixe; die frischen Betreffvergleiche blockieren zusätzlich einen veralteten Triggerstand. Das ist keine garantierte Einmalverarbeitung. Wurde ein Prüffall schon verschoben, kann ein weiterer Lauf mit der alten Nachrichten-ID fehlschlagen. In Plan B kann ein erneuter Lauf nach einem Versand- oder Verschiebefehler eine zweite Kopie senden; deshalb ist dieser Entwurf nicht produktiv freigegeben.
 
 ## Fehler finden
 
 | Was du siehst | Ursache | Was tun |
 | --- | --- | --- |
-| Flow startet nicht | Flow aus, falsches Postfach oder falscher Triggerordner | Trigger auf das freigegebene Postfach und dessen Posteingang stellen |
+| Flow startet nicht | Flow aus, falsches Postfach/Ordner oder vom Microsoft-Trigger übersprungene Nachricht | Einstellungen prüfen und Posteingang abgleichen; geschützte, beschädigte oder zu große Nachrichten können ohne Lauf liegenbleiben |
 | HTTP- oder Verschiebeaktion: **403** | Kein Vollzugriff, falsches Verbindungskonto oder Rechte noch nicht aktiv | Schritt 1 und Verbindung der Aktion prüfen |
 | **404** beim Verschieben | Falsches Postfach/Zielordner oder Original bereits verschoben | Erst freigegebene Postfachadresse bestätigen, dann vorhandenen Zielordner neu auswählen; Nachrichten-ID des Triggers verwenden |
 | **400** beim PATCH | Textfeld/Formel falsch | Aktuelle Formel aus `formeln/` über **fx** einsetzen |
-| Run_script rot oder Timeout | Skript nicht verfügbar, Excel-Fehler, zu große Mail oder Zeitlimit | Original im Prüfordner ansehen; im Verlauf die Fehlermeldung prüfen |
+| Run_script rot oder Timeout | Skript nicht verfügbar, Excel-Fehler, zu große Mail oder Zeitlimit | Im Verlauf die Fehlermeldung und den Erfolg der Verschiebeaktion prüfen; bei fehlgeschlagenem Verschieben Original im Posteingang suchen |
 | Run_script nach Exportfehler übersprungen, Mail bleibt liegen | Bearbeitung_noetig wartet nicht auf „Wurde übersprungen“ | Alle vier Statuswerte für Run_script in Schritt 5.5 aktivieren |
 | Betreff_setzen rot, keine Kategorie | Die nötige Betreffänderung ist fehlgeschlagen; die Kategorisierung wird deshalb nicht ausgeführt | Fehler bei Betreff_setzen beheben; Kategorie_erlaubt verhindert die Kategorie bis zur erfolgreichen nötigen Änderung |
+| Nachricht_vor_Betreff_lesen oder Nachricht_vor_Kategorie_lesen rot | Nachricht verschoben, falsche ID, fehlende Rechte oder Graph-/Verbindungsfehler | Aktuellen Nachrichtenort und Fehler prüfen; der folgende Schreibschritt bleibt aus |
+| Betreff_unveraendert oder Kategorie_Betreff_passt = Falsch | Der aktuelle Betreff weicht vom erwarteten Stand ab | Manuelle Änderung oder vorherigen Lauf prüfen; nicht durch Abschalten des Vergleichs übergehen |
+| `invalid receiving mailbox address` | Parameter mailboxAddress ist keine einzelne gültige Adresse | Festen Konfigurationswert aus Schritt 5.4 prüfen, nicht An/Cc aus der Mail einsetzen |
 | Sicherer Betrag, aber keine Betreffänderung und keine Kategorie; Warnung `subject unavailable - no automatic category` | Der Originalbetreff ist nicht verfügbar oder nicht lesbar | Die Mail bleibt unverändert im Posteingang, ohne Verschieben in den Prüfordner. Betreff und Mail-Export von Hand prüfen |
 | Prüffall bekommt trotzdem Avis prüfen | Alte Kategorie-Ersatzformel oder alter Flow aktiv | Schritt 5.11 und Migration prüfen; nur einen Flow für das Postfach aktiv lassen |
 | Mail landet im falschen Ordner | Ziel aus persönlichem Postfach oder falscher Archive-Ordner gewählt | Shared-Mailbox-Adresse zuerst setzen, dann **Posteingang → Archive → Avisbetrag fehlt** auswählen |
@@ -327,87 +350,97 @@ Microsoft hat angekündigt, ab dem 31.12.2026 Änderungen an Betreff und Text em
 
 1. In der ersten Januarwoche den 5-Minuten-Test (Schritt 4) wiederholen.
 2. Sind beide Aktionen grün: nichts tun.
-3. Ist die Betreff-Aktion rot (meist 403) und die anschließende Kategorie-Aktion deshalb übersprungen: Die Sperre kann die Ursache sein. Den Fehlertext prüfen. Dann auf Plan B umstellen. Plan B legt statt der Betreffänderung eine Weiterleitung als Entwurf an, setzt dort den Betreff und schickt sie an das Postfach. Danach wird das Original kategorisiert und erst dann in einen Ordner „Avis-Original" verschoben. Alle Aktionen und Formeln dazu stehen in `dist/avis-flow.html` (oben auf „Plan B" umschalten). Plan B braucht zusätzlich „Senden als" (Schritt 1 gibt das schon).
+3. Ist die Betreff-Aktion rot (meist 403) und die anschließende Kategorie-Aktion deshalb übersprungen: Die Sperre kann die Ursache sein. Den Fehlertext prüfen. Die Kategorie darf nicht als Ersatz ohne erfolgreichen nötigen Betreffschritt gesetzt werden. Plan B ist ein noch nicht freigegebener Prüfentwurf; bis zur Behebung seiner offenen Risiken und einer Live-Abnahme betroffene Mails manuell bearbeiten.
 
-### Plan B: Reihenfolge und Verschieben
+### Plan B: nicht produktiv freigegebener Prüfentwurf
 
-Plan B ist noch nicht live im Testzugang gebaut. Nur sichere Avise (`high`) bekommen bei nötiger Betreffänderung eine Kopie mit dem neuen Betreff. Prüffälle werden ohne Kopie und ohne Betreffänderung direkt in **Posteingang → Archive → Avisbetrag fehlt** verschoben.
+Plan B ist noch nicht live in Microsoft 365 abgenommen. Es fehlen eine nachgewiesene sichere Erkennung der versandten Kopien und eine dauerhafte Versandzuordnung, die Wiederholungen verhindert. Ein Timeout kann auftreten, obwohl Microsoft die Kopie bereits gesendet hat. Auch nach erfolgreichem Senden und fehlgeschlagenem Verschieben kann ein neuer Lauf erneut senden. **Diesen Entwurf deshalb nicht als produktive Ausweichlösung einschalten.** Aktionen und Felder für weitere Tests stehen in `dist/avis-flow.html` unter „Plan B“; die Variante braucht zusätzlich „Senden als“.
+
+Im Entwurf erhalten nur sichere Avise (`high`) bei nötiger Betreffänderung eine Kopie. Prüffälle werden ohne Kopie und ohne Betreffänderung in **Posteingang → Archive → Avisbetrag fehlt** verschoben, sofern Trigger und Verschiebeaktion erfolgreich sind.
 
 Im Wahr-Zweig von Bearbeitung_noetig:
 
 ```
 Betreff_noetig (Formel Betreff_noetig_Plan_B_links.txt)
-├─ Wahr: Kopie_anlegen → Kopie_anpassen → Kopie_senden
+├─ Wahr: Nachricht_vor_Betreff_lesen
+│        └─ Betreff_unveraendert
+│           └─ Wahr: Kopie_anlegen → Kopie_anpassen → Kopie_senden
 └─ Falsch: leer
 danach: Pruefung_noetig
         ├─ Wahr: Avisbetrag_fehlt_verschieben
         └─ Falsch: Kategorie_erlaubt (Plan-B-Formel)
-                   ├─ Wahr: Kategorie_setzen
-                   │        └─ danach: Original_verschieben_noetig
-                   │                   ├─ Wahr: Original_verschieben
-                   │                   └─ Falsch: leer
+                   ├─ Wahr: Nachricht_vor_Kategorie_lesen
+                   │        └─ Kategorie_Betreff_passt (Plan-B-Formel)
+                   │           └─ Wahr: Kategorie_setzen
+                   │                    └─ danach: Original_verschieben_noetig
+                   │                               ├─ Wahr: Original_verschieben
+                   │                               └─ Falsch: leer
                    └─ Falsch: leer
 ```
 
 1. In **Betreff_noetig** die Formel `formeln/Betreff_noetig_Plan_B_links.txt` verwenden. Sie ist inhaltlich gleich zur aktuellen Hauptflow-Formel und verlangt neben einem neuen Betreff, dass kein Prüffall vorliegt.
-2. **Betreff_setzen** durch **Kopie_anlegen → Kopie_anpassen → Kopie_senden** ersetzen. Kopie_anpassen läuft nur nach erfolgreichem Anlegen, Kopie_senden nur nach erfolgreichem Anpassen. Die vollständigen Parameter stehen in der HTML.
+2. Die frische Leseaktion und den Vergleich **Betreff_unveraendert** aus Schritt 5.7 beibehalten. Nur in dessen Wahr-Zweig **Betreff_setzen** durch **Kopie_anlegen → Kopie_anpassen → Kopie_senden** ersetzen. Kopie_anpassen läuft nur nach erfolgreichem Anlegen, Kopie_senden nur nach erfolgreichem Anpassen. Die vollständigen Parameter stehen in der HTML.
 3. **Pruefung_noetig** bleibt nach der gesamten Betreff-Bedingung und läuft nach Erfolg, Timeout oder Fehler. Der Wahr-Zweig verschiebt Prüffälle in den Prüfordner (Schritt 5.9).
 4. Im **Falsch**-Zweig als erste Karte **Kategorie_erlaubt** einbauen. Links **fx** → `formeln/Kategorie_erlaubt_Plan_B_links.txt`, Mitte **ist gleich**, rechts **fx** `true`. Nur wenn keine Kopie benötigt wird oder **Kopie_senden** tatsächlich erfolgreich war, wird der Wahr-Zweig ausgeführt. Der Falsch-Zweig bleibt leer.
-5. Im **Wahr**-Zweig von Kategorie_erlaubt steht **Kategorie_setzen** an erster Stelle. Dahinter **Original_verschieben_noetig** anlegen: links **fx** `equals(actions('Kopie_senden')?['status'], 'Succeeded')`, Mitte **ist gleich**, rechts **fx** `true`. Bei **Ausführen nach → Kategorie setzen** ausschließlich **Ist erfolgreich** wählen.
+5. Im **Wahr**-Zweig von Kategorie_erlaubt **Nachricht_vor_Kategorie_lesen → Kategorie_Betreff_passt** wie in Schritt 5.11 einbauen. Für den Vergleich die abweichende Formel `formeln/Kategorie_Betreff_passt_Plan_B_links.txt` verwenden: Das Original muss noch den ursprünglichen Triggerbetreff haben. Nur in dessen Wahr-Zweig steht **Kategorie_setzen**. Dahinter **Original_verschieben_noetig** anlegen: links **fx** `equals(actions('Kopie_senden')?['status'], 'Succeeded')`, Mitte **ist gleich**, rechts **fx** `true`. Bei **Ausführen nach → Kategorie setzen** ausschließlich **Ist erfolgreich** wählen.
 6. In deren Wahr-Zweig **Original_verschieben**: Nachrichten-ID des Triggers, freigegebene Postfachadresse, Ziel **Avis-Original**. Dort keine alte Abhängigkeit von Kopie_senden eintragen. Nur erfolgreich versandte Kopien und eine erfolgreiche Kategorie-Aktion erlauben dieses Verschieben.
 
-Die eigene Kopie startet einen neuen Lauf. Direkt nach dem Trigger prüft **Eigene_Kopie**, ob der Absender das freigegebene Postfach ist. Im Falsch-Zweig läuft Keine_Automatik mit dem obigen Ablauf. Im Wahr-Zweig wird jetzt zusätzlich geprüft:
+Eine zugestellte eigene Kopie kann einen neuen Lauf starten. Direkt nach dem Trigger prüft **Eigene_Kopie**, ob der Absender das freigegebene Postfach ist. Dieser Vergleich beweist keine automatisch erzeugte Avis-Kopie: Auch normale eigene Mails können denselben Absender haben. Im Falsch-Zweig läuft Keine_Automatik mit dem obigen Ablauf. **Der Wahr-Zweig bleibt vollständig leer:**
 
 ```
-Eigene_Kopie → Wahr: Kopie_pruefen
-                     ├─ Wahr: Kopie_Pruefordner_verschieben
-                     └─ Falsch: Kategorie_Kopie
+Eigene_Kopie
+├─ Wahr: leer, keine Kategorie und keine Verschiebung
+└─ Falsch: Keine_Automatik → normaler Prüfentwurf
 ```
 
-1. **Kopie_pruefen** als Bedingung anlegen: links **fx** → `formeln/Kopie_pruefen_links.txt`, Mitte **ist gleich**, rechts **fx** `true`. Sie erkennt `?` und `(prüfen)` im Betragspräfix älterer eigener Kopien, auch im früheren Format mit Währung und Bindestrich.
-2. **Kopie_Pruefordner_verschieben** ist **E-Mail verschieben (V2)** im Wahr-Zweig. Wie in Schritt 5.9 zuerst die freigegebene Postfachadresse eintragen, dann über den Ordnerwähler **Posteingang → Archive → Avisbetrag fehlt** auswählen. Nachrichten-ID ist die des aktuellen Triggers, also der Kopie.
-3. **Kategorie_Kopie** in den Falsch-Zweig verschieben. HTTP-PATCH mit der normalen URI und dem festen Text `{"categories":["Avis"]}`. Die bisherige Formel mit einer Ersatzkategorie entfernen.
-
-Neue Kopien enthalten nur sichere Avise (`high`); `medium`, `low` und andere Prüffälle werden bereits im ursprünglichen Lauf verschoben. Die Zusatzprüfung verhindert, dass eine noch eintreffende ältere Kopie mit `?` oder `(prüfen)` als sicheres Avis kategorisiert wird. Auch hier gilt: Ein Verschiebefehler bekommt keine Ersatzkategorie.
+Die früheren Aktionen **Kopie_pruefen**, **Kopie_Pruefordner_verschieben** und **Kategorie_Kopie** sowie die Datei `Kopie_pruefen_links.txt` entfallen. Eigene Mails und alte Kopien müssen gegebenenfalls manuell geprüft werden. Ein verlässlicher Nachweis der Kopienherkunft und ein gegen Wiederholung abgesicherter Versand sind Voraussetzungen für eine spätere Produktivfreigabe; sie werden durch diesen leeren Zweig nicht ersetzt.
 
 ## Grenzen
 
-- Etwa 150 Avise und 150 andere Mails am Tag ergeben rund 300 Skript-Aufrufe (Limit 1.600 pro Nutzer und Tag) und rund 1.500 Power-Automate-Anfragen (Limit bei Microsoft-365-Lizenz offiziell 6.000 in 24 Stunden).
+- Etwa 150 Avise und 150 andere Mails am Tag ergeben ohne Wiederholungen rund 300 Skript-Aufrufe (Limit 1.600 pro Nutzer und Tag). Die frischen Leseaktionen benötigen zusätzliche Power-Automate-Anfragen; Wiederholungen und doppelte Trigger erhöhen die Last weiter. Die tatsächlich verwendete Lizenz und ihre Kontingente prüfen, statt die frühere Schätzung von 1.500 Anfragen unverändert zu übernehmen.
 - Ein Office-Script-Aufruf hat eine externe Laufzeitgrenze von 120 Sekunden. Das interne Budget von 90 Sekunden wird kooperativ geprüft: Lese- und Auswertungsschleifen kontrollieren regelmäßig die Zeit und brechen beim nächsten Prüfpunkt ab, wenn das Budget erschöpft ist. Das garantiert keinen Abbruch exakt nach 90 Sekunden. Nach erkanntem Budgetablauf wird kein sicheres Ergebnis mehr automatisch zur Betreff- oder Kategorieänderung freigegeben.
 - Das Skript darf höchstens 3-mal in 10 Sekunden gestartet werden (daher Grad 1). Run_script erlaubt höchstens drei Wiederholungen mit je einer Minute Abstand, also vier Anläufe einschließlich des ersten Aufrufs. Wartezeiten und Wiederholungen können den gesamten Flow deutlich länger dauern lassen als einen Skriptaufruf.
-- Sehr große Mails (über etwa 4 MB) können am Größenlimit scheitern und werden dann in den Prüfordner verschoben.
-- Nicht lesbar: reine Scans ohne Text (keine Texterkennung), verschlüsselte Mails und PDFs mit Kennwort, altes Excel-Format .xls, Word-Dateien (.doc, .docx), mit Microsoft Purview geschützte Mails. Sie werden in den Prüfordner verschoben, wenn ein Hinweis auf ein Avis da ist. Gelesen werden PDF, Excel (.xlsx, .xlsm), CSV, OpenDocument-Tabellen (.ods), RTF, Text, HTML, XML, JSON, angehängte Mails (.eml) und Outlook-Elemente (.msg, mit ihren Anhängen und eingebetteten Mails).
+- Größenlimits können bereits den Trigger, später den Export oder den Skriptaufruf betreffen. Nur wenn ein Lauf entsteht und die Verschiebeaktion erfolgreich ist, kann ein erkannter Fehler zum Prüfordner führen.
+- Der [Microsoft-Trigger für neue Mails im freigegebenen Postfach](https://learn.microsoft.com/en-us/connectors/office365/#when-a-new-email-arrives-in-a-shared-mailbox-(v2)) kann geschützte Nachrichten, Nachrichten mit ungültigem Text/Anlagen sowie Nachrichten über dem Exchange-Limit oder 50 MB überspringen. Dann gibt es keinen Skriptlauf und keine automatische Verschiebung. Ein regelmäßiger Abgleich des Posteingangs ist erforderlich, damit solche Nachrichten nicht liegenbleiben.
+- Nicht lesbar: reine Scans ohne Text (keine Texterkennung), verschlüsselte Mails und PDFs mit Kennwort, altes Excel-Format .xls, Word-Dateien (.doc, .docx), mit Microsoft Purview geschützte Mails. Wenn sie das Skript erreichen und als mögliche Avis-Quelle erkannt werden, führen sie zur Prüfung. Gelesen werden PDF, Excel (.xlsx, .xlsm), CSV, OpenDocument-Tabellen (.ods), RTF, Text, HTML, XML, JSON, angehängte Mails (.eml) und Outlook-Elemente (.msg, mit ihren Anhängen und eingebetteten Mails).
 - Bilder als Anlage (Foto, Fax als TIFF/JPG) werden nicht gelesen.
-- Eigene Zahlungsavise: Schickt eure Kreditorenbuchhaltung ihre Avise an Lieferanten in Kopie (CC oder BCC) an das Avis-Postfach, erkennt das Skript die eigene Mail an der Absender-Domain und an den Empfängerangaben im Mailkopf und vergibt keine Kategorie. Fehlen diese Angaben im Mailkopf, sieht die Kopie aus wie ein Kunden-Avis und bekommt „Avis". Sicher ist: die Kopie abstellen oder in Keine_Automatik eine sechste Zeile ergänzen: links Blitz → **Von**, Mitte **enthält nicht**, rechts die Absenderadresse der Kreditorenbuchhaltung.
-- Je Mail liest das Skript höchstens 30 Anlagen (Dateien mit „Avis" oder „Zahlungsavis" im Namen zuerst). Hat eine Mail mehr, wird sie in den Prüfordner verschoben, wenn unter den gelesenen kein Avis war.
+- Eigene Zahlungsavise: Für die Unterscheidung eigener ausgehender Zahlungen und eingehender Kunden-Avise muss `mailboxAddress` die tatsächliche Zieladresse enthalten. Das behebt den geprüften Fall einer eigenen Zahlung in Blindkopie ohne passenden Empfänger im Mailkopf. Ohne diesen Parameter bleibt die alte Grenze bestehen. Abweichende Firmendomains, Aliasnamen und unbekannte Begünstigte bleiben gesondert zu prüfen; die Domainableitung ist kein Identitätsnachweis.
+- Je Mail liest das Skript höchstens 30 Anlagen, Dateien mit „Avis“ oder „Zahlungsavis“ im Namen zuerst. Nicht geprüfte mögliche Zahlungsquellen sperren auch neben einem bereits lesbaren Avis die automatische Freigabe. Das Gleiche gilt für neutrale oder unbenannte unlesbare Dokumente, wenn sie eine weitere Zahlung enthalten könnten.
+- Ein frischer GET und ein anschließender PATCH bilden keine Transaktion. Gleichzeitige manuelle Änderungen oder ein weiterer Prozess können nach dem Lesen eingreifen. Die aktuelle Lösung reduziert veraltete Schreibzugriffe, garantiert aber keine atomare Verarbeitung oder exakt einen Lauf pro Nachricht.
+- Das Skript kann nur den übergebenen Inhalt nach seinen Regeln bewerten. Neue Formulierungen, falsche Angaben des Absenders oder manipulierte Belege können nicht durch eine Einstufung `high` ausgeschlossen werden. Ein Zahlungsnachweis und die Zuordnung zur Buchhaltung erfordern weitere Prüfung.
 
 ### Laufzeitprüfung des Parsers
 
 Die frühere Bündelung der `try/catch`-Fehlerbehandlung bleibt erhalten: Der PDF-Tokenlauf, die Objektsuche, die Zeichenzuordnung (CMap) und die Seitenverarbeitung öffnen nicht für jedes einzelne Token einen neuen Fehlerbehandlungsblock. Diese Blöcke sind keine erneuten Flow-Anläufe. Die neuen Zeitprüfungen in aufwendigen Schleifen und bei der Betragsauswahl ändern daran nichts.
 
-Zusätzlich werden ungültige PDF-Bildparameter wie null Spalten oder Farbkanäle abgefangen, die zuvor eine Schleife ohne Fortschritt auslösen konnten. Die lokalen Prüfungen stehen in `tests/runtime-budget.cjs`. Laufzeiten aus Node.js lassen sich nicht als Microsoft-365-Laufzeiten angeben; für diesen Stand liegt kein neuer Office-Livebenchmark vor.
+Zusätzlich werden ungültige PDF-Bildparameter wie null Spalten oder Farbkanäle und nicht sinnvoll durchlaufbare Schriftbreitenbereiche abgefangen. Weitere Budgetprüfungen begrenzen die Verarbeitung von PDF-Zeichenabbildungen, Schriften, Objektströmen, verschachtelten Seiten/Formularen und ZIP-Metadaten. Beschädigte verwendete Zeichenzuordnungen und zyklische PDF-Strukturen dürfen keine teilweise gelesene Zahlung als sicher freigeben. Die Prüfungen stehen in `tests/runtime-budget.cjs` und `tests/safety-runtime.cjs`.
+
+Alle zehn lokalen Suiten gemeinsam starten: `node tests/run-all.cjs`. Sie prüfen auch fehlende Formelwerte in Tabellen, abgeschnittene XML-/RTF-/MSG-/CMS-/EML-Inhalte, widersprüchliche Zahlungsstatus und mehrfache Zahlungen. Die Lastfälle enthalten unter anderem 20 bzw. 31 Anlagen und ein künstlich erzeugtes 72-Seiten-PDF mit 720 Rechnungszeilen. Diese kleinen synthetischen Dateien bilden keine Bild-, Schrift- oder Produktionslast vollständig ab. Laufzeiten aus Node.js lassen sich nicht als Microsoft-365-Laufzeiten angeben; für diesen Stand liegt kein neuer Office-Livebenchmark vor. Details und verbleibende Grenzen stehen im [Testbericht](TESTBERICHT.md).
 
 ## Anhang A: Alle Formeln zum Kopieren
 
-Die elf Formeln liegen einzeln in `formeln/` (Datei öffnen, **Copy raw file**, im Feld über **fx** einfügen). Bei allen Bedingungen rechts über **fx** den Wahrheitswert `true` einsetzen. Die URI enthält als Beispiel `avis@firma.de`; dort die Adresse des freigegebenen Postfachs verwenden. Den Verschiebeordner über den Ordnerwähler auswählen; dafür gibt es keine Textformel.
+Die 14 Formeln liegen einzeln in `formeln/` (Datei öffnen, **Copy raw file**, im Feld über **fx** einfügen). Bei allen Bedingungen rechts über **fx** den Wahrheitswert `true` einsetzen. Die URIs enthalten als Beispiel `avis@firma.de`; dort die Adresse des freigegebenen Postfachs verwenden. Den Verschiebeordner über den Ordnerwähler auswählen; dafür gibt es keine Textformel. Die Dateien für Plan B dienen ausschließlich dem nicht produktiv freigegebenen Prüfentwurf. `Kopie_pruefen_links.txt` entfällt.
 
 | Wo | Formel | Datei |
 | --- | --- | --- |
 | Run_script, pdfBase64 | `base64(body('Export_email'))` | `Run_script_pdfBase64.txt` |
 | Bearbeitung_noetig, links | `or(or(not(equals(actions('Run_script')?['status'], 'Succeeded')), equals(outputs('Run_script')?['body/result/needsReview'], true), equals(outputs('Run_script')?['body/result/category'], 'Avis prüfen')), not(empty(outputs('Run_script')?['body/result/patchCategory'])))` | `Bearbeitung_noetig_links.txt` |
 | Betreff_noetig, links im normalen Flow | `and(and(equals(actions('Run_script')?['status'], 'Succeeded'), not(empty(outputs('Run_script')?['body/result/patchSubject']))), not(or(not(equals(actions('Run_script')?['status'], 'Succeeded')), equals(outputs('Run_script')?['body/result/needsReview'], true), equals(outputs('Run_script')?['body/result/category'], 'Avis prüfen'))))` | `Betreff_noetig_links.txt` |
-| Betreff_noetig, links in Plan B | `and(and(equals(actions('Run_script')?['status'], 'Succeeded'), not(empty(outputs('Run_script')?['body/result/patchSubject']))), not(or(not(equals(actions('Run_script')?['status'], 'Succeeded')), equals(outputs('Run_script')?['body/result/needsReview'], true), equals(outputs('Run_script')?['body/result/category'], 'Avis prüfen'))))` | `Betreff_noetig_Plan_B_links.txt` |
+| Betreff_noetig, links im Plan-B-Entwurf | `and(and(equals(actions('Run_script')?['status'], 'Succeeded'), not(empty(outputs('Run_script')?['body/result/patchSubject']))), not(or(not(equals(actions('Run_script')?['status'], 'Succeeded')), equals(outputs('Run_script')?['body/result/needsReview'], true), equals(outputs('Run_script')?['body/result/category'], 'Avis prüfen'))))` | `Betreff_noetig_Plan_B_links.txt` |
+| Beide Nachricht_lesen-Aktionen, URI | `concat('https://graph.microsoft.com/v1.0/users/avis@firma.de/messages/', triggerOutputs()?['body/id'], '?$select=subject,categories')` | `Nachricht_lesen_URI.txt` |
+| Betreff_unveraendert, links | `equals(body('Nachricht_vor_Betreff_lesen')?['subject'], triggerOutputs()?['body/subject'])` | `Betreff_unveraendert_links.txt` |
 | Pruefung_noetig, links | `or(not(equals(actions('Run_script')?['status'], 'Succeeded')), equals(outputs('Run_script')?['body/result/needsReview'], true), equals(outputs('Run_script')?['body/result/category'], 'Avis prüfen'))` | `Pruefung_noetig_links.txt` |
 | Kategorie_erlaubt, links im normalen Flow | `or(empty(outputs('Run_script')?['body/result/patchSubject']), equals(actions('Betreff_setzen')?['status'], 'Succeeded'))` | `Kategorie_erlaubt_links.txt` |
-| Kategorie_erlaubt, links in Plan B | `or(empty(outputs('Run_script')?['body/result/patchSubject']), equals(actions('Kopie_senden')?['status'], 'Succeeded'))` | `Kategorie_erlaubt_Plan_B_links.txt` |
+| Kategorie_erlaubt, links im Plan-B-Entwurf | `or(empty(outputs('Run_script')?['body/result/patchSubject']), equals(actions('Kopie_senden')?['status'], 'Succeeded'))` | `Kategorie_erlaubt_Plan_B_links.txt` |
+| Kategorie_Betreff_passt, links im normalen Flow | `equals(body('Nachricht_vor_Kategorie_lesen')?['subject'], if(empty(outputs('Run_script')?['body/result/patchSubject']), triggerOutputs()?['body/subject'], outputs('Run_script')?['body/result/newSubject']))` | `Kategorie_Betreff_passt_links.txt` |
+| Kategorie_Betreff_passt, links im Plan-B-Entwurf | `equals(body('Nachricht_vor_Kategorie_lesen')?['subject'], triggerOutputs()?['body/subject'])` | `Kategorie_Betreff_passt_Plan_B_links.txt` |
 | Kategorie_setzen und Betreff_setzen, URI | `concat('https://graph.microsoft.com/v1.0/users/avis@firma.de/messages/', triggerOutputs()?['body/id'])` | `URI_Kategorie_und_Betreff.txt` |
 | Betreff_setzen, Text | `outputs('Run_script')?['body/result/patchSubject']` | `Betreff_setzen_Text.txt` |
-| Kategorie_setzen, Text | `outputs('Run_script')?['body/result/patchCategory']` | `Kategorie_setzen_Text.txt` |
-| Kopie_pruefen, links in Plan B | `or(equals(split(trim(coalesce(triggerOutputs()?['body/subject'], '')), ' ')?[1], '?'), equals(split(trim(coalesce(triggerOutputs()?['body/subject'], '')), ' ')?[1], '(prüfen)'), and(contains(' EUR CHF USD GBP PLN CZK SEK DKK NOK HUF RON BGN JPY CNY CAD AUD TRY SGD NZD HKD ZAR MXN ', concat(' ', coalesce(split(trim(coalesce(triggerOutputs()?['body/subject'], '')), ' ')?[1], ''), ' ')), or(endsWith(first(split(coalesce(triggerOutputs()?['body/subject'], ''), ' - ')), ' ?'), endsWith(first(split(coalesce(triggerOutputs()?['body/subject'], ''), ' - ')), ' (prüfen)'))))` | `Kopie_pruefen_links.txt` |
+| Kategorie_setzen, Text | `string(setProperty(json('{}'), 'categories', union(coalesce(body('Nachricht_vor_Kategorie_lesen')?['categories'], json('[]')), createArray('Avis'))))` | `Kategorie_setzen_Text.txt` |
 
 ## Anhang B: Gründe und Hinweise auf Deutsch
 
-**Prüfordner** bedeutet in allen folgenden Tabellen: Original nach **Posteingang → Archive → Avisbetrag fehlt** verschieben, ohne eine neue Kategorie zu setzen. Der ursprüngliche Betreff bleibt bei allen Prüffällen unverändert, sowohl im normalen Flow als auch in Plan B. Mögliche Beträge stehen nur im Skriptergebnis zur Prüfung. Die frühere Kategorie `Avis prüfen` wird damit vollständig ersetzt. Auch die Stufe `medium`, die früher einen Betreffzusatz `(prüfen)` bekam, führt jetzt in den Prüfordner. Angaben zu „Avis“ in den folgenden Tabellen setzen immer `confidence = high` voraus; ein Diagnosegrund allein hebt diese Bedingung nicht auf.
+**Prüfordner** bedeutet in allen folgenden Tabellen den beabsichtigten Ablauf: Original nach **Posteingang → Archive → Avisbetrag fehlt** verschieben, ohne eine neue Kategorie zu setzen. Dafür müssen Trigger und Verschiebeaktion funktionieren; sonst den tatsächlichen Nachrichtenort und den Verlauf prüfen. Der Flow verändert bei Prüffällen den ursprünglichen Betreff nicht. Mögliche Beträge stehen nur im Skriptergebnis zur Prüfung. Die frühere Kategorie `Avis prüfen` wird damit ersetzt. Auch die Stufe `medium`, die früher einen Betreffzusatz `(prüfen)` bekam, führt zur Prüfung. Angaben zu „Avis“ in den folgenden Tabellen setzen immer `confidence = high`, erfolgreiche nötige Schreibschritte und passende frische Betreffprüfungen voraus; ein Diagnosegrund allein hebt diese Bedingungen nicht auf. Plan B bleibt ein nicht freigegebener Prüfentwurf.
 
 Das Skript schreibt Gründe und Hinweise auf Englisch, damit sie überall gleich lesbar sind. Du findest sie im Ausführungsverlauf: Lauf anklicken → **Keine Automatik** aufklappen → **Run script** → **Ausgaben**: `result.error` (Grund), `result.warnings` (Hinweise), `result.verdictWhy` (Urteil über die Mail) und `result.documents` (je Dokument). In der Tabelle steht der Anfang des englischen Textes. Wo `…` steht, folgen Zahlen oder Details aus dem Dokument.
 
@@ -427,6 +460,9 @@ Das Skript schreibt Gründe und Hinweise auf Englisch, damit sie überall gleich
 | `no amount pattern found` | Text gelesen, aber kein Betrag erkannt (z. B. Beträge ohne Nachkommastellen wie „3.454 EUR") | Betrag von Hand |
 | `time budget exhausted` / `exception: Error: time budget exhausted` | Eine Budgetprüfung hat den Ablauf des internen Zeitbudgets erkannt. Ein zuvor gefundener Betrag wird nicht mehr automatisch freigegeben | Prüfordner; Betrag von Hand prüfen |
 | `invalid PDF predictor parameters` / `invalid PDF predictor row size` | Die PDF enthält ungültige Parameter für komprimierte Daten. Die Verarbeitung dieses Datenstroms wird abgebrochen, statt in einer Schleife hängen zu bleiben | Original-PDF prüfen oder neu anfordern |
+| `invalid receiving mailbox address` | Der konfigurierte Parameter mailboxAddress ist keine einzelne lesbare E-Mail-Adresse; keine automatische Freigabe | Konfiguration nach Schritt 5.4 korrigieren, Mail anschließend kontrolliert erneut prüfen |
+| `malformed XML …` / `XML read incompletely or truncated` / `RTF read incompletely …` | Die Datei ist strukturell beschädigt oder nur teilweise lesbar; ein trotzdem sichtbarer Betrag wird nicht als vollständig geprüfte Zahlung freigegeben | Vollständige Originaldatei öffnen oder beim Absender neu anfordern |
+| `damaged Outlook/Office file: …` / `malformed or truncated CMS …` | Ein Outlook-/Office-Container oder eine CMS-Hülle ist abgeschnitten, zyklisch oder enthält unvollständige Daten | Original-Anlage prüfen; der Inhalt einer Signaturhülle ist kein Nachweis einer gültigen Signatur |
 | `exception: …` | Interner Fehler im Skript | Betrag von Hand; PDF aufheben und an die Person geben, die das Skript pflegt |
 
 **Signierte, verschlüsselte und geschützte Mails und PDFs**
@@ -447,6 +483,7 @@ Nach `uncertain:` folgen ein oder mehrere dieser Gründe, getrennt durch `;`. M�
 | `OCR text layer` | Der Text stammt aus einer Texterkennung (OCR) über einem Scan. Ziffern können falsch erkannt sein |
 | `uncertain: PDF arrived as text instead of Base64 - parts may be damaged` | Power Automate hat die PDF als Text statt als Base64 übergeben. Ein Teil ließ sich lesen, andere Teile sind verloren. Den Vorschlag mit der PDF vergleichen und das Feld pdfBase64 in Run_script auf fx `base64(body('Export_email'))` umstellen (Schritt 5.4) |
 | `PDF read incompletely (…)` | Die PDF konnte nur teilweise gelesen werden (beschädigt, abgeschnitten, Zeichen ohne Zuordnung). Der richtige Betrag kann fehlen |
+| `another possible advice could not be checked (…)` | Neben dem gelesenen Avis bleibt eine mögliche weitere Zahlungsquelle unlesbar, unvollständig oder widersprüchlich. Die gesamte Mail bleibt zur Prüfung, auch wenn der erste Betrag eindeutig aussieht |
 | `PDF read incompletely (time budget exhausted)` | Die PDF war so groß oder aufwendig, dass eine Budgetprüfung den Ablauf des internen 90-Sekunden-Budgets erkannt hat |
 | `uncertain: PDF changed after signing` | Die PDF selbst ist digital signiert und wurde nach der letzten Signatur noch verändert. Der gelesene Betrag ist vielleicht nicht der signierte. Im Zweifel beim Absender nachfragen |
 | `uncertain: several PDFs in the mail with different amounts (…)` | Neben dem gewählten Avis enthält die Mail eine weitere Anlage mit einem anderen sicheren Betrag, die weder ein Avis noch ein anderer Dokumenttyp ist (in der Klammer: Dateiname und Betrag; trotz des Wortlauts muss die Anlage keine PDF sein). Welcher Betrag gezahlt wurde, ist unklar: Betreff unverändert, Verschieben in den Prüfordner. Ein möglicher Betrag steht nur im Skriptergebnis. Beide Anlagen ansehen |
@@ -516,7 +553,7 @@ Mit der ganzen Mail prüft das Skript jede PDF, jede andere lesbare Anlage und d
 | `not a PDF (header missing, …) - read as …: …` | Statt einer PDF kam eine Tabelle, eine HTML- oder Textdatei (auch RTF, JSON, XML oder eine SWIFT-Nachricht); nach dem Doppelpunkt steht, warum darin kein Betrag gefunden wurde | Datei von Hand öffnen |
 | `no text` | Ein Mailtext oder eine Textdatei ist leer | – |
 | `uncertain: total computed from … rows of column '…'` | Eine Zahlungsliste ohne Summenzeile: Das Skript hat die Zahlbetrag-Spalte selbst addiert (Zahl der Zeilen und Spaltenname in der Meldung). Das kommt auch, wenn das Skript sonst nur eine einzelne Zeile der Liste gefunden hätte | Summe mit der Liste vergleichen |
-| `…, the mail text states the same amount` (in `result.verdictWhy`) | Die Tabelle hat keine Summenzeile, das Skript hat die Zahlbetrag-Spalte selbst addiert, und der Mailtext nennt genau diesen Betrag. Damit gilt der Betrag als sicher (Kategorie „Avis" ohne Zusatz) | – |
+| `…, the mail text states the same amount` (in `result.verdictWhy`) | Die Tabelle hat keine Summenzeile, das Skript hat die Zahlbetrag-Spalte selbst addiert, und der Mailtext nennt genau diesen Betrag. Nur wenn die gesamte Prüfung weiterhin `high` ergibt, ist die Kategorie „Avis“ erlaubt; fehlende gespeicherte Formelwerte oder andere Unvollständigkeit sperren die automatische Freigabe | – |
 | `uncertain: list read in part - total not computed` | Eine Zahlungsliste ohne Summenzeile ist länger als 5000 Zeilen (oder das Zeitlimit war erreicht). Eine selbst addierte Summe wäre unvollständig, daher kein Betrag im Betreff; die Mail wird in den Prüfordner verschoben | Summe in der Liste von Hand bilden |
 | `uncertain: data file read in part` | Sehr große JSON- oder XML-Datei (mehr als 3000 Zeilen, wie das Skript sie darstellt): nur der Anfang wurde gelesen, Zeilen und Summen können fehlen (dazu der Hinweis `data file read in part (first … lines)`). Betreff unverändert, die Mail wird in den Prüfordner verschoben; ein möglicher Betrag steht nur im Skriptergebnis | Betrag in der Datei prüfen |
 | `uncertain: total row differs from the sum of column '…' (…, … rows)` | Die Summenzeile einer Tabelle passt nicht zur Summe der Zahlbetrag-Spalte (in der Klammer: die nachgerechnete Summe und die Zahl der Zeilen). Nennt ein anderes Avis der Mail genau diese Spaltensumme, nimmt das Skript sie (im `verdictWhy`: `… (sum of the payment column, as in …)`) | Summe mit der Liste vergleichen |
@@ -549,7 +586,7 @@ Mit der ganzen Mail prüft das Skript jede PDF, jede andere lesbare Anlage und d
 | `not read: …` | Anlagen, die nie gelesen werden: Bilder, Signaturen (`smime.p7s`), Visitenkarten (.vcf), Termine (.ics), `winmail.dat`. Steht ein Avis-Wort im Betreff oder Dateinamen und gibt es sonst kein Avis, wird die Mail in den Prüfordner verschoben |
 | `sheet '…': … hidden row(s) skipped` / `… hidden column(s) skipped` / `… cell(s) in hidden columns skipped` | Ausgeblendete Zeilen und Spalten einer Tabelle wurden nicht gelesen (sie zählen auch nicht in die Summe) |
 | `sheet '…' is hidden` | Ein ausgeblendetes Tabellenblatt. Es wird nur gelesen, wenn die Datei kein sichtbares Blatt hat |
-| `… formula cell(s) without a saved value (file not recalculated)` | Die Datei wurde von einem Programm erzeugt, das Formeln nicht ausrechnet; eine Summenzeile kann leer sein. Das Skript addiert dann selbst (`total computed from …`) |
+| `… formula cell(s) without a saved value (file not recalculated)` | Die Datei enthält Formeln ohne gespeicherten Wert; gerade die Summenzeile kann fehlen. Die betroffene Tabelle wird nicht automatisch freigegeben. Datei nach Neuberechnung neu speichern oder Betrag von Hand prüfen |
 | `only the first 5000 rows were read` / `only the first 5000 rows of a table were read` / `only the first 64 sheets were read` | Sehr große Tabelle, nur der Anfang wurde gelesen. Eine selbst addierte Summe ist dann unvollständig |
 | `data file read in part (first … lines)` | Sehr große JSON- oder XML-Datei, nur die ersten Zeilen wurden gelesen (siehe `uncertain: data file read in part`) |
 | `time budget exhausted …` (`sheet read in part`, `while reading the workbook`, `while reading the HTML tables`, `while reading the XML spreadsheet`, `while reading the OpenDocument spreadsheet`) | Eine Budgetprüfung hat das erschöpfte interne 90-Sekunden-Budget erkannt; die Tabelle wurde nur teilweise gelesen |
@@ -564,6 +601,9 @@ Die Tabelle ist alphabetisch nach dem englischen Grund sortiert. `no advice: …
 
 | Urteil (`verdictWhy`, englisch) | Bedeutung |
 | --- | --- |
+| `payment execution not confirmed ('…')` | Ein ausdrücklicher Nichtzahlungs-, Freigabe-, Entwurfs-, Storno-, Fehler- oder Ausstehend-Hinweis widerspricht der sicheren Ausführung. Trotz Avis-Titel oder sichtbarem Betrag keine automatische Freigabe |
+| `conflicting payment currency (…)` | Die Währung am Zahlbetrag widerspricht einem ausdrücklichen Feld für die Zahlungswährung. Zur Prüfung, ohne Betrag im Betreff und ohne neue Kategorie |
+| `transfer beneficiary not confirmed as the mailbox owner ('…')` | Das Bankformular nennt einen Begünstigten, der dem Zielpostfach nicht sicher zugeordnet werden konnte. Empfänger und Zahlungseingang von Hand prüfen |
 | `'payment has been disputed' - not a payment advice?` | Eine Kreditkarten-Reklamation oder Rückbuchung (Chargeback): keine Kategorie |
 | `'…' - not a payment advice` (z. B. `'Dies ist keine Zahlungsbestätigung'`) | Der Text sagt selbst, dass er kein Avis ist („Dies ist keine Zahlungsbestätigung", „This is not a remittance advice"), etwa ein Portal-Status „zur Zahlung freigegeben". Keine Kategorie |
 | `'…' - the document says it is no advice` | Der Text sagt selbst, dass er kein Avis ist („This is not a remittance advice"): keine Kategorie |
@@ -589,7 +629,7 @@ Die Tabelle ist alphabetisch nach dem englischen Grund sortiert. `no advice: …
 | `…, but the colleague who passes it on writes '…'` | Ein Kollege leitet ein Avis intern weiter und schreibt dazu, dass hier nichts zu buchen ist („nothing to book on your side", „bitte nicht buchen", „kein Handlungsbedarf"), etwa weil die Zahlung an eine Konzerngesellschaft ging. Zur Prüfung |
 | `…, but the mail text speaks against an advice (…)` | Der Mailtext ist eine Reklamation, Mahnung, Bestellung, ein Zahlungsplan oder das Begleitschreiben einer Rechnung („anbei erhalten Sie unsere Rechnung"). Eine Anlage, die nur eine Zahlbetrag-Spalte oder -Zeile hat, gilt dann nicht als Avis (Prüfordner) |
 | `…, but the mail text withdraws a payment ('…')` | Der Mailtext zieht eine Zahlung oder ein Avis zurück („betrachten Sie unser Zahlungsavis als gegenstandslos", „Zahlung wurde von unserer Bank zurückgerufen", „please disregard our remittance advice") und nennt weder eine neue Zahlung noch ein beigefügtes Ersatz-Avis („anbei das korrigierte Avis"). Ein Avis in der Mail ist das zurückgezogene: Prüfordner |
-| `…, but the payee is another company ('…')` | Ein Bankformular oder eine Bankbestätigung (z. B. MT103) nennt als Empfänger eine andere Firma, und kein Empfängerfeld nennt die eigene. Wohl eine Zahlung an jemand anderen, irrtümlich als Nachweis geschickt: Prüfordner. Geprüft wird das nur, wenn der eigene Firmenname in der Mail oder im Dokument steht |
+| `…, but the payee is another company ('…')` | Ein Bankformular oder eine Bankbestätigung (z. B. MT103) nennt als Empfänger eine andere Firma, und kein Empfängerfeld nennt die eigene. Möglicherweise eine Zahlung an jemand anderen, irrtümlich als Nachweis geschickt: Prüfordner. Zusätzlich erfasst `transfer beneficiary not confirmed as the mailbox owner` einen nicht verlässlich zugeordneten Begünstigten |
 | `chat notification (…)` / `…, but the mail is a chat notification` | Die Mail ist die Benachrichtigung eines Chat- oder Aufgaben-Tools: Jemand hat das Postfach erwähnt, in einem Kanal geschrieben („Neue Nachricht in Finanzen › Zahlungsverkehr“, „New activity in Finance › ap-payments“, „… posted in Finance › ap-payments: …“), eine Direktnachricht oder Aufgabe geschickt (mit Schaltfläche „In … anzeigen“ oder Benachrichtigungs-Fußzeile), auch wenn das Tool die Mail mit List-Unsubscribe verschickt. Sie gibt Gespräche von Kollegen wieder: keine Kategorie, auch mit Avis-Wort. Liest sich eine Nachricht darin wie ein Avis mit Betrag (z. B. ein Kunde in einem geteilten Kanal): Prüfordner, nie „Avis“ |
 | `colleague's reply above a quoted payment advice (…)` | Ein Kollege (eigene Domain) antwortet einem Kunden und setzt das Postfach in Kopie; die zitierte Mail des Kunden an den Kollegen ist ein Zahlungsavis (in der Klammer dessen Grund). Prüfordner mit dem Betrag des zitierten Avis (nicht im Betreff). Nicht, wenn der Kollege schreibt, dass die Zahlung eingegangen oder gebucht ist, oder wenn das zitierte Avis an das Postfach selbst ging |
 | `column '…' with its total, but …` / `column '…', but …` | Tabelle mit Zahlbetrag-Spalte (mit oder ohne Summe), aber mit einem Zeichen für einen Plan statt einer Zahlung: `due-date column '…'` (Fälligkeitsspalte), `instalment rows` (Ratenzeilen) oder `name '…'` (Datei- oder Blattname wie Zahlungsplan, OP-Liste, Abstimmung). Kein sicheres Avis: Prüfordner ohne Betrag. Das Zeichen kann auch hinter einem anderen Grund stehen (`…, but instalment rows`). Nennt der Mailtext einen Zahlungsplan oder eine noch nicht geleistete Zahlung, keine Kategorie (`…, in a mail about another topic (…)`). `due-date column '…'` gilt nicht, wenn jede Zeile dasselbe Buchungs- oder Zahlungsdatum trägt („Buchungsdatum", „Valuta", „Payment date") und es das Maildatum ist oder höchstens fünf Tage davor liegt. Dann ist die Liste ein Export gemachter Zahlungen |
@@ -611,7 +651,7 @@ Die Tabelle ist alphabetisch nach dem englischen Grund sortiert. `no advice: …
 | `invoice disputed or complaint by the sender` / `return of goods` / `order` / `request for a quote` / `price change` / `change of payment terms` / `change of bank details` / `holiday notice` | Was der Text statt eines Avis ist: Reklamation, Rücksendung, Bestellung, Anfrage, Preisänderung, neue Zahlungsbedingungen („neue Zahlungsbedingungen ab …", „payment term changes"), neue Bankverbindung oder Betriebsferien. Kein Avis; neben einer Zahlungserklärung Prüfordner. Steht das Wort im Titel, folgt `('…' in the title)`. Ein Warnhinweis wie „Wir ändern unsere Bankverbindung niemals per E-Mail" ist keine neue Bankverbindung |
 | `invoice features (…) beside payment label '…' - not a payment advice?` / `payment label '…', but invoice features (…)` | Ein Dokument ohne Avis-Titel endet mit „Zahlbetrag", hat aber Merkmale einer Rechnung, Quittung oder eines Leistungsnachweises (Positionstabelle, Umsatzsteuerzeile, „bezahlt mit girocard", Titel „Leistungsnachweis"). Zwei Merkmale: kein Avis; ein Merkmal: Prüfordner |
 | `invoices sent ('…')` | Der Absender schreibt, dass Rechnungen an den Leser oder an seinen Kunden „raus" sind („die beiden Rechnungen an Sie … sind heute raus", „the invoices to our customer … went out today"). Er hat Rechnungen verschickt, ist also Verkäufer: kein Zahlungseingang, keine Kategorie |
-| `line of '…' in a payment register` | In einer Zahlungsliste mit mehreren Empfängern steht genau eine Zeile oder genau ein Block von Zeilen mit eigener Summenzeile mit dem eigenen Firmennamen, auch gekürzt („NORDWERK ANTRIEBST"). Den Firmennamen leitet das Skript aus der Empfängeradresse der Mail ab. Dieser Betrag ist die Zahlung, nicht die Summe des Zahllaufs: Prüfordner bei unverändertem Betreff (`medium`). Heißt die Datei wie ein Vorschlag oder Plan („Zahlungsvorschlag"), bleibt sie zur Prüfung |
+| `line of '…' in a payment register` | In einer Zahlungsliste mit mehreren Empfängern steht genau eine Zeile oder genau ein Block von Zeilen mit eigener Summenzeile mit dem eigenen Firmennamen, auch gekürzt („NORDWERK ANTRIEBST"). Den Firmennamen leitet das Skript aus dem konfigurierten Zielpostfach `mailboxAddress` ab; nur ohne diesen Wert aus den Mailkopf-Angaben. Dieser Betrag ist die Zahlung, nicht die Summe des Zahllaufs: Prüfordner bei unverändertem Betreff (`medium`). Heißt die Datei wie ein Vorschlag oder Plan („Zahlungsvorschlag"), bleibt sie zur Prüfung |
 | `mail of the group company … to … with the mailbox in copy - our own payment, not a payment received (…)` | Eine Konzerngesellschaft (Domain wie unsere mit einem Zusatz, z. B. nordwerk-group.example zu nordwerk.example) schreibt an einen Externen, unser Postfach steht nur in Cc: Die Inhouse-Bank oder die Zentrale zahlt für uns an einen Lieferanten. Eigene Zahlung: keine Kategorie |
 | `mail text refers to an attachment, amount doubtful (…)` | Der Mailtext verweist auf eine Anlage („anbei unser Zahlungsavis", „Details siehe Anhang"), aber sein Betrag ist unsicher (nur nach Größe gewählt, z. B. eine Rechnungssumme oder eine Zahl aus der Signatur), und keine Anlage ist ein lesbares Avis (z. B. nur ein Foto): Prüfordner ohne Betrag im Betreff. Anlage von Hand öffnen |
 | `meeting invitation (…)` | Eine Termineinladung (Kalenderteil oder .ics-Datei; auch als Text weitergeleitet mit „Einladung:" und „Wann:"), deren Mailtext Zahlungswörter, aber kein Avis-Merkmal enthält: keine Kategorie, auch wenn die Einladung selbst ein Avis-Wort im Betreff oder in der Tagesordnung hat. Hängt nur eine .ics-Datei an einer normalen Mail, hebt ein Avis-Wort im Betreff sie weiter in den Prüfordner |
@@ -648,7 +688,7 @@ Die Tabelle ist alphabetisch nach dem englischen Grund sortiert. `no advice: …
 | `payment on account received ('…') - invoice?` | Eine Abrechnung mit Mehrwertsteuer zieht eine Anzahlung oder Abschlagszahlung ab, die der Absender schon erhalten hat („abzgl. Abschlagszahlung vom … (erhalten)", „abzüglich erhaltene Anzahlung", „less advance payment received"; in der Klammer steht die Zeile). Der Absender ist der Zahlungsempfänger, die Schlussrechnung folgt: kein Avis, keine Kategorie |
 | `payment plan ('…')` | Ein Ratenplan oder Zahlungsplan ohne erfolgte Zahlung („payment plan", „Ratenvereinbarung", „per month"). Kein Avis. Schreibt der Absender dazu „die 2. Rate haben wir heute überwiesen", ist es ein Avis |
 | `payment register with N payees, no total for the recipient's block - which payment is ours?` | Zahlungsliste in Blöcken (Empfängerzeile mit IBAN, Rechnungen, Blocksumme wie „Zahlung 70412"); der Block der eigenen Firma hat keine Summenzeile: Prüfordner ohne Betrag |
-| `payment register with N payees, …` (`no line named like the recipient` / `N lines named like the recipient`) `- which payment is ours?` | Eine Zahlungsliste (Zahllauf, Ausführungsprotokoll) zahlt an mehrere Empfänger. Das Skript sucht die Zeile mit dem eigenen Firmennamen, den es aus der Empfängeradresse der Mail ableitet (z. B. `debitoren@nordwerk….de` → „Nordwerk"). Findet es keine oder mehrere solche Zeilen: Prüfordner ohne Betrag, nie „Avis" mit der Listensumme |
+| `payment register with N payees, …` (`no line named like the recipient` / `N lines named like the recipient`) `- which payment is ours?` | Eine Zahlungsliste (Zahllauf, Ausführungsprotokoll) zahlt an mehrere Empfänger. Das Skript sucht die Zeile mit dem eigenen Firmennamen, den es aus dem konfigurierten Zielpostfach `mailboxAddress` ableitet (ohne diesen Wert aus den Mailkopf-Angaben) (z. B. `debitoren@nordwerk….de` → „Nordwerk"). Findet es keine oder mehrere solche Zeilen: Prüfordner ohne Betrag, nie „Avis" mit der Listensumme |
 | `payment reminder ('…')` | Eine Zahlungserinnerung oder Mahnung ohne Zahlung des Schreibers („We've sent the payment reminder"). Kein Avis |
 | `payment requested from the reader ('…')` | Der Absender bittet Sie, ihm Geld zu zahlen („Bitte … auf mein Konto überweisen", „please pay the total amount"), und nennt keine eigene Zahlung, z. B. eine Reisekostenabrechnung. Keine Kategorie |
 | `payment returned ('…')` | Die Zahlung ist zurückgekommen („sent back by the bank", „Rückläufer", „zurückgebucht"), und sonst nennt der Text keine Zahlung. Kein Avis |
@@ -698,6 +738,8 @@ Die Tabelle ist alphabetisch nach dem englischen Grund sortiert. `no advice: …
 | --- | --- |
 | Mail im Prüfordner, im Ausführungsverlauf ist **Run script** rot | Das Skript ist auch nach höchstens drei Wiederholungen (vier Anläufen insgesamt) gescheitert; die Meldung von Microsoft steht im Verlauf bei Run script. Mail von Hand bearbeiten |
 | Mail im Prüfordner, Run script mit **Zeitüberschreitung** | Die externe Laufzeitgrenze des Office-Script-Aufrufs wurde erreicht; aufwendige oder beschädigte Eingaben können die Verarbeitung verlängern. Mail von Hand bearbeiten |
+| Leseaktion rot oder Betreffvergleich Falsch | Der folgende Schreibschritt wurde nicht ausgeführt. Aktuelle Nachricht und Verlauf prüfen; ein erfolgreicher Gesamtstatus beweist keine erfolgte Kategorisierung |
+| Nachricht im Posteingang ohne zugehörigen Lauf | Der Trigger kann sie übersprungen haben. Posteingang und Verarbeitung abgleichen; ohne Lauf kann das Skript keinen Prüfordner erreichen |
 | Keine Kategorie, Lauf endet bei **Keine Automatik** | Der Betreff enthielt einen der Texte aus Keine_Automatik (Abwesenheitsnotiz, Zustellmeldung) |
 
 **Weitere Hinweise (Feld `warnings`)**
@@ -707,12 +749,12 @@ Die Tabelle ist alphabetisch nach dem englischen Grund sortiert. `no advice: …
 | leer | Alles normal |
 | `subject unavailable - no automatic category` | Der MIME-Betreff ist beschädigt/unlesbar oder beim direkten Dateiaufruf fehlt ein verfügbarer Betreff. Auch bei `high` gibt es keinen Betreff-PATCH und keine neue Kategorie; die Mail bleibt unverändert im Posteingang. Eine echte leere EML-Betreffzeile ist davon nicht betroffen: Sie erhält bei einem sicheren Avis weiterhin nur den Betrag oder die Betragsliste |
 | `from signed mail: …` | Der Betrag stammt aus dieser PDF in der signierten Mail (`from mail: …` bei einer weitergeleiteten Mail-Datei) |
-| `… PDFs checked (…)` / `only … of … PDFs checked` | Die Mail enthielt mehrere PDFs, das Skript hat die genannten geprüft und die beste genommen. Hat eine PDF „Zahlungsavis" oder „Avis" als eigenes Wort im Namen (nicht „Lieferavis"), prüft es nur diese |
-| `only the first 50 of … PDFs read` | Die Mail enthielt mehr als 50 PDFs. Das Skript hat nur die ersten 50 angesehen |
-| `PDF arrived as text instead of Base64` | Power Automate hat die PDF als Text übergeben, sie ließ sich aber vollständig zurückwandeln. Der Betrag stimmt; trotzdem das Feld pdfBase64 in Run_script auf fx `base64(body('Export_email'))` umstellen (Schritt 5.4), sonst gehen bei anderen PDFs Teile verloren. Mit `(… characters lost)` gingen Zeichen verloren; dann steht im Grund `uncertain: PDF arrived as text instead of Base64 - parts may be damaged` oder `PDF arrived as text instead of Base64 - content damaged (…)` |
+| `… PDFs checked (…)` / `only … of … PDFs checked` | Historischer Diagnosetext: Der aktuelle Mailpfad prüft bis zu 30 Anlagen, bevorzugt Avis-Dateinamen. Weitere nicht lesbare oder nicht geprüfte mögliche Zahlungsquellen dürfen eine automatische Freigabe verhindern; alle genannten Quellen ansehen |
+| `only the first 50 of … PDFs read` | Historischer Diagnosetext aus älteren Lesepfaden. Im aktuellen Mailpfad gilt die Grenze von 30 Anlagen; eine Begrenzung ist kein Nachweis einer vollständigen Prüfung |
+| `PDF arrived as text instead of Base64` | Power Automate hat die PDF als Text übergeben, sie ließ sich aber vollständig zurückwandeln. Das besagt nur, dass die Rückwandlung keinen erkannten Byteverlust hatte; die fachliche Betragsprüfung bleibt erforderlich. Das Feld pdfBase64 in Run_script auf fx `base64(body('Export_email'))` umstellen (Schritt 5.4), sonst gehen bei anderen PDFs Teile verloren. Mit `(… characters lost)` gingen Zeichen verloren; dann steht im Grund `uncertain: PDF arrived as text instead of Base64 - parts may be damaged` oder `PDF arrived as text instead of Base64 - content damaged (…)` |
 | `decrypted (permissions-only encryption)` | Die PDF war nur gegen Kopieren oder Drucken geschützt und wurde normal gelesen |
 | `OCR text layer (… % of the text)` | Text aus Texterkennung. Solche Avise gehen in den Prüfordner und bekommen weder Betreffänderung noch neue Kategorie |
-| `incomplete: …` | PDF teilweise gelesen. Kommt bei „Avis" ebenfalls nicht vor |
+| `incomplete: …` | PDF teilweise gelesen. Erkannte Unvollständigkeit sperrt die automatische Freigabe; Originaldatei prüfen |
 | andere Texte (z. B. `page 2: …`) | Technische Details zum Lesen der PDF, für die Person, die das Skript pflegt |
 | `no currency in … - … assumed from the mail` | Das Dokument nennt keine Währung; sie stammt aus dem Mailtext oder aus einem anderen Dokument der Mail mit demselben Betrag. Ein bloßes „$" wird zur Währung des Landes, die das Dokument nennt („All amounts in Australian dollars", ABN, „Pty Ltd" → AUD). Der Betrag bleibt nur im Skriptergebnis; bei `medium` bleibt der Betreff unverändert und die Mail geht in den Prüfordner. Währung prüfen |
 | `…, currency … from body` | Das Dokument nennt keine Währung; sie stammt aus dem Mailtext, der denselben Betrag mit Währung nennt |

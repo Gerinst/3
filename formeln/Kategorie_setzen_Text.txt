@@ -1,1 +1,1 @@
-outputs('Run_script')?['body/result/patchCategory']
+string(setProperty(json('{}'), 'categories', union(coalesce(body('Nachricht_vor_Kategorie_lesen')?['categories'], json('[]')), createArray('Avis'))))

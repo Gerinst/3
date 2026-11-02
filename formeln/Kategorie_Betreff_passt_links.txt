@@ -1,0 +1,1 @@
+equals(body('Nachricht_vor_Kategorie_lesen')?['subject'], if(empty(outputs('Run_script')?['body/result/patchSubject']), triggerOutputs()?['body/subject'], outputs('Run_script')?['body/result/newSubject']))

@@ -18,16 +18,32 @@ const resultKeys = result => Object.fromEntries(
 // of the Power Automate functions used by this flow.
 function expression(raw, state) {
   if (typeof raw !== 'string' || !raw.startsWith('@')) return raw;
-  const code = raw.slice(1).replace(/\?\[/g, '?.[');
+  const code = raw.slice(1).replaceAll('{{MB}}', state.mailbox || 'avis@firma.de')
+    .replaceAll('{{mb}}', (state.mailbox || 'avis@firma.de').toLowerCase())
+    .replace(/\?\[/g, '?.[').replace(/\bif\(/g, 'ifValue(');
+  const currentSubject = state.subject ?? 'Abrechnung Oktober';
+  const bodies = {
+    Nachricht_vor_Betreff_lesen: {
+      subject: state.subjectBeforePatch ?? currentSubject,
+      categories: state.categoriesBeforePatch ?? [],
+    },
+    Nachricht_vor_Kategorie_lesen: {
+      subject: state.subjectBeforeCategory ?? (state.mode === 'planB'
+        ? currentSubject : state.result.patchSubject ? state.result.newSubject : currentSubject),
+      categories: state.categoriesBeforeCategory ?? [],
+    },
+    Kopie_anlegen: { id: 'draft-copy-id' },
+    ...state.bodies,
+  };
   return vm.runInNewContext(code, {
     actions: name => ({ status: state.status[name] }),
-    outputs: () => resultKeys(state.result),
+    outputs: name => name === 'Run_script' ? resultKeys(state.result) : { body: bodies[name] },
     triggerOutputs: () => ({
       'body/id': 'original-message-id',
       'body/from': state.from || 'kunde@example.org',
-      'body/subject': state.subject || 'Abrechnung Oktober',
+      'body/subject': currentSubject,
     }),
-    body: () => ({ id: 'draft-copy-id' }),
+    body: name => bodies[name],
     equals: (a, b) => a === b,
     not: a => !a,
     and: (...args) => args.every(Boolean),
@@ -35,6 +51,12 @@ function expression(raw, state) {
     empty: a => a == null || a === '' || (Array.isArray(a) && a.length === 0),
     concat: (...args) => args.join(''),
     coalesce: (...args) => args.find(a => a != null),
+    ifValue: (test, yes, no) => test ? yes : no,
+    json: JSON.parse,
+    string: value => typeof value === 'string' ? value : JSON.stringify(value),
+    setProperty: (value, key, item) => ({ ...value, [key]: item }),
+    createArray: (...items) => items,
+    union: (...arrays) => [...new Set(arrays.flat())],
     split: (s, separator) => s.split(separator),
     trim: s => s.trim(),
     first: a => a[0],
@@ -101,6 +123,7 @@ function execute(actions, state) {
           if (typeof payload === 'string' && payload.startsWith('{')) {
             const json = JSON.parse(payload);
             assert(!json.categories?.includes('Avis prüfen'), 'retired review category written');
+            state.payloads[name] = json;
           }
         }
       }
@@ -121,7 +144,11 @@ function graphFromUi(items, mode) {
       [after.action.replaceAll(' ', '_')]: Object.keys(after.st)
         .filter(key => after.st[key]).map(key => statuses[key]),
     } : {};
-    if (typeof item === 'string') return [id, { type: 'OpenApiConnection', runAfter }];
+    if (typeof item === 'string') {
+      const body = node.params.find(p => p.label === 'Text' && p.expr);
+      return [id, { type: 'OpenApiConnection', runAfter,
+        ...(body ? { inputs: { parameters: { Body: '@' + body.expr } } } : {}) }];
+    }
     const rows = node.params.find(p => p.t === 'condition').rows;
     return [id, {
       type: 'If', runAfter,
@@ -188,7 +215,7 @@ const planB = graphFromUi([pbNode], 'planB');
 let checks = 0;
 function check(label, graph, result, expected, options = {}) {
   const state = {
-    result, trace: [], status: { Run_script: options.scriptStatus || 'Succeeded' },
+    result, trace: [], payloads: {}, status: { Run_script: options.scriptStatus || 'Succeeded' },
     forced: options.forced || {}, ...options,
   };
   execute(graph, state);
@@ -198,40 +225,57 @@ function check(label, graph, result, expected, options = {}) {
 }
 
 for (const [mode, graph] of [['main', main], ['main UI', mainUi], ['planB', planB]]) {
-  const subject = mode === 'planB' ? ['Kopie_anlegen', 'Kopie_anpassen', 'Kopie_senden'] : ['Betreff_setzen'];
-  const normal = [...subject, 'Kategorie_setzen', ...(mode === 'planB' ? ['Original_verschieben'] : [])];
-  check(mode + ' normal single', graph, single, normal);
-  check(mode + ' normal multiple', graph, multi, normal);
-  check(mode + ' repeated complete subject', graph, rerun, ['Kategorie_setzen']);
-  check(mode + ' unreadable original subject cannot be overwritten or categorized',
-    graph, unreadableSubject, []);
-  check(mode + ' missing amount', graph, missing, ['Avisbetrag_fehlt_verschieben']);
-  check(mode + ' medium confidence', graph, medium, ['Avisbetrag_fehlt_verschieben']);
-  check(mode + ' low confidence', graph, low,
-    ['Avisbetrag_fehlt_verschieben']);
-  check(mode + ' stale review subject is ignored', graph,
+  const run = (label, result, expected, options = {}) =>
+    check(mode + ' ' + label, graph, result, expected, { mode, ...options });
+  const writes = mode === 'planB' ? ['Kopie_anlegen', 'Kopie_anpassen', 'Kopie_senden'] : ['Betreff_setzen'];
+  const subject = ['Nachricht_vor_Betreff_lesen', ...writes];
+  const category = ['Nachricht_vor_Kategorie_lesen', 'Kategorie_setzen'];
+  const normal = [...subject, ...category, ...(mode === 'planB' ? ['Original_verschieben'] : [])];
+  run('normal single', single, normal);
+  run('normal multiple', multi, normal);
+  run('repeated complete subject', rerun, category, { subject: multi.newSubject });
+  run('unreadable original subject cannot be overwritten or categorized', unreadableSubject, []);
+  run('missing amount', missing, ['Avisbetrag_fehlt_verschieben']);
+  run('medium confidence', medium, ['Avisbetrag_fehlt_verschieben']);
+  run('low confidence', low, ['Avisbetrag_fehlt_verschieben']);
+  run('stale review subject is ignored',
     { ...low, patchSubject: '{"subject":"1.200,30 ? Abrechnung Oktober"}' },
     ['Avisbetrag_fehlt_verschieben']);
-  check(mode + ' no input', graph, noInput, ['Avisbetrag_fehlt_verschieben']);
-  check(mode + ' other mail', graph, other, []);
-  check(mode + ' legacy script review category', graph,
+  run('no input', noInput, ['Avisbetrag_fehlt_verschieben']);
+  run('other mail', other, []);
+  run('legacy script review category',
     { category: 'Avis prüfen', patchCategory: '{"categories":["Avis prüfen"]}',
       patchSubject: '{"subject":"1.200,30 ? Abrechnung Oktober"}' },
     ['Avisbetrag_fehlt_verschieben']);
+  run('changed subject before required write blocks all writes', multi,
+    ['Nachricht_vor_Betreff_lesen'], { subjectBeforePatch: 'Manuell korrigierter Betreff' });
+  run('changed subject before category blocks category and archive', multi,
+    [...subject, 'Nachricht_vor_Kategorie_lesen'],
+    { subjectBeforeCategory: 'Manuell korrigierter Betreff' });
+  run('changed already prefixed subject blocks category', rerun,
+    ['Nachricht_vor_Kategorie_lesen'],
+    { subject: multi.newSubject, subjectBeforeCategory: 'Manuell korrigierter Betreff' });
+  const merged = run('category merges fresh Graph categories', multi, normal,
+    { categoriesBeforeCategory: ['Buchhaltung', 'Neu gesetzt', 'Avis'] });
+  assert.deepEqual(merged.payloads.Kategorie_setzen.categories,
+    ['Buchhaltung', 'Neu gesetzt', 'Avis'], mode + ' preserves fresh categories without duplicate Avis');
   for (const scriptStatus of ['Failed', 'TimedOut', 'Skipped']) {
-    check(mode + ' script ' + scriptStatus, graph, {}, ['Avisbetrag_fehlt_verschieben'], { scriptStatus });
+    run('script ' + scriptStatus, {}, ['Avisbetrag_fehlt_verschieben'], { scriptStatus });
   }
   for (const failure of ['Failed', 'TimedOut', 'Skipped']) {
-    check(mode + ' failed move has no category fallback', graph, missing,
+    run('failed move has no category fallback', missing,
       failure === 'Skipped' ? [] : ['Avisbetrag_fehlt_verschieben'],
       { forced: { Avisbetrag_fehlt_verschieben: failure } });
     for (const [index, action] of subject.entries()) {
       const attempted = subject.slice(0, index + (failure === 'Skipped' ? 0 : 1));
-      check(mode + ' required ' + action + ' ' + failure + ' blocks category and archive',
-        graph, multi, attempted, { forced: { [action]: failure } });
+      run('required ' + action + ' ' + failure + ' blocks category and archive',
+        multi, attempted, { forced: { [action]: failure } });
     }
-    check(mode + ' category ' + failure + ' blocks archive', graph, multi,
-      [...subject, ...(failure === 'Skipped' ? [] : ['Kategorie_setzen'])],
+    run('category read ' + failure + ' blocks category and archive', multi,
+      [...subject, ...(failure === 'Skipped' ? [] : ['Nachricht_vor_Kategorie_lesen'])],
+      { forced: { Nachricht_vor_Kategorie_lesen: failure } });
+    run('category ' + failure + ' blocks archive', multi,
+      [...subject, 'Nachricht_vor_Kategorie_lesen', ...(failure === 'Skipped' ? [] : ['Kategorie_setzen'])],
       { forced: { Kategorie_setzen: failure } });
   }
 }
@@ -251,22 +295,18 @@ assert.equal(move.inputs.parameters.messageId, "@triggerOutputs()?['body/id']");
 assert.equal(move.inputs.parameters.mailboxAddress, 'team@example.org');
 assert.equal(move.inputs.parameters.folderPath, flow.ID.reviewFolder);
 
-const copyNode = findNode(flow.tree('planB'), 'Kopie_pruefen');
-const copies = graphFromUi([copyNode], 'planB');
+const ownNode = findNode(flow.tree('planB'), 'Eigene_Kopie');
+assert.deepEqual(plain(ownNode.yes), [], 'sender alone must not classify an own copy');
+const copies = graphFromUi([ownNode], 'planB');
 for (const subject of [
   '1.200,30 ? Zahlungsavis', '1.200,30 EUR ? - Zahlungsavis',
   '1.200,30 (prüfen) Zahlungsavis', '1.200,30 EUR (prüfen) - Zahlungsavis',
-]) {
-  check('old uncertain copy: ' + subject, copies, {}, ['Kopie_Pruefordner_verschieben'], { subject });
-}
-check('normal multiple copy with question in original subject', copies, {}, ['Kategorie_Kopie'],
-  { subject: '1.200,30 + 5.632,21 Abrechnung?' });
-for (const subject of [
+  '1.200,30 + 5.632,21 Abrechnung?', 'Eigene Nachricht ohne Betrag',
   '1.200,30 Zahlungsavis (prüfen)', '1.200,30 EUR - Zahlungsavis (prüfen)',
   '1.200,30 Zahlungsavis - Rückfrage ?',
 ]) {
-  check('review word only in original subject stays normal: ' + subject,
-    copies, {}, ['Kategorie_Kopie'], { subject });
+  check('own sender is not classified: ' + subject, copies, {}, [],
+    { subject, from: 'avis@firma.de', mode: 'planB' });
 }
 
 const files = {
@@ -274,9 +314,12 @@ const files = {
   reviewLinks: 'Pruefung_noetig_links', uri: 'URI_Kategorie_und_Betreff',
   katText: 'Kategorie_setzen_Text', betLinks: 'Betreff_noetig_links',
   betText: 'Betreff_setzen_Text', betLinksB: 'Betreff_noetig_Plan_B_links',
-  copyReviewLinks: 'Kopie_pruefen_links',
   categoryAllowedLinks: 'Kategorie_erlaubt_links',
   categoryAllowedLinksB: 'Kategorie_erlaubt_Plan_B_links',
+  uriRead: 'Nachricht_lesen_URI',
+  subjectUnchangedLinks: 'Betreff_unveraendert_links',
+  categorySubjectLinks: 'Kategorie_Betreff_passt_links',
+  categorySubjectLinksB: 'Kategorie_Betreff_passt_Plan_B_links',
 };
 for (const [key, name] of Object.entries(files)) {
   const formula = fs.readFileSync(path.join(__dirname, '../formeln/' + name + '.txt'), 'utf8').trim();
