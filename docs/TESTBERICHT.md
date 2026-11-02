@@ -4,6 +4,8 @@ Der aktuelle Stand wurde lokal mit **671 Prüffällen in zehn Suiten** geprüft.
 
 **Das ist keine Zusicherung einer hundertprozentigen Erkennung und keine Microsoft-365-Live-Abnahme.** Der Parser wertet Regeln und Dokumentinhalte aus. Er kann weder den Wahrheitsgehalt einer Zahlungsmitteilung noch einen tatsächlichen Bankeingang bestätigen. Das Projekt ändert Betreff/Kategorie und verschiebt Nachrichten; es führt keine Buchung aus. Auch ein LLM würde diese Nachweise nicht ersetzen.
 
+Der [Zwischenstand der Liveabnahme vom 02.11.2026](LIVE-ABNAHME-2026-11-02.md) dokumentiert die **laufende Liveausführung ohne bisherige Abnahme**. Sicherungen und geprüfter Umzug sind abgeschlossen. Skript und Hauptflow sind aktualisiert und gespeichert; die 14 Aktionen und der Trigger sind geprüft, Status **Ein** ist bestätigt. Der erste Fall wurde einmal versendet, Ergebnis offen; 15 weitere Fälle sind noch nicht versendet. Kein Livefall ist bisher als bestanden oder fehlgeschlagen bewertet.
+
 ## Was genau getestet wurde
 
 | Suite unter `tests/` | Fälle | Gegenstand |
