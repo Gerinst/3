@@ -18,6 +18,9 @@ function assertReview(result) {
   assert.equal(result.needsReview, true);
   assert.equal(result.category, "");
   assert.equal(result.patchCategory, "");
+  assert.equal(result.subjectPrefix, "");
+  assert.equal(result.newSubject, "");
+  assert.equal(result.patchSubject, "");
 }
 const two = "1.200,30 + 5.632,21";
 const three = two + " + 500,42";
@@ -391,16 +394,17 @@ for (const [confidence, category, marker] of [
       const amount =
         value === 0 ? "0,00" : value < 0 ? "-1.200,30" : "1.200,30";
       assert.equal(result.category, category);
-      assert.equal(result.newSubject, amount + marker + " Abrechnung Oktober");
       assert.equal(result.needsReview, confidence === "low");
       if (confidence === "low") assertReview(result);
-      else
+      else {
+        assert.equal(result.newSubject, amount + marker + " Abrechnung Oktober");
         assert.deepEqual(JSON.parse(result.patchCategory), {
           categories: [category],
         });
-      assert.deepEqual(JSON.parse(result.patchSubject), {
-        subject: result.newSubject,
-      });
+        assert.deepEqual(JSON.parse(result.patchSubject), {
+          subject: result.newSubject,
+        });
+      }
       assert.deepEqual(Array.from(result.paymentAmounts), []);
     });
   }
@@ -527,7 +531,7 @@ check(
   },
 );
 
-check("low-confidence review preserves categories and the original question mark", () => {
+check("low-confidence review preserves categories and the entire original subject", () => {
   const result = vm.runInContext(
     `(() => {
     const result = emptyResult();
@@ -542,9 +546,6 @@ check("low-confidence review preserves categories and the original question mark
     ctx,
   );
   assertReview(result);
-  assert.deepEqual(JSON.parse(result.patchSubject), {
-    subject: "1.200,30 Abrechnung Oktober?",
-  });
 });
 
 for (const mode of ["missing", "out-of-range", "nonfinite"]) {

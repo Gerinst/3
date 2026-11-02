@@ -463,12 +463,12 @@ mark.mbm { background: var(--chg-bg); color: inherit; border-radius: 3px; paddin
   <div class="dh"><b>Infos zum Flow „Avis V2“</b><button type="button" class="picon" id="dClose" aria-label="Schließen"><svg viewBox="0 0 16 16"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg></button></div>
   <div class="db">
     <details open><summary>Was an der Mail passiert</summary><div class="dc">
-      <p>Jede neue Mail im Posteingang des freigegebenen Postfachs geht als Ganzes an das Skript. Im Hauptflow wird zuerst ein vorhandener neuer Betreff geschrieben. Danach entscheidet <b>Pruefung noetig</b>: Prüffälle werden ohne neue Kategorie nach <b>Posteingang → Archive → Avisbetrag fehlt</b> verschoben; verwertbare Avise erhalten die Kategorie „Avis“. Andere Mails bleiben unverändert.</p>
+      <p>Jede neue Mail im Posteingang des freigegebenen Postfachs geht als Ganzes an das Skript. Verwertbare Avise erhalten zuerst einen nötigen neuen Betreff und danach die Kategorie „Avis“. Prüffälle behalten ihren Originalbetreff und werden ohne neue Kategorie nach <b>Posteingang → Archive → Avisbetrag fehlt</b> verschoben. Andere Mails bleiben unverändert.</p>
       <div class="tblwrap"><table class="tbl">
         <tr><th>Ergebnis</th><th>Kategorie / Ablage</th><th>Betreff im Hauptflow</th></tr>
         <tr><td>Ein Avis, Betrag sicher</td><td><span class="cat g">Avis</span></td><td><code>2.601,35 Zahlungsavis</code></td></tr>
         <tr><td>Ein Avis, Betrag ziemlich sicher</td><td><span class="cat g">Avis</span></td><td><code>2.601,35 (prüfen) Zahlungsavis</code></td></tr>
-        <tr><td>Ein Avis, Betrag unsicher</td><td>Keine neue Kategorie; Ordner „Avisbetrag fehlt“</td><td><code>2.601,35 Zahlungsavis</code></td></tr>
+        <tr><td>Ein Avis, Betrag unsicher</td><td>Keine neue Kategorie; Ordner „Avisbetrag fehlt“</td><td>Originalbetreff unverändert</td></tr>
         <tr><td>Mehrere Avise, alle Beträge lesbar</td><td><span class="cat g">Avis</span></td><td><code>1.200,30 + 5.632,21 + 500,42 Zahlungsavis</code></td></tr>
         <tr><td>Mehrere Avise, Betrag fehlt oder ungültig</td><td>Keine neue Kategorie; Ordner „Avisbetrag fehlt“</td><td>unverändert</td></tr>
         <tr><td>Unklar, nicht lesbar, Export- oder Skriptfehler</td><td>Keine neue Kategorie; Ordner „Avisbetrag fehlt“</td><td>unverändert</td></tr>
@@ -477,7 +477,7 @@ mark.mbm { background: var(--chg-bg); color: inherit; border-radius: 3px; paddin
       <p>Der ursprüngliche Betreff bleibt erhalten. Ein einzelner Betrag steht im deutschen Format mit einem Leerzeichen davor, auch vor „AW:“ oder „WG:“. Mehrere Beträge werden durch <code> + </code> getrennt: <code>1.200,30 + 5.632,21 + 500,42 Abrechnung Oktober</code>. Es wird keine Gesamtsumme gebildet und keine Währung ergänzt. Ist derselbe Betrag bzw. dieselbe vollständige Liste schon vorangestellt, wird der Betreff nicht nochmals ergänzt.</p>
       <p>Ein Hinweis auf ein Avis im Kundenportal ohne Betrag ist ebenfalls ein Prüffall. <b>Plan B</b> verschiebt alle Prüffälle im Original unverändert: weder neue Kopie noch Betreffänderung. Die Kategorie „Avis prüfen“ wird nicht mehr gesetzt.</p>
     </div></details>
-    <p>„Zahlungsavis“ ist in den Beispielen nur ein möglicher Originalbetreff und wird nicht automatisch hinzugefügt. Bei einem sicheren Betrag von 5.500,05 Euro wird aus <code>Abrechnung Oktober</code> der Betreff <code>5.500,05 Abrechnung Oktober</code>. Bei mittlerer Sicherheit bleibt „(prüfen)“ hinter dem Betrag. Bei niedriger Sicherheit wird kein Fragezeichen ergänzt; der erkannte Betrag steht weiterhin vor dem Originalbetreff und die Mail wird in den Prüfungsordner verschoben.</p>
+    <p>„Zahlungsavis“ ist in den Beispielen nur ein möglicher Originalbetreff und wird nicht automatisch hinzugefügt. Bei einem sicheren Betrag von 5.500,05 Euro wird aus <code>Abrechnung Oktober</code> der Betreff <code>5.500,05 Abrechnung Oktober</code>. Bei mittlerer Sicherheit bleibt „(prüfen)“ hinter dem Betrag. Bei niedriger Sicherheit bleibt <code>Abrechnung Oktober</code> vollständig unverändert; die Mail wird nur in den Prüfungsordner verschoben.</p>
     <details><summary>Welches Postfach? (Feld „Avis-Postfach“ oben rechts)</summary><div class="dc" id="mbDrawer"></div></details>
     <details><summary>Designer-Tipps (vor dem Bauen lesen)</summary><div class="dc"><ul>
       <li><b>Umbenennen:</b> Karte anklicken, oben im Bereich auf den Titel klicken, neuen Namen eintippen, Enter. Auf der Fläche zeigt Power Automate statt <code>_</code> ein Leerzeichen („Run script“). Das ist richtig; die Formeln brauchen den Namen mit <code>_</code>.</li>
@@ -492,9 +492,9 @@ mark.mbm { background: var(--chg-bg); color: inherit; border-radius: 3px; paddin
       <li><b>Prüfungsordner:</b> Unter <b>Posteingang</b> den Unterordner <b>Archive</b> und darin <b>Avisbetrag fehlt</b> anlegen bzw. vorhandene Ordner verwenden. Das Ziel ist kein separates Archivpostfach.</li>
       <li><b>Skript:</b> Den aktuellen Inhalt von <code>dist/AvisV2.ts</code> in das vorhandene Office-Skript <code>AvisV2</code> übernehmen und speichern. Die leere Arbeitsmappe <code>AvisParser.xlsx</code> bleibt.</li>
       <li><b>Äußere Bedingung:</b> Kategorie_noetig in <b>Bearbeitung_noetig</b> umbenennen und die neue Formel aus <code>Bearbeitung_noetig_links.txt</code> einsetzen. Nach Run script alle vier Zustände aktivieren: Erfolg, Timeout, Fehler und übersprungen. Die alte Datei Kategorie_noetig_links.txt entfällt.</li>
-      <li><b>Reihenfolge:</b> Im Wahr-Zweig bleibt <b>Betreff_noetig</b> zuerst. Direkt unter der gesamten Bedingung <b>Pruefung_noetig</b> einfügen; nach Betreff noetig Erfolg, Timeout und Fehler zulassen. Deren Wahr-Zweig enthält <b>Avisbetrag_fehlt_verschieben</b>. Den exakten Zielordner erst nach Eintragen der ursprünglichen Postfachadresse auswählen.</li>
+      <li><b>Reihenfolge:</b> Im Wahr-Zweig bleibt <b>Betreff_noetig</b> zuerst. Im Hauptflow dessen Formel durch <code>Betreff_noetig_links.txt</code> ersetzen: Auch bei einer alten Skriptausgabe mit Betreffvorschlag verhindert sie jede Betreffänderung für Prüffälle. Direkt unter der gesamten Bedingung <b>Pruefung_noetig</b> einfügen; nach Betreff noetig Erfolg, Timeout und Fehler zulassen. Deren Wahr-Zweig enthält <b>Avisbetrag_fehlt_verschieben</b>. Den exakten Zielordner erst nach Eintragen der ursprünglichen Postfachadresse auswählen.</li>
       <li><b>Kategorie:</b> Kategorie_setzen in den <b>Falsch-Zweig von Pruefung_noetig</b> verschieben. Alte Abhängigkeiten unter Ausführen nach entfernen; die Aktion steht dort zuerst. Das Textfeld durch <code>Kategorie_setzen_Text.txt</code> ersetzen: direkte Skriptausgabe, keine Ersatzkategorie.</li>
-      <li><b>Plan B:</b> In Betreff_noetig die eigene Formel <code>Betreff_noetig_Plan_B_links.txt</code> verwenden. Kategorie_setzen, Original_verschieben_noetig und Original_verschieben liegen im Falsch-Zweig von Pruefung_noetig. Nach Eigene_Kopie im Wahr-Zweig <b>Kopie_pruefen</b> einsetzen: Wahr → <b>Kopie_Pruefordner_verschieben</b>, Falsch → <b>Kategorie_Kopie</b> mit dem festen Text <code>{"categories":["Avis"]}</code>.</li>
+      <li><b>Plan B:</b> In Betreff_noetig bleibt <code>Betreff_noetig_Plan_B_links.txt</code> gültig; die Formel entspricht jetzt der Hauptflow-Formel. Kategorie_setzen, Original_verschieben_noetig und Original_verschieben liegen im Falsch-Zweig von Pruefung_noetig. Nach Eigene_Kopie im Wahr-Zweig <b>Kopie_pruefen</b> einsetzen: Wahr → <b>Kopie_Pruefordner_verschieben</b>, Falsch → <b>Kategorie_Kopie</b> mit dem festen Text <code>{"categories":["Avis"]}</code>.</li>
       <li><b>Prüfen:</b> Speichern, alle Zielordner im gemeinsamen Postfach kontrollieren und die Testfälle der Abschlusskarte durchführen. Nie zwei Flows gleichzeitig auf dasselbe Postfach loslassen.</li>
     </ol><p>Die neun aktuellen TXT-Dateien enthalten die Formeln für Hauptflow und Plan B. Die Dateien allein ändern keinen bestehenden Power-Automate-Flow. Alte Mails werden nicht automatisch nachbearbeitet; andere vorhandene Kategorien werden durch das Verschieben nicht verändert. Die frühere Kategorie „Avise“ kann weiterhin in „Avis“ umbenannt werden. Eine erneut verarbeitete gültige Mehrfach-Mail verliert ihre alte Kategorie „mehrere Avise“ und erhält „Avis“.</p><p>Die Anleitung mit allen Schritten steht in <code>docs/ANLEITUNG.md</code>.</p></div></details>
     <details><summary>5-Minuten-Test vor dem Bau</summary><div class="dc">
@@ -534,7 +534,7 @@ mark.mbm { background: var(--chg-bg); color: inherit; border-radius: 3px; paddin
       <tr><td><code>verdict</code></td><td><code>advice</code> (ein Avis), <code>several</code> (mehrere), <code>unclear</code>, <code>other</code> (kein Avis)</td></tr>
       <tr><td><code>verdictWhy</code></td><td>Kurzer Grund auf Englisch, z. B. <code>advice title 'Zahlungsavis' in Zahlung_4711.pdf</code></td></tr>
       <tr><td><code>category</code></td><td><code>Avis</code> oder leer; bei Prüffällen bleiben category und patchCategory leer</td></tr>
-      <tr><td><code>needsReview</code></td><td><code>true</code>: ohne neue Kategorie in den Prüfungsordner verschieben. Ein unsicherer Betrag kann im Hauptflow weiterhin vor dem Originalbetreff stehen; ein Fragezeichen wird dabei nicht ergänzt.</td></tr>
+      <tr><td><code>needsReview</code></td><td><code>true</code>: Originalbetreff unverändert lassen und ohne neue Kategorie in den Prüfungsordner verschieben. Auch ein erkannter unsicherer Betrag wird nicht ergänzt.</td></tr>
       <tr><td><code>subjectPrefix</code> / <code>newSubject</code></td><td>Betrag oder mit <code> + </code> getrennte Betragsliste vor dem Betreff (z. B. <code>1.200,30 + 5.632,21 </code>) / der fertige neue Betreff (leer = keine Änderung)</td></tr>
       <tr><td><code>paymentAmounts</code></td><td>Bei mehreren Avisen eine Liste von Zeichenketten mit den einzelnen Beträgen und ihrer Währung, z. B. <code>["1.200,30 EUR", "5.632,21 EUR"]</code>. Für den Betreff entfällt die Währung; <code>amountNumber</code> stellt bei mehreren Avisen keinen einzelnen Gesamtbetrag dar.</td></tr>
       <tr><td><code>patchCategory</code> / <code>patchSubject</code></td><td>Fertiger Text für Kategorie setzen und Betreff setzen (leer = nichts tun)</td></tr>
@@ -648,8 +648,7 @@ mark.mbm { background: var(--chg-bg); color: inherit; border-radius: 3px; paddin
     reviewLinks: "or(not(equals(actions('Run_script')?['status'], 'Succeeded')), equals(outputs('Run_script')?['body/result/needsReview'], true), equals(outputs('Run_script')?['body/result/category'], 'Avis prüfen'))",
     uri: "concat('https://graph.microsoft.com/v1.0/users/{{MB}}/messages/', triggerOutputs()?['body/id'])",
     katText: "outputs('Run_script')?['body/result/patchCategory']",
-    betLinks: "and(equals(actions('Run_script')?['status'], 'Succeeded'), not(empty(outputs('Run_script')?['body/result/patchSubject'])))",
-    betLinksB: "and(and(equals(actions('Run_script')?['status'], 'Succeeded'), not(empty(outputs('Run_script')?['body/result/patchSubject']))), not(or(not(equals(actions('Run_script')?['status'], 'Succeeded')), equals(outputs('Run_script')?['body/result/needsReview'], true), equals(outputs('Run_script')?['body/result/category'], 'Avis prüfen'))))",
+    betLinks: "and(and(equals(actions('Run_script')?['status'], 'Succeeded'), not(empty(outputs('Run_script')?['body/result/patchSubject']))), not(or(not(equals(actions('Run_script')?['status'], 'Succeeded')), equals(outputs('Run_script')?['body/result/needsReview'], true), equals(outputs('Run_script')?['body/result/category'], 'Avis prüfen'))))",
     betText: "outputs('Run_script')?['body/result/patchSubject']",
     subject: "triggerOutputs()?['body/subject']",
     msgId: "triggerOutputs()?['body/id']",
@@ -663,6 +662,7 @@ mark.mbm { background: var(--chg-bg); color: inherit; border-radius: 3px; paddin
     uriSend: "concat('https://graph.microsoft.com/v1.0/users/{{MB}}/messages/', body('Kopie_anlegen')?['id'], '/send')",
     moveLinks: "equals(actions('Kopie_senden')?['status'], 'Succeeded')"
   };
+  F.betLinksB = F.betLinks;
   function host(api, conn, op) { return { apiId: api, connection: conn, operationId: op }; }
   function httpCode(uri, body) {
     return { type: 'OpenApiConnection', inputs: { parameters: { Uri: '@' + sub(uri), Method: 'PATCH', Body: '@' + body, ContentType: 'application/json' }, host: host(OUTLOOK_API, 'shared_office365', 'HttpRequest') } };
@@ -857,8 +857,8 @@ mark.mbm { background: var(--chg-bg); color: inherit; border-radius: 3px; paddin
       summary: { chg: false, html: 'Erster Schritt in diesem Zweig: keine vorherige Aktion bei „Ausführen nach“. Beim Umbau eine alte Abhängigkeit von Kategorie setzen entfernen.' },
       settings: [S.tracking],
       code: CODE.Betreff_noetig,
-      info: '<p>Wenn das Skript einen neuen Betreff liefert, wird er zuerst geschrieben. Auch ein unsicherer Betrag bleibt im Hauptflow als Vorschlag vor dem Originalbetreff erhalten, ohne zusätzliches Fragezeichen. Danach entscheidet Pruefung noetig zwischen Verschieben ohne Kategorie und Kategorie „Avis“. Bei unverändertem Betreff läuft diese Entscheidung ebenfalls.</p>',
-      planBParams: conditionParams(F.betLinksB, 'Für Plan B die eigene Formel aus Betreff_noetig_Plan_B_links.txt verwenden: neuer Betreff und kein Prüfbedarf.'),
+      info: '<p>Nur verwertbare Avise ohne Prüfbedarf erhalten einen neuen Betreff. Prüffälle behalten ihren Originalbetreff vollständig, auch wenn ein unsicherer Betrag erkannt wurde. Danach entscheidet Pruefung noetig zwischen Verschieben ohne Kategorie und Kategorie „Avis“. Bei unverändertem Betreff läuft diese Entscheidung ebenfalls.</p>',
+      planBParams: conditionParams(F.betLinksB, 'Betreff_noetig_Plan_B_links.txt enthält dieselbe Formel wie der Hauptflow: neuer Betreff und kein Prüfbedarf.'),
       planBInfo: '<p>Plan B erstellt nur für verwertbare Avise ohne Prüfbedarf eine Kopie. Prüffälle werden weder kopiert noch im Betreff verändert; Pruefung noetig verschiebt ihr Original anschließend in den Prüfungsordner. Einzel- und Mehrfachbeträge verwenden sonst denselben Kopierweg.</p>'
 
     },
@@ -876,14 +876,14 @@ mark.mbm { background: var(--chg-bg); color: inherit; border-radius: 3px; paddin
       summary: { chg: false, html: 'Nichts ändern.' },
       settings: ACTION_SETTINGS,
       code: CODE.Betreff_setzen,
-      info: '<p>Schreibt im Hauptflow zuerst den Betrag oder die vollständige Betragsliste vor den Originalbetreff. Auch bei einem unsicheren Einzelbetrag wird kein Fragezeichen ergänzt; der Prüfbedarf bleibt bestehen. Danach entscheidet <b>Pruefung noetig</b>: Prüffälle werden ohne neue Kategorie verschoben, andere Avise bekommen „Avis“.</p><p>Auch nach Fehler oder Timeout dieser Aktion läuft die Prüfentscheidung. Die Betreffänderung selbst ändert den vom Skript ermittelten Prüfbedarf nicht. Bei einer Sperre für empfangene Betreffzeilen auf Plan B umstellen.</p>'
+      info: '<p>Schreibt für verwertbare Avise zuerst den Betrag oder die vollständige Betragsliste vor den Originalbetreff. Prüffälle erreichen diese Aktion nicht: Ihr Betreff bleibt unverändert, sie werden ohne neue Kategorie verschoben. Andere Avise bekommen danach „Avis“.</p><p>Auch nach Fehler oder Timeout dieser Aktion läuft die Prüfentscheidung. Die Betreffänderung selbst ändert den vom Skript ermittelten Prüfbedarf nicht. Bei einer Sperre für empfangene Betreffzeilen auf Plan B umstellen.</p>'
 
     },
     finish: {
       kind: 'finish', conn: 'finish', title: 'Speichern und testen', sub: 'Zum Schluss',
       html: '<ol><li>Speichern und mit der Codeansicht von <b>Keine Automatik</b> sowie dem Trigger vergleichen. Den Zielordner in der Verschiebeaktion zusätzlich im gemeinsamen Postfach prüfen.</li>' +
         '<li>Ein sicheres Einzelavis und eine vollständige Mehrfach-Mail testen: erst Betreff setzen, danach Pruefung noetig = Falsch, Kategorie „Avis“. Gleiche vollständige Betragsliste erneut: keine doppelte Ergänzung, weiterhin „Avis“.</li>' +
-        '<li>Unsicheren Einzelbetrag testen: im Hauptflow zunächst Betrag vor dem Originalbetreff ohne zusätzliches Fragezeichen, danach Pruefung noetig = Wahr und Original ohne neue Kategorie nach <b>Posteingang → Archive → Avisbetrag fehlt</b>.</li>' +
+        '<li>Unsicheren Einzelbetrag testen: Betreff noetig = Falsch, Originalbetreff vollständig unverändert; danach Pruefung noetig = Wahr und Original ohne neue Kategorie nach <b>Posteingang → Archive → Avisbetrag fehlt</b>.</li>' +
         '<li>Scan ohne lesbaren Betrag, unvollständige Mehrfach-Mail und Skriptfehler: ohne Betreffänderung und ohne neue Kategorie in denselben Ordner. Bei Exportfehler muss Bearbeitung noetig trotz übersprungenem Run script laufen.</li>' +
         '<li>Eine Rechnung und eine herausgefilterte automatische Antwort bleiben unverändert. In einer Testkopie Betreff- und Verschiebefehler prüfen: Prüfentscheidung läuft nach Betrefffehler weiter; ein Verschiebefehler bleibt im Ausführungsverlauf sichtbar.</li>' +
         '<li>Ausgaben kontrollieren: <code>needsReview</code>, <code>category</code>, <code>newSubject</code>, <code>paymentAmounts</code> und <code>verdictWhy</code>. Diese Änderung wurde lokal geprüft; die beschriebenen Microsoft-365-Tests im eigenen Testpostfach durchführen.</li></ol>'

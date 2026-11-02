@@ -31,7 +31,7 @@ interface AvisResult {
   verdict: string;        // advice (exactly one advice) / several (advices with different amounts) / unclear / other
   verdictWhy: string;     // short English reason
   category: string;       // Outlook category: "Avis" / "" (none)
-  needsReview: boolean;   // true when the flow should move the mail for manual review instead of setting a category
+  needsReview: boolean;   // true: move the mail for manual review without changing its subject or setting a category
   paymentAmounts: string[]; // separate payments for "several", e.g. ["1.200,30 EUR", "5.632,21 EUR"]; otherwise []
   subjectPrefix: string;  // one amount (with optional check marker) or several joined by " + ", then a space
   newSubject: string;     // prefix + subject ("2.601,35 Zahlungsavis"), "" when the subject stays as it is
@@ -17590,7 +17590,7 @@ function subjectFields(res: AvisResult, subject: string, keywords: string): void
     amounts.push(amt);
     if (res.confidence === "high") { cat = "Avis"; tag = amt; }
     else if (res.confidence === "medium") { cat = "Avis"; tag = amt + " (prüfen)"; }
-    else { review = true; tag = amt; }
+    else { review = true; }
   } else if (res.verdict === "advice") {
     res.verdict = "unclear";
     review = true;

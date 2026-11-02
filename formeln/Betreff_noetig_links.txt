@@ -1,1 +1,1 @@
-and(equals(actions('Run_script')?['status'], 'Succeeded'), not(empty(outputs('Run_script')?['body/result/patchSubject'])))
+and(and(equals(actions('Run_script')?['status'], 'Succeeded'), not(empty(outputs('Run_script')?['body/result/patchSubject']))), not(or(not(equals(actions('Run_script')?['status'], 'Succeeded')), equals(outputs('Run_script')?['body/result/needsReview'], true), equals(outputs('Run_script')?['body/result/category'], 'Avis prüfen'))))

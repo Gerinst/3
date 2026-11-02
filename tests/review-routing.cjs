@@ -178,11 +178,15 @@ for (const [mode, graph] of [['main', main], ['planB', planB]]) {
   check(mode + ' repeated complete subject', graph, rerun, ['Kategorie_setzen']);
   check(mode + ' missing amount', graph, missing, ['Avisbetrag_fehlt_verschieben']);
   check(mode + ' low confidence', graph, low,
-    [...(mode === 'main' ? subject : []), 'Avisbetrag_fehlt_verschieben']);
+    ['Avisbetrag_fehlt_verschieben']);
+  check(mode + ' stale review subject is ignored', graph,
+    { ...low, patchSubject: '{"subject":"1.200,30 ? Abrechnung Oktober"}' },
+    ['Avisbetrag_fehlt_verschieben']);
   check(mode + ' no input', graph, noInput, ['Avisbetrag_fehlt_verschieben']);
   check(mode + ' other mail', graph, other, []);
   check(mode + ' legacy script review category', graph,
-    { category: 'Avis prüfen', patchCategory: '{"categories":["Avis prüfen"]}', patchSubject: '' },
+    { category: 'Avis prüfen', patchCategory: '{"categories":["Avis prüfen"]}',
+      patchSubject: '{"subject":"1.200,30 ? Abrechnung Oktober"}' },
     ['Avisbetrag_fehlt_verschieben']);
   for (const scriptStatus of ['Failed', 'TimedOut', 'Skipped']) {
     check(mode + ' script ' + scriptStatus, graph, {}, ['Avisbetrag_fehlt_verschieben'], { scriptStatus });
@@ -193,11 +197,6 @@ for (const [mode, graph] of [['main', main], ['planB', planB]]) {
     check(mode + ' subject or copy failure still categorizes normal advice', graph, multi,
       [subject[0], 'Kategorie_setzen'], { forced: { [subject[0]]: failure } });
   }
-}
-
-for (const failure of ['Failed', 'TimedOut']) {
-  check('review subject failure still moves original', main, low,
-    ['Betreff_setzen', 'Avisbetrag_fehlt_verschieben'], { forced: { Betreff_setzen: failure } });
 }
 
 check('automatic reply never reaches review handling',
