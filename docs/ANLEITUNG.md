@@ -8,7 +8,7 @@ Die früheren Klickwege und Live-Tests vom 30./31.10.2026 beziehen sich auf den 
 
 Die ergänzende [Gegenprüfung mit dem alten Testarchiv](GEGENPRUEFUNG-ALTTESTS.md) verwendet die Eingaben aus `Gerinst/2testordner` und aus dessen Originalgeneratoren wiederhergestellte Dateien. Sie trennt verfügbare von fehlenden Eingaben, fachliche Fehler von geänderten früheren Kategorien und konservative Prüffälle von exakt übereinstimmenden Ergebnissen. Dazu kommt eine lokale Office-Script-Simulation. Auch diese Ergebnisse sind keine Live-Abnahme des angeschlossenen Postfachs.
 
-Der [Zwischenstand der Liveabnahme vom 02.11.2026](LIVE-ABNAHME-2026-11-02.md) dokumentiert die **laufende Liveausführung ohne bisherige Abnahme**. Sicherungen und geprüfter Umzug sind abgeschlossen. Skript und Hauptflow sind aktualisiert und gespeichert; die 14 Aktionen und der Trigger sind geprüft, Status **Ein** ist bestätigt. Der erste Fall wurde einmal versendet, Ergebnis offen; 15 weitere Fälle sind noch nicht versendet. Kein Livefall ist bisher als bestanden oder fehlgeschlagen bewertet.
+Die [Liveprüfung vom 02.11.2026](LIVE-ABNAHME-2026-11-02.md) dokumentiert **14 bestandene Livefälle einschließlich B02 und 2 nicht ausgeführte Originalfälle**. Sicherungen und Umzug sind abgeschlossen; Skript und Hauptflow sind aktualisiert, gespeichert, geprüft und aktiv. Die vollständige 16/16-Abnahme bleibt offen. Der Bericht benennt die beiden MIME-Sonderfälle, den separat ausgebliebenen ersten Triggerlauf und die Grenzen der Nachweise.
 
 ## Überblick
 
