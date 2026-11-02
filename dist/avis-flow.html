@@ -1,0 +1,1481 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Avis V2 – Flow-Nachbau</title>
+<style>
+:root {
+  --font: "Segoe UI", "Segoe UI Web (West European)", -apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: Consolas, "Cascadia Mono", Menlo, "SF Mono", "Courier New", monospace;
+  --bg: #f5f5f5; --dot: #c8c8c8;
+  --surface: #ffffff; --surface-2: #f3f3f3; --surface-3: #fafafa; --hover: #f0f0f0;
+  --text: #242424; --text-2: #5c5c5c; --text-3: #858585;
+  --border: #d1d1d1; --border-2: #e5e5e5; --line: #8a8886;
+  --brand: #0f6cbd; --brand-2: #115ea3; --brand-weak: #ebf3fc;
+  --appbar: #0f6cbd; --appbar-text: #ffffff;
+  --scope: #474f59; --yes: #4b7d1c; --no: #a4262c;
+  --ok: #107c10; --to: #d06d0c; --sk: #8a8886; --fa: #c50f1f;
+  --chg-bg: #fff6dc; --chg-bd: #e3ad2b; --chg-tx: #6e4b00;
+  --tok-bg: #e7f0fa; --tok-bd: #b6d3f2; --tokx-bg: #e6f2ea; --tokx-bd: #b3d6bf; --fx-bg: #efefef; --fx-bd: #cccccc;
+  --code-bg: #fffffe; --code-ln: #237893; --jk: #0451a5; --js: #a31515; --jn: #098658; --jb: #0000ff;
+  --pb: #7b3fbf; --pb-weak: #f4ecfc;
+  --shadow: 0 1px 2px rgba(0,0,0,.14), 0 0 2px rgba(0,0,0,.10);
+  --shadow-lg: 0 10px 28px rgba(0,0,0,.20);
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1c1c1c; --dot: #3b3b3b;
+    --surface: #292929; --surface-2: #242424; --surface-3: #202020; --hover: #333333;
+    --text: #f0f0f0; --text-2: #c4c4c4; --text-3: #9a9a9a;
+    --border: #4a4a4a; --border-2: #3a3a3a; --line: #8f8f8f;
+    --brand: #479ef5; --brand-2: #62abf5; --brand-weak: #10304f;
+    --appbar: #0c3b5e; --appbar-text: #ffffff;
+    --scope: #3e444c; --yes: #5b9a27; --no: #c4383f;
+    --ok: #54b054; --to: #f0973a; --sk: #9a9a9a; --fa: #f1707b;
+    --chg-bg: #3a2f10; --chg-bd: #a37f22; --chg-tx: #f3d27c;
+    --tok-bg: #14324f; --tok-bd: #2a5c8c; --tokx-bg: #15321f; --tokx-bd: #2c6141; --fx-bg: #353535; --fx-bd: #555555;
+    --code-bg: #1e1e1e; --code-ln: #858585; --jk: #9cdcfe; --js: #ce9178; --jn: #b5cea8; --jb: #569cd6;
+    --pb: #b98af0; --pb-weak: #2c1f3d;
+    --shadow: 0 1px 2px rgba(0,0,0,.5), 0 0 2px rgba(0,0,0,.4);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #1c1c1c; --dot: #3b3b3b;
+  --surface: #292929; --surface-2: #242424; --surface-3: #202020; --hover: #333333;
+  --text: #f0f0f0; --text-2: #c4c4c4; --text-3: #9a9a9a;
+  --border: #4a4a4a; --border-2: #3a3a3a; --line: #8f8f8f;
+  --brand: #479ef5; --brand-2: #62abf5; --brand-weak: #10304f;
+  --appbar: #0c3b5e; --appbar-text: #ffffff;
+  --scope: #3e444c; --yes: #5b9a27; --no: #c4383f;
+  --ok: #54b054; --to: #f0973a; --sk: #9a9a9a; --fa: #f1707b;
+  --chg-bg: #3a2f10; --chg-bd: #a37f22; --chg-tx: #f3d27c;
+  --tok-bg: #14324f; --tok-bd: #2a5c8c; --tokx-bg: #15321f; --tokx-bd: #2c6141; --fx-bg: #353535; --fx-bd: #555555;
+  --code-bg: #1e1e1e; --code-ln: #858585; --jk: #9cdcfe; --js: #ce9178; --jn: #b5cea8; --jb: #569cd6;
+  --pb: #b98af0; --pb-weak: #2c1f3d;
+  --shadow: 0 1px 2px rgba(0,0,0,.5), 0 0 2px rgba(0,0,0,.4);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body { display: flex; flex-direction: column; overflow: hidden; background: var(--bg); color: var(--text); font: 14px/1.42 var(--font); -webkit-text-size-adjust: 100%; }
+button { font: inherit; color: inherit; }
+code, .mono { font-family: var(--mono); font-size: 12.5px; }
+svg { display: block; }
+
+/* top bars */
+.appbar { flex: none; height: 48px; display: flex; align-items: center; gap: 14px; padding: 0 16px; background: var(--appbar); color: var(--appbar-text); }
+.appbar .waffle { width: 20px; height: 20px; opacity: .95; }
+.appbar .prod { font-size: 16px; font-weight: 600; white-space: nowrap; }
+.appbar .note { margin-left: auto; font-size: 12px; opacity: .9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cmdbar { flex: none; display: flex; align-items: center; gap: 6px 10px; flex-wrap: wrap; padding: 6px 16px; background: var(--surface); border-bottom: 1px solid var(--border); }
+.cmdbar .fname { font-size: 15px; font-weight: 600; margin-right: 6px; white-space: nowrap; }
+.seg { display: inline-flex; border: 1px solid var(--border); border-radius: 4px; overflow: hidden; }
+.seg button { border: 0; background: transparent; padding: 4px 12px; cursor: pointer; font-size: 13px; color: var(--text-2); }
+.seg button[aria-pressed="true"] { background: var(--brand); color: #fff; }
+.seg button:not([aria-pressed="true"]):hover { background: var(--hover); }
+.spacer { flex: 1; }
+.mbwrap { position: relative; display: inline-flex; align-items: center; gap: 6px; }
+.mbf { font-size: 13px; font-weight: 600; color: var(--text-2); white-space: nowrap; }
+.mbwrap input { width: 270px; max-width: 100%; height: 30px; padding: 0 8px; border: 1px solid var(--border); border-bottom-color: var(--text-3); border-radius: 4px; background: var(--surface); color: var(--text); font: 13px var(--font); }
+.mbwrap input:focus { outline: 2px solid var(--brand); outline-offset: -1px; }
+.mbwrap input.empty { border-color: var(--chg-bd); box-shadow: 0 0 0 2px var(--chg-bg); }
+.mbwrap input.bad { border-color: var(--fa); box-shadow: 0 0 0 2px rgba(197,15,31,.15); }
+.mbhelp { width: 24px; height: 24px; flex: none; border: 1px solid var(--border); border-radius: 50%; background: var(--surface); color: var(--brand); font-weight: 700; font-size: 13px; cursor: pointer; }
+.mbhelp:hover, .mbhelp[aria-expanded="true"] { background: var(--brand-weak); }
+.mbpop { position: absolute; top: calc(100% + 8px); right: 0; z-index: 70; width: 440px; max-width: calc(100vw - 32px); padding: 12px 14px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); box-shadow: var(--shadow-lg); font-size: 13px; line-height: 1.45; }
+.mbpop[hidden] { display: none; }
+.mbpop .h { display: block; font-size: 14px; margin-bottom: 6px; }
+.mbpop p { margin: 0 0 8px; }
+.mbpop ul { margin: 0 0 8px; padding-left: 18px; }
+.mbpop li { margin-bottom: 5px; }
+.mbpop .mbbad { color: var(--fa); font-weight: 600; margin: 0; }
+.dcp { margin: 8px 0 6px; max-width: 480px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); box-shadow: var(--shadow); font-size: 13px; overflow: hidden; }
+.dcp .top { display: flex; align-items: center; gap: 8px; padding: 5px 10px; background: var(--surface-2); border-bottom: 1px solid var(--border-2); font-size: 12px; color: var(--text-2); }
+.dcp .top span { flex: 1; }
+.dcp .srch { display: flex; align-items: center; gap: 6px; margin: 8px 10px; padding: 4px 8px; border: 1px solid var(--border); border-bottom: 2px solid var(--brand); border-radius: 4px; color: var(--text); }
+.dcp .srch svg { width: 13px; height: 13px; color: var(--text-3); }
+.dcp .grp { display: flex; align-items: center; gap: 8px; padding: 7px 10px; background: var(--brand-weak); font-weight: 600; }
+.dcp .grp .ic { width: 20px; height: 20px; flex: none; }
+.dcp .grp .ic svg { width: 20px; height: 20px; }
+.dcp .it { position: relative; padding: 6px 110px 6px 10px; border-left: 3px solid transparent; }
+.dcp .it b { display: block; font-size: 13px; }
+.dcp .it span { font-size: 12px; color: var(--text-2); }
+.dcp .it.pick { border-left-color: var(--ok); background: rgba(16,124,16,.10); }
+.dcp .it.wrong { border-left-color: var(--fa); background: rgba(197,15,31,.07); }
+.dcp .it.dim { opacity: .5; }
+.dcp .it em { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); font-style: normal; font-size: 11.5px; font-weight: 700; white-space: nowrap; }
+.dcp .it.pick em { color: var(--ok); }
+.dcp .it.wrong em { color: var(--fa); }
+.dcp .nt { padding: 6px 10px 8px; font-size: 12px; color: var(--text-2); border-top: 1px solid var(--border-2); }
+.dcplabel { margin-top: 10px; font-size: 12.5px; font-weight: 600; }
+mark.mbm { background: var(--chg-bg); color: inherit; border-radius: 3px; padding: 0 2px; box-shadow: inset 0 -2px 0 var(--chg-bd); }
+.setup { flex: none; display: flex; align-items: center; gap: 12px; padding: 7px 16px; background: var(--chg-bg); border-bottom: 1px solid var(--chg-bd); font-size: 13px; }
+.setup span { flex: 1; }
+.setup[hidden] { display: none; }
+.mbnote { margin-top: 6px; padding: 7px 10px; border-radius: 4px; background: var(--brand-weak); font-size: 12.5px; }
+.mbnote.warn { background: var(--chg-bg); box-shadow: inset 3px 0 0 var(--chg-bd); }
+.cmd { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 10px; border: 0; border-radius: 4px; background: transparent; cursor: pointer; font-size: 14px; white-space: nowrap; }
+.cmd:hover { background: var(--hover); }
+.cmd svg { width: 16px; height: 16px; }
+.progress { font-size: 12px; color: var(--text-3); white-space: nowrap; }
+
+/* workspace */
+.ws { flex: 1; min-height: 0; display: flex; position: relative; }
+.cwrap { flex: 1; min-width: 0; position: relative; }
+.canvas { position: absolute; inset: 0; overflow: auto; background-color: var(--bg); background-image: radial-gradient(var(--dot) 1px, transparent 1.3px); background-size: 14px 14px; background-attachment: local; -webkit-overflow-scrolling: touch; }
+.flow { width: max-content; margin: 0 auto; padding: 26px 40px 140px 70px; display: flex; flex-direction: column; align-items: center; }
+.tools { position: absolute; left: 12px; bottom: 16px; display: flex; flex-direction: column; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; box-shadow: var(--shadow); z-index: 5; }
+.tools button { width: 36px; height: 36px; border: 0; background: transparent; cursor: pointer; display: grid; place-items: center; color: var(--text-2); }
+.tools button + button { border-top: 1px solid var(--border-2); }
+.tools button:hover { background: var(--hover); color: var(--text); }
+.tools svg { width: 16px; height: 16px; }
+.hintchip { position: absolute; bottom: 18px; left: 50%; transform: translateX(-50%); z-index: 4; max-width: calc(100% - 140px); padding: 6px 12px; border-radius: 16px; background: var(--surface); border: 1px solid var(--border); box-shadow: var(--shadow); font-size: 13px; color: var(--text-2); text-align: center; }
+.hintchip[hidden] { display: none; }
+
+/* cards */
+.card { position: relative; width: 210px; min-height: 38px; display: flex; align-items: center; gap: 9px; padding: 7px 10px 7px 9px; background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--c, var(--brand)); border-radius: 3px; box-shadow: var(--shadow); cursor: pointer; font-size: 13px; line-height: 1.3; }
+.card.trig { width: 230px; }
+.card:hover { background: var(--hover); }
+.card:focus-visible, .shead:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+.card.sel { outline: 2px solid var(--brand); outline-offset: 1px; }
+.card .ic { flex: none; width: 22px; height: 22px; }
+.card .ic svg { width: 22px; height: 22px; }
+.c-outlook { --c: #0f6cbd; }
+.c-excel { --c: #217346; }
+.badge { position: absolute; top: -7px; right: -7px; width: 16px; height: 16px; border-radius: 50%; background: var(--ok); color: #fff; display: none; place-items: center; box-shadow: 0 0 0 2px var(--bg); }
+.badge svg { width: 10px; height: 10px; }
+.done > .badge, .done > .shead > .badge { display: grid; }
+.pbtag { position: absolute; top: -9px; left: 8px; padding: 0 5px; border-radius: 3px; background: var(--pb); color: #fff; font-size: 10px; font-weight: 600; line-height: 15px; letter-spacing: .02em; }
+.card.pb { border-style: dashed; border-left-style: solid; border-color: var(--pb); background: var(--pb-weak); }
+
+/* edges */
+.edge { position: relative; width: 24px; height: 44px; flex: none; }
+.edge::before { content: ""; position: absolute; left: 50%; top: 0; bottom: 6px; border-left: 1px solid var(--line); }
+.edge::after { content: ""; position: absolute; left: calc(50% - 4px); bottom: 0; border-left: 4.5px solid transparent; border-right: 4.5px solid transparent; border-top: 6px solid var(--line); }
+.edge.end { height: 30px; }
+.edge.end::before { bottom: 12px; }
+.edge.end::after { display: none; }
+.edge.solo { height: 22px; }
+.edge.solo::before, .edge.solo::after { display: none; }
+.plus { position: absolute; left: 50%; top: 50%; width: 16px; height: 16px; margin: -9px 0 0 -8px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); }
+.edge.end .plus { top: auto; bottom: 0; margin-top: 0; }
+.edge.solo .plus { top: 3px; margin-top: 0; }
+.plus::before, .plus::after { content: ""; position: absolute; left: 50%; top: 50%; background: var(--text-2); }
+.plus::before { width: 8px; height: 1px; margin: -.5px 0 0 -4px; }
+.plus::after { width: 1px; height: 8px; margin: -4px 0 0 -.5px; }
+.rdots { position: absolute; left: calc(50% + 12px); bottom: 8px; display: flex; gap: 3px; align-items: center; cursor: help; }
+.rdots i { width: 6px; height: 6px; border-radius: 50%; display: block; }
+.rdots i.off { width: 3px; height: 3px; }
+
+/* scopes */
+.scope { display: flex; flex-direction: column; align-items: center; position: relative; }
+.shead { position: relative; z-index: 2; min-width: 190px; height: 34px; display: flex; align-items: center; gap: 8px; padding: 0 0 0 10px; border-radius: 3px; background: var(--scope); color: #fff; box-shadow: var(--shadow); cursor: pointer; font-size: 13px; }
+.shead .ic { width: 16px; height: 16px; flex: none; opacity: .95; }
+.shead .ic svg { width: 16px; height: 16px; }
+.shead .tt { flex: 1; padding-right: 8px; white-space: nowrap; }
+.shead .chev { align-self: stretch; width: 30px; display: grid; place-items: center; border: 0; border-left: 1px solid rgba(255,255,255,.25); background: transparent; color: #fff; cursor: pointer; border-radius: 0 3px 3px 0; }
+.shead .chev:hover { background: rgba(255,255,255,.12); }
+.shead .chev svg { width: 12px; height: 12px; transition: transform .15s; }
+.shead.sel { outline: 2px solid var(--brand); outline-offset: 2px; }
+.scope.pb > .shead { box-shadow: 0 0 0 2px var(--pb); }
+.sbox { position: relative; margin-top: -17px; padding: 34px 14px 14px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface-2); }
+.sbox::before { content: ""; position: absolute; left: 50%; top: 0; height: 34px; border-left: 1px solid var(--line); }
+.branches { display: flex; gap: 24px; align-items: flex-start; }
+.branch { position: relative; display: flex; flex-direction: column; align-items: center; padding-top: 16px; }
+.branch::before { content: ""; position: absolute; left: 50%; top: 0; height: 16px; border-left: 1px solid var(--line); }
+.branch::after { content: ""; position: absolute; top: 0; border-top: 1px solid var(--line); }
+.branch.yes::after { left: 50%; right: -12px; }
+.branch.no::after { left: -12px; right: 50%; }
+.pill { position: relative; z-index: 2; display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 6px 0 9px; border: 0; border-radius: 3px; color: #fff; font-size: 12px; cursor: pointer; box-shadow: var(--shadow); }
+.pill.yes { background: var(--yes); }
+.pill.no { background: var(--no); }
+.pill svg { width: 10px; height: 10px; transition: transform .15s; }
+.bbox { margin-top: -12px; min-width: 150px; padding: 16px 16px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface-3); display: flex; flex-direction: column; align-items: center; }
+.bbox .leer { font-size: 11px; color: var(--text-3); margin-top: 2px; }
+.scol, .bcol { display: none; margin-top: -12px; padding: 18px 16px 8px; min-width: 150px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface-3); font-size: 12px; color: var(--text-3); text-align: center; }
+.scol { margin-top: -17px; padding-top: 24px; min-width: 190px; background: var(--surface-2); }
+.scope.collapsed > .sbox { display: none; }
+.scope.collapsed > .scol { display: block; }
+.scope.collapsed > .shead .chev svg { transform: rotate(180deg); }
+.branch.collapsed > .bbox { display: none; }
+.branch.collapsed > .bcol { display: block; }
+.branch.collapsed > .pill svg { transform: rotate(180deg); }
+
+/* panel */
+.panel { width: clamp(420px, 40vw, 600px); flex: none; display: flex; flex-direction: column; min-height: 0; background: var(--surface); border-right: 1px solid var(--border); box-shadow: 2px 0 8px rgba(0,0,0,.06); z-index: 10; }
+.panel[hidden] { display: none; }
+.ph { flex: none; display: flex; align-items: flex-start; gap: 10px; padding: 14px 12px 6px 16px; }
+.ph .pic { flex: none; width: 26px; height: 26px; margin-top: 1px; display: grid; place-items: center; border-radius: 3px; }
+.ph .pic svg { width: 26px; height: 26px; }
+.ph .pic.cond { background: var(--scope); color: #fff; }
+.ph .pic.cond svg { width: 16px; height: 16px; }
+.ph .pic.done { background: var(--ok); color: #fff; }
+.ph .pic.done svg { width: 15px; height: 15px; }
+.ptitle { flex: 1; min-width: 0; }
+.pname { font-size: 17px; font-weight: 600; line-height: 1.3; overflow-wrap: anywhere; }
+.psub { font-size: 12px; color: var(--text-3); margin-top: 1px; }
+.picon { flex: none; width: 32px; height: 32px; border: 0; border-radius: 4px; background: transparent; cursor: pointer; display: grid; place-items: center; color: var(--text-2); }
+.picon:hover { background: var(--hover); }
+.picon svg { width: 16px; height: 16px; }
+.prename { flex: none; margin: 2px 16px 4px; padding: 6px 8px 6px 10px; display: flex; align-items: center; flex-wrap: wrap; gap: 4px 8px; border-radius: 4px; background: var(--brand-weak); font-size: 13px; }
+.prename code { font-size: 13px; font-weight: 600; }
+.prename .muted { flex-basis: 100%; font-size: 12px; color: var(--text-2); }
+.ptabs { flex: none; display: flex; gap: 4px; padding: 0 10px; border-bottom: 1px solid var(--border-2); overflow-x: auto; }
+.ptabs button { position: relative; border: 0; background: transparent; padding: 10px 8px 9px; cursor: pointer; font-size: 14px; color: var(--text-2); white-space: nowrap; }
+.ptabs button[aria-selected="true"] { color: var(--text); font-weight: 600; }
+.ptabs button[aria-selected="true"]::after { content: ""; position: absolute; left: 8px; right: 8px; bottom: -1px; height: 3px; border-radius: 2px; background: var(--brand); }
+.ptabs button:hover { color: var(--text); }
+.pbody { flex: 1; min-height: 0; overflow-y: auto; padding: 14px 16px 24px; }
+.pfoot { flex: none; display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-top: 1px solid var(--border-2); background: var(--surface); }
+.pfoot .stepno { flex: 1; text-align: center; font-size: 12px; color: var(--text-3); }
+.btn { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border: 1px solid var(--border); border-radius: 4px; background: var(--surface); cursor: pointer; font-size: 13px; white-space: nowrap; }
+.btn:hover { background: var(--hover); }
+.btn.primary { background: var(--brand); border-color: var(--brand); color: #fff; }
+.btn.primary:hover { background: var(--brand-2); }
+.btn:disabled { opacity: .45; cursor: default; }
+.btn svg { width: 14px; height: 14px; }
+.donechk { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer; user-select: none; }
+.donechk input { width: 16px; height: 16px; accent-color: var(--ok); margin: 0; }
+
+/* panel content */
+.addbox { margin: 0 0 16px; padding: 10px 12px; border: 1px solid var(--border-2); border-radius: 6px; background: var(--surface-3); font-size: 13px; }
+.addbox b.h { display: block; margin-bottom: 4px; }
+.addbox ol { margin: 0; padding-left: 20px; }
+.addbox li + li { margin-top: 3px; }
+.field { margin: 0 0 16px; }
+.flabel { font-size: 14px; font-weight: 600; margin-bottom: 5px; }
+.req { color: var(--fa); margin-left: 3px; }
+.frow { display: flex; align-items: center; gap: 8px; }
+.fbox { flex: 1; min-width: 0; min-height: 32px; display: flex; align-items: center; flex-wrap: wrap; gap: 4px 6px; padding: 4px 8px; border: 1px solid var(--border); border-bottom-color: var(--text-3); border-radius: 4px; background: var(--surface); font-size: 13px; }
+.fbox .val { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.fbox .dd, .fbox .fi { flex: none; margin-left: auto; color: var(--text-2); }
+.fbox .dd svg { width: 12px; height: 12px; }
+.fbox .fi svg { width: 16px; height: 16px; }
+.phtext { color: var(--text-3); font-size: 12.5px; }
+.clr { flex: none; color: var(--brand); font-size: 16px; line-height: 1; width: 16px; text-align: center; }
+.cp { flex: none; height: 28px; padding: 0 9px; border: 1px solid var(--border); border-radius: 4px; background: var(--surface); color: var(--brand); cursor: pointer; font-size: 12px; font-weight: 600; white-space: nowrap; }
+.cp:hover { background: var(--brand-weak); }
+.cp.ok { color: var(--ok); border-color: var(--ok); }
+.how { margin-top: 5px; font-size: 12.5px; color: var(--text-2); }
+.how code { font-size: 12px; padding: 0 3px; border-radius: 3px; background: var(--surface-2); }
+.how .alt { display: block; margin-top: 3px; }
+.kbd { display: inline-flex; align-items: center; justify-content: center; min-width: 18px; height: 18px; padding: 0 4px; border: 1px solid var(--border); border-radius: 3px; background: var(--surface); font-size: 11px; font-weight: 700; font-style: italic; vertical-align: -3px; color: var(--text); }
+.kbd svg { width: 11px; height: 11px; color: #c17b00; }
+.expr { margin-top: 6px; border: 1px solid var(--border-2); border-radius: 4px; background: var(--code-bg); }
+.expr .eh { display: flex; align-items: center; gap: 8px; padding: 4px 4px 4px 8px; border-bottom: 1px solid var(--border-2); font-size: 12px; color: var(--text-2); }
+.expr .eh span { flex: 1; }
+.expr code { display: block; padding: 7px 9px; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--text); }
+.persona { display: inline-flex; align-items: center; gap: 6px; padding: 1px 6px 1px 2px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--border-2); font-size: 12.5px; max-width: 100%; }
+.persona .av { width: 20px; height: 20px; flex: none; border-radius: 50%; display: grid; place-items: center; background: #8f6cd2; color: #fff; font-size: 11px; font-weight: 600; }
+.persona .x { color: var(--text-3); }
+.tok { display: inline-flex; align-items: center; gap: 5px; max-width: 100%; height: 24px; padding: 0 6px 0 3px; border-radius: 4px; border: 1px solid var(--tok-bd); background: var(--tok-bg); font-size: 12.5px; white-space: nowrap; }
+.tok .ti { width: 16px; height: 16px; flex: none; }
+.tok .ti svg { width: 16px; height: 16px; }
+.tok .tl { overflow: hidden; text-overflow: ellipsis; }
+.tok .tx { color: var(--text-3); margin-left: 2px; }
+.tok.xl { border-color: var(--tokx-bd); background: var(--tokx-bg); }
+.tok.fx { border-color: var(--fx-bd); background: var(--fx-bg); padding-left: 2px; }
+.tok.fx .fxi { width: 18px; height: 18px; flex: none; border-radius: 3px; display: grid; place-items: center; background: #5c2e91; color: #fff; font-size: 10px; font-style: italic; font-weight: 700; }
+.adv { margin: 4px 0 16px; padding-top: 12px; border-top: 1px solid var(--border-2); }
+.advrow { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.advrow .fbox { flex: 1 1 200px; }
+.btnlike { display: inline-flex; align-items: center; height: 30px; padding: 0 10px; border: 1px solid var(--border); border-radius: 4px; font-size: 12.5px; color: var(--text-2); background: var(--surface); }
+.conninfo { display: flex; align-items: center; gap: 6px; margin-top: 18px; padding-top: 12px; border-top: 1px solid var(--border-2); font-size: 12.5px; color: var(--text-2); }
+.conninfo svg { width: 14px; height: 14px; }
+.lnk { color: var(--brand); }
+.cond { margin-bottom: 16px; }
+.cond .cdesc { font-size: 12.5px; color: var(--text-2); margin-bottom: 8px; }
+.cgroup { display: inline-flex; margin-bottom: 8px; }
+.cgroup .fbox { min-width: 90px; }
+.crow { display: grid; grid-template-columns: 18px minmax(0, 1.25fr) minmax(0, .9fr) minmax(0, 1.15fr) 18px; gap: 6px; align-items: center; margin-bottom: 4px; }
+.crow .cbx { width: 14px; height: 14px; border: 1px solid var(--text-3); border-radius: 2px; }
+.crow .more { color: var(--text-3); text-align: center; }
+.crow.empty { opacity: .45; }
+.crow + .how { margin: 0 0 10px 24px; }
+.addrow { display: inline-flex; align-items: center; gap: 4px; margin: 6px 0 4px; font-size: 13px; color: var(--brand); }
+.sumbox { margin: 0 0 14px; padding: 9px 12px; border-radius: 6px; font-size: 13px; }
+.sumbox.chg { background: var(--chg-bg); border: 1px solid var(--chg-bd); color: var(--text); }
+.sumbox.std { background: var(--surface-2); border: 1px solid var(--border-2); color: var(--text-2); }
+.sec { border-bottom: 1px solid var(--border-2); }
+.sec > summary { list-style: none; display: flex; align-items: center; gap: 8px; padding: 10px 2px; cursor: pointer; font-size: 15px; font-weight: 600; }
+.sec > summary::-webkit-details-marker { display: none; }
+.sec > summary svg { width: 12px; height: 12px; transition: transform .15s; }
+.sec:not([open]) > summary svg { transform: rotate(-90deg); }
+.secb { padding: 0 2px 12px 22px; }
+.sf { margin: 0 0 12px; padding: 6px 8px; border-radius: 4px; }
+.sf.chg { background: var(--chg-bg); box-shadow: inset 3px 0 0 var(--chg-bd); }
+.sl { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; font-size: 13.5px; font-weight: 600; margin-bottom: 5px; }
+.tag { font-size: 10.5px; font-weight: 600; padding: 1px 6px; border-radius: 8px; letter-spacing: .02em; }
+.tag.c { background: var(--chg-bd); color: #fff; }
+.tag.s { background: var(--surface-2); color: var(--text-3); border: 1px solid var(--border-2); }
+.sdesc { font-size: 12px; color: var(--text-3); margin: -2px 0 6px; }
+.sv { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+.sv .fbox { max-width: 320px; }
+.sw { position: relative; width: 40px; height: 20px; flex: none; border-radius: 10px; border: 1px solid var(--text-3); background: var(--surface); }
+.sw::after { content: ""; position: absolute; top: 3px; left: 3px; width: 12px; height: 12px; border-radius: 50%; background: var(--text-2); }
+.sw.on { background: var(--brand); border-color: var(--brand); }
+.sw.on::after { left: 23px; background: #fff; }
+.slider { display: flex; align-items: center; gap: 12px; width: 100%; max-width: 360px; }
+.slider .tr { position: relative; flex: 1; height: 4px; border-radius: 2px; background: var(--border); }
+.slider .th { position: absolute; left: 0; top: -6px; width: 16px; height: 16px; border-radius: 50%; background: var(--brand); border: 2px solid var(--surface); box-shadow: 0 0 0 1px var(--brand); }
+.slider .num { width: 46px; height: 30px; display: grid; place-items: center; border: 1px solid var(--border); border-radius: 4px; background: var(--surface); }
+.kv { display: flex; gap: 8px; }
+.kv .fbox { flex: 1; }
+.ra { padding: 2px 0 4px; }
+.raadd { display: inline-flex; align-items: center; gap: 6px; font-size: 15px; font-weight: 600; margin: 4px 0 10px 12px; }
+.raadd svg { width: 12px; height: 12px; }
+.raact { display: flex; align-items: center; gap: 8px; margin: 0 0 8px 12px; font-size: 14px; }
+.raact .ic svg { width: 20px; height: 20px; }
+.raact .rdots { position: static; margin-left: auto; }
+.raact .tr { color: var(--text-3); }
+.raact .tr svg { width: 15px; height: 15px; }
+.raopt { display: flex; align-items: center; gap: 8px; margin: 0 0 6px 44px; font-size: 13.5px; }
+.raopt .cbx { width: 16px; height: 16px; flex: none; border: 1px solid var(--text-3); border-radius: 2px; display: grid; place-items: center; }
+.raopt .cbx.on { background: var(--brand); border-color: var(--brand); color: #fff; }
+.raopt .cbx svg { width: 11px; height: 11px; }
+.raopt .si { width: 16px; height: 16px; flex: none; border-radius: 50%; display: grid; place-items: center; color: #fff; font-size: 11px; font-weight: 700; }
+.raopt.off { color: var(--text-3); }
+.raopt.on-chg { font-weight: 600; }
+.note { font-size: 13px; color: var(--text-2); margin: 0 0 10px; }
+.codeh { display: flex; align-items: center; gap: 8px; margin: 6px 0 6px; }
+.codeh b { flex: 1; font-size: 13px; }
+.code { border: 1px solid var(--border); border-radius: 4px; background: var(--code-bg); padding: 6px 0; font-family: var(--mono); font-size: 12px; line-height: 1.5; max-height: 460px; overflow: auto; }
+.cl { display: grid; grid-template-columns: 34px minmax(0, 1fr); }
+.cn { color: var(--code-ln); text-align: right; padding-right: 10px; user-select: none; }
+.ct { white-space: pre-wrap; overflow-wrap: anywhere; padding-right: 10px; color: var(--text); }
+.jk { color: var(--jk); } .js { color: var(--js); } .jn { color: var(--jn); } .jb { color: var(--jb); }
+.cmp { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--border-2); }
+.cmp h4 { margin: 0 0 4px; font-size: 14px; }
+.cmp textarea { width: 100%; min-height: 110px; margin: 6px 0 8px; padding: 8px; border: 1px solid var(--border); border-radius: 4px; background: var(--surface); color: var(--text); font: 12px/1.45 var(--mono); resize: vertical; }
+.cmpres { margin-top: 10px; font-size: 13px; }
+.cmpres .okline { padding: 8px 10px; border-radius: 4px; background: rgba(16,124,16,.12); color: var(--text); }
+.cmpres .badline { padding: 8px 10px; border-radius: 4px; background: rgba(197,15,31,.10); }
+.cmpres .warnline { margin-top: 6px; padding: 8px 10px; border-radius: 4px; background: var(--chg-bg); }
+.cmpres ul { margin: 8px 0 0; padding-left: 18px; }
+.cmpres li { margin-bottom: 8px; overflow-wrap: anywhere; }
+.cmpres li code { font-size: 11.5px; }
+.cmpres .hint { color: var(--text-2); font-size: 12px; }
+.info p { margin: 0 0 10px; }
+.info ul, .info ol { margin: 0 0 10px; padding-left: 20px; }
+.info li { margin-bottom: 4px; }
+.info h4 { margin: 14px 0 6px; font-size: 14px; }
+.callout { padding: 9px 12px; border-radius: 6px; background: var(--brand-weak); margin: 0 0 12px; font-size: 13px; }
+.callout.warn { background: var(--chg-bg); }
+.callout.pbc { background: var(--pb-weak); }
+
+/* drawer */
+.drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(640px, 100%); z-index: 60; display: flex; flex-direction: column; background: var(--surface); box-shadow: var(--shadow-lg); }
+.drawer[hidden] { display: none; }
+.scrim { position: fixed; inset: 0; z-index: 55; background: rgba(0,0,0,.25); }
+.scrim[hidden] { display: none; }
+.dh { flex: none; display: flex; align-items: center; gap: 10px; padding: 12px 12px 12px 18px; border-bottom: 1px solid var(--border-2); }
+.dh b { flex: 1; font-size: 17px; }
+.db { flex: 1; overflow-y: auto; padding: 4px 18px 30px; }
+.db details { border-bottom: 1px solid var(--border-2); }
+.db summary { cursor: pointer; padding: 12px 0; font-size: 15px; font-weight: 600; }
+.db .dc { padding: 0 0 14px; font-size: 13.5px; }
+.db .dc p { margin: 0 0 8px; }
+.db .dc ul, .db .dc ol { margin: 0 0 8px; padding-left: 20px; }
+.db .dc li { margin-bottom: 4px; }
+.tbl { width: 100%; border-collapse: collapse; font-size: 13px; margin: 4px 0 8px; }
+.tbl th, .tbl td { text-align: left; vertical-align: top; padding: 6px 8px; border-bottom: 1px solid var(--border-2); }
+.tbl th { font-size: 12px; color: var(--text-2); font-weight: 600; background: var(--surface-2); }
+.tbl code { font-size: 12px; }
+.tblwrap { overflow-x: auto; }
+.cat { display: inline-block; padding: 1px 7px; border-radius: 3px; font-size: 12px; font-weight: 600; color: #fff; white-space: nowrap; }
+.cat.g { background: #4f8a2b; } .cat.o { background: #c7651a; } .cat.p { background: #7a4fb5; } .cat.n { background: transparent; color: var(--text-3); border: 1px solid var(--border); }
+.toast { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%); z-index: 80; padding: 8px 14px; border-radius: 6px; background: #242424; color: #fff; font-size: 13px; box-shadow: var(--shadow-lg); opacity: 0; transition: opacity .2s; pointer-events: none; }
+.toast.on { opacity: 1; }
+
+@media (max-width: 760px) {
+  .appbar { height: 42px; padding: 0 12px; }
+  .appbar .note { display: none; }
+  .cmdbar { padding: 6px 12px; }
+  .hide-sm { display: none !important; }
+  .mbf { order: 5; flex: 1 1 100%; }
+  .mbf input { flex: 1; width: auto; }
+  .panel { position: fixed; inset: 0; width: auto; z-index: 50; border: 0; }
+  .crow { grid-template-columns: 18px minmax(0, 1fr) minmax(0, 1fr) 14px; }
+  .crow > .fbox:nth-of-type(3) { grid-column: 2 / 4; }
+  .crow .more { grid-row: 1; grid-column: 4; }
+  .flow { padding: 22px 24px 140px 56px; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<header class="appbar">
+  <svg class="waffle" viewBox="0 0 20 20" aria-hidden="true"><g fill="currentColor"><circle cx="3" cy="3" r="1.6"/><circle cx="10" cy="3" r="1.6"/><circle cx="17" cy="3" r="1.6"/><circle cx="3" cy="10" r="1.6"/><circle cx="10" cy="10" r="1.6"/><circle cx="17" cy="10" r="1.6"/><circle cx="3" cy="17" r="1.6"/><circle cx="10" cy="17" r="1.6"/><circle cx="17" cy="17" r="1.6"/></g></svg>
+  <span class="prod">Power Automate</span>
+  <span class="note">Nachbau des Flows zum Abschreiben – hier wird nichts gespeichert</span>
+</header>
+<div class="cmdbar">
+  <span class="fname">Avis V2</span>
+  <div class="seg" role="group" aria-label="Ansicht">
+    <button type="button" id="vMain" aria-pressed="true">Flow</button>
+    <button type="button" id="vPlanB" aria-pressed="false">Plan B</button>
+  </div>
+  <span class="progress" id="progress"></span>
+  <span class="spacer"></span>
+  <div class="mbwrap">
+    <label class="mbf" for="mb">Avis-Postfach</label>
+    <input id="mb" type="email" inputmode="email" autocomplete="off" spellcheck="false" placeholder="Adresse des freigegebenen Postfachs" aria-describedby="mbPop">
+    <button type="button" class="mbhelp" id="mbHelp" aria-expanded="false" aria-controls="mbPop" title="Welche Adresse gehört hierher?">?</button>
+    <div class="mbpop" id="mbPop" role="dialog" aria-label="Welche Adresse gehört hierher?" hidden>
+      <b class="h">Welche Adresse gehört hierher?</b>
+      <p>Die E-Mail-Adresse des <b>freigegebenen Postfachs</b>, in dem die Zahlungsavise ankommen, z. B. <code>avis@firma.de</code>. Der Flow überwacht dieses Postfach und ändert dort Kategorie und Betreff.</p>
+      <ul>
+        <li><b>Nicht</b> deine eigene Adresse und nicht die Adresse, mit der du dich anmeldest.</li>
+        <li><b>Freigegebenes Postfach, keine Microsoft-365-Gruppe:</b> In Outlook im Web steht es links als eigenes Postfach mit eigenem Posteingang. Steht es unter „Gruppen“, geht es nicht – dort kann der Flow weder Kategorie noch Betreff setzen.</li>
+        <li><b>Vollzugriff:</b> Das Konto, mit dem der Flow verbunden ist, braucht Vollzugriff auf das Postfach (richtet die IT ein). Wenn du darin Mails verschieben kannst, passt es meist.</li>
+        <li><b>So findest du sie:</b> Postfach in Outlook im Web öffnen – die Adresse steht in der Adresszeile des Browsers: <code>…/mail/avis@firma.de/</code>. Sonst die IT fragen.</li>
+      </ul>
+      <p>Hier eingetragen, steht sie automatisch überall, wo der Flow sie braucht: im <b>Trigger</b>, in <b>Export email</b> und in den <b>URI-Formeln</b> von Kategorie setzen und Betreff setzen. Im Designer muss es an allen vier Stellen genau dieselbe Adresse sein.</p>
+      <p class="mbbad" id="mbBad" hidden>Das sieht nicht wie eine E-Mail-Adresse aus.</p>
+    </div>
+  </div>
+  <button type="button" class="cmd" id="bInfo"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor" stroke-width="1.2"/><path d="M8 7v4.5M8 4.6v.1" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>Infos</button>
+  <button type="button" class="cmd hide-sm" id="bSave"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 2.5h9l2 2v9h-11z" fill="none" stroke="currentColor" stroke-width="1.2"/><path d="M5 2.5v3.5h5V2.5M5 13.5v-4h6v4" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>Speichern</button>
+  <button type="button" class="cmd hide-sm" id="bTest"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 1.5h4M6.8 1.5v4.2L2.6 13a1 1 0 0 0 .9 1.5h9a1 1 0 0 0 .9-1.5L9.2 5.7V1.5" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>Testen</button>
+</div>
+<div class="setup" id="setup" role="status" hidden><span><b>Zuerst:</b> oben rechts bei „Avis-Postfach“ die Adresse des freigegebenen Postfachs eintragen, in dem die Avise ankommen. Dann stehen alle Felder und Formeln richtig da.</span><button type="button" class="btn" id="setupHelp">Welche Adresse?</button></div>
+<div class="ws">
+  <aside class="panel" id="panel" hidden role="dialog" aria-label="Details zur Karte"></aside>
+  <div class="cwrap">
+    <div class="hintchip" id="hint">Karte anklicken: alle Felder, Einstellungen und Formeln zum Abschreiben</div>
+    <div class="canvas" id="canvas"><div class="flow" id="flow"></div></div>
+    <div class="tools" role="toolbar" aria-label="Ansicht">
+      <button type="button" id="zExpand" title="Alle Aktionsgruppen erweitern" aria-label="Alle Aktionsgruppen erweitern"><svg viewBox="0 0 16 16"><path d="M2 8h12M8 1.5v4M6 3.5l2 2 2-2M8 14.5v-4M6 12.5l2-2 2 2" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <button type="button" id="zIn" title="Vergrößern" aria-label="Vergrößern"><svg viewBox="0 0 16 16"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg></button>
+      <button type="button" id="zOut" title="Verkleinern" aria-label="Verkleinern"><svg viewBox="0 0 16 16"><path d="M3 8h10" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg></button>
+      <button type="button" id="zFit" title="Ansicht passend zoomen" aria-label="Ansicht passend zoomen"><svg viewBox="0 0 16 16"><path d="M2 5.5V2h3.5M10.5 2H14v3.5M14 10.5V14h-3.5M5.5 14H2v-3.5" fill="none" stroke="currentColor" stroke-width="1.2"/><circle cx="8" cy="8" r="2" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></button>
+    </div>
+  </div>
+</div>
+
+<div class="scrim" id="scrim" hidden></div>
+<aside class="drawer" id="drawer" hidden role="dialog" aria-label="Infos zum Flow">
+  <div class="dh"><b>Infos zum Flow „Avis V2“</b><button type="button" class="picon" id="dClose" aria-label="Schließen"><svg viewBox="0 0 16 16"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg></button></div>
+  <div class="db">
+    <details open><summary>Was an der Mail passiert</summary><div class="dc">
+      <p>Jede neue Mail im Posteingang des freigegebenen Postfachs geht als Ganzes an das Skript (PDF, Excel/CSV, SAP-Export und Mailtext). Ist es ein Zahlungsavis, bekommt die <b>Original-Mail</b> eine Kategorie und den Betrag vorne in den Betreff. Andere Mails bleiben unberührt; es kommen keine zusätzlichen Mails.</p>
+      <div class="tblwrap"><table class="tbl">
+        <tr><th>Ergebnis des Skripts</th><th>Kategorie</th><th>Betreff danach</th></tr>
+        <tr><td>Ein Avis, Betrag sicher</td><td><span class="cat g">Avis</span></td><td><code>2.601,35 Zahlungsavis</code></td></tr>
+        <tr><td>Ein Avis, Betrag ziemlich sicher</td><td><span class="cat g">Avis</span></td><td><code>2.601,35 (prüfen) Zahlungsavis</code></td></tr>
+        <tr><td>Ein Avis, Betrag unsicher</td><td><span class="cat o">Avis prüfen</span></td><td><code>2.601,35 ? Zahlungsavis</code></td></tr>
+        <tr><td>Mehrere Avise in einer Mail</td><td><span class="cat p">mehrere Avise</span></td><td>unverändert</td></tr>
+        <tr><td>Unklar: Avis-Hinweis, aber nicht lesbar (Scan, verschlüsselt, altes .xls) oder nicht sicher erkennbar</td><td><span class="cat o">Avis prüfen</span></td><td>unverändert</td></tr>
+        <tr><td>Skript-Fehler oder Zeitüberschreitung</td><td><span class="cat o">Avis prüfen</span></td><td>unverändert</td></tr>
+        <tr><td>Avis nur erwähnt, ohne Betrag und ohne Datei (Frage, Ankündigung, vergessener Anhang, Lieferavis)</td><td><span class="cat n">keine</span></td><td>unverändert</td></tr>
+        <tr><td>Kein Avis (Rechnung, Reklamation, Bestellung, Info, Mahnung …)</td><td><span class="cat n">keine</span></td><td>unverändert</td></tr>
+      </table></div>
+      <p>„Zahlungsavis“ steht für den Betreff, den der Absender geschrieben hat; er bleibt vollständig erhalten. Der Betrag steht immer davor, im deutschen Format ohne Währung und mit einem Leerzeichen als Trenner, auch vor „AW:“ oder „WG:“. Eine Mail ohne Betreff bekommt nur den Betrag. Trägt der Betreff schon denselben Betrag (Antwort auf eine bearbeitete Mail), bleibt er unverändert; ein neues Avis mit anderem Betrag kommt nach vorne: <code>12.347,80 AW: 2.601,35 Zahlungsavis</code>. Ein Hinweis auf ein Avis im Kundenportal ohne Betrag bekommt „Avis prüfen“.</p>
+    </div></details>
+    <p>„Zahlungsavis“ ist in den Beispielen nur ein möglicher Originalbetreff und wird nicht automatisch hinzugefügt. Bei einem sicheren Betrag von 5.500,05 Euro wird aus <code>Abrechnung Oktober</code> der Betreff <code>5.500,05 Abrechnung Oktober</code>. Prüfhinweise bleiben gegebenenfalls hinter dem Betrag stehen.</p>
+    <details><summary>Welches Postfach? (Feld „Avis-Postfach“ oben rechts)</summary><div class="dc" id="mbDrawer"></div></details>
+    <details><summary>Designer-Tipps (vor dem Bauen lesen)</summary><div class="dc"><ul>
+      <li><b>Umbenennen:</b> Karte anklicken, oben im Bereich auf den Titel klicken, neuen Namen eintippen, Enter. Auf der Fläche zeigt Power Automate statt <code>_</code> ein Leerzeichen („Run script“). Das ist richtig; die Formeln brauchen den Namen mit <code>_</code>.</li>
+      <li><b>Formeln</b> (<span class="kbd">fx</span>): ins Feld klicken → neben dem Feld erscheinen Blitz und <span class="kbd">fx</span> (bei Bedingungen links am Feld) → <span class="kbd">fx</span> → Formel einfügen → <b>Hinzufügen</b>. Meldet der Editor „Der Ausdruck ist ungültig“, obwohl genau kopiert: noch einmal auf <b>Hinzufügen</b>.</li>
+      <li><b>Werte aus dem Trigger</b> (Blitz, dynamischer Inhalt): ins Feld klicken → Blitz → im Suchfeld den Namen eintippen (z. B. „Betreff“) → den Eintrag unter der Überschrift <b>„Wenn eine neue E-Mail in einem freigegebenen Postfach eingeht (V2)“</b> anklicken. Für „Betreff“ gibt es dort nur einen Eintrag. Bei der <b>Nachrichten-ID</b> steht „Internetnachrichten-ID“ direkt darüber – die ist falsch.</li>
+      <li>Ein „/“ im Feld öffnet ein kleines Menü. Einfach weitertippen; wählst du dort etwas aus, verschwindet das „/“.</li>
+      <li>Oben rechts bei „Postfach“ die echte Adresse eintragen: Dann stehen in allen Feldern und Formeln zum Kopieren gleich die richtigen Werte.</li>
+    </ul></div></details>
+    <details><summary>Einmalige Einrichtung</summary><div class="dc"><ol>
+      <li><b>IT:</b> Das Konto, unter dem der Flow läuft, bekommt Vollzugriff auf das freigegebene Postfach <code class="mbv">avis@firma.de</code> (für Plan B zusätzlich „Senden als“). Nach dem Einrichten bis zu 2 Stunden warten.</li>
+      <li><b>Kategorien</b> im Postfach anlegen (Outlook → Kategorisieren → Kategorien verwalten → Neu): <span class="cat g">Avis</span> <span class="cat o">Avis prüfen</span> <span class="cat p">mehrere Avise</span>. Genau so schreiben. Die Farbe ist egal; ohne Anlegen erscheinen sie grau.</li>
+      <li><b>Skript:</b> Excel im Browser → Automatisieren → Neues Skript → Inhalt von <code>dist/AvisV2.ts</code> einfügen → speichern → umbenennen in <code>AvisV2</code>. Das alte Skript <code>AvisPdfAmount</code> bleibt unverändert.</li>
+      <li><b>Arbeitsmappe:</b> die leere <code>AvisParser.xlsx</code> in OneDrive weiterverwenden (oder neu anlegen).</li>
+      <li><b>Neuer Flow</b> mit den Karten auf der Fläche. Nie zwei Flows gleichzeitig auf dasselbe Postfach.</li>
+    </ol><p><b>Bestehenden Flow aktualisieren:</b> Die Kategorie „Avise“ in Outlook unter „Kategorien verwalten“ in „Avis“ umbenennen und das Skript <code>AvisV2</code> aktualisieren. Bei Plan B außerdem in <b>Kategorie Kopie</b> das Feld <b>Text</b> durch die aktuelle Formel dieser HTML ersetzen: Sie erkennt das <code>?</code> im neuen Betreffformat und setzt die Kategorie „Avis“. Die sechs TXT-Formeln bleiben für diese Umstellung unverändert.</p><p>Die ausführliche Klick-für-Klick-Anleitung steht in <code>docs/ANLEITUNG.md</code>.</p></div></details>
+    <details><summary>5-Minuten-Test vor dem Bau</summary><div class="dc">
+      <p>Prüft vorab, ob Vollzugriff und Betreffänderung im Postfach funktionieren.</p>
+      <ol>
+        <li>Testflow <code>PATCHTEST</code>: Trigger „Wenn eine neue E-Mail in einem freigegebenen Postfach eingeht (V2)“, Postfach <code class="mbv">avis@firma.de</code>, Erweiterte Parameter → <b>Filter für Betreff</b> = <code>PATCHTEST</code>.</li>
+        <li>Aktion <b>HTTP-Anforderung senden</b> (Office 365 Outlook): URI über <span class="kbd">fx</span> <button type="button" class="cp" data-copy-tpl="concat('https://graph.microsoft.com/v1.0/users/{{MB}}/messages/', triggerOutputs()?['body/id'])">URI-Formel kopieren</button>, Methode <b>PATCH</b>, Text <code>{"categories":["Avis"]}</code>.</li>
+        <li>Zweite gleiche Aktion mit Text <code>{"subject":"2.601,35 PATCHTEST Zahlungsavis"}</code>.</li>
+        <li>Mail mit Betreff „PATCHTEST Zahlungsavis“ an das Postfach schicken, 1 bis 5 Minuten warten. Richtig: neuer Betreff und Kategorie in Outlook, beide Aktionen grün. 403 = kein Vollzugriff oder falsches Konto; 404 = URI oder Adresse falsch.</li>
+        <li>Danach den Testflow deaktivieren.</li>
+      </ol></div></details>
+    <details><summary>Alle Formeln zum Kopieren</summary><div class="dc" id="formulaList"></div></details>
+    <details><summary>Live getestet am 30. und 31.10.2026</summary><div class="dc">
+      <p>Diese Berichte beziehen sich auf den damaligen Stand. Die Kategorie „Avis“ und das Betreffformat ohne Währung und Bindestrich wurden danach lokal geprüft; die Anzeige-Beispiele sind entsprechend aktualisiert.</p>
+      <p>31.10.2026 abends, Endfassung: 20 weitere Live-Mails (10 deutsch, 10 englisch) aus den Themen-Testrunden, u. a. Teilzahlung, CSV-Export, Korrektur-Avis, Marktplatz-Auszahlung, verschachtelte Weiterleitung, zwei Avise in einer Mail und als JSON, ZIP-Anhang, eigenes Avis, Abwesenheitsnotiz, Rücksendung, Skonto-Zahlung, Avis einer Behörde, Steuererstattung, ODS-Liste, Verrechnung, Lieferavis. Jedes Ergebnis war live genau wie im lokalen Test (7 „Avis“ mit Betrag je Sprache, je 1 „mehrere Avise“, je 2 „Avis prüfen“, je 2 ohne Kategorie).</p>
+      <p>Danach 6 Mails mit Outlook-Elementen (.msg) als Anlage: Kunden-Avis als PDF im Element (deutsch, englisch), Avis nur im Text des Elements, eingebettete Mail, zwei Rechnungen als Fallen. Live genau wie lokal.</p>
+      <p>31.10.2026: 41 weitere Live-Mails (22 deutsch, 19 englisch): Excel/CSV-Avise und -Fallen, englische Überweisungsbestätigung und SWIFT-Kopie, zwei Zahlungen in einer Mail, Teilzahlung, nur erwähntes Avis, Portal-Hinweis, Antwort mit neuem Betrag. Jedes Ergebnis war live genau wie im lokalen Test, der Betrag steht vorne im Betreff (z. B. <code>12.347,80 AW: 2.601,35 Zahlungsavis</code>).</p>
+      <p>Microsoft-365-Testzugang mit freigegebenem Postfach, damaliger Stand von Flow und Skript, nur erfundene Test-Mails. Lasttest: 40 Mails in unter 2 Minuten (15 Avise, 25 Fallen). Jede Mail löste einen Lauf aus, 20 sogar zwei (ohne Folgen: der Betrag steht nie doppelt im Betreff). 37 Ergebnisse genau wie erwartet, 3 vertretbar, keine Falle mit „Avis“, kein Avis verloren. Dazu zwei Mails mit 20 PDF-Anlagen. Dauer meist 8 bis 20 Sekunden je Mail.</p>
+      <div class="tblwrap"><table class="tbl">
+        <tr><th>Test-Mail</th><th>Kategorie</th><th>Betreff danach</th></tr>
+        <tr><td>Avis mit 72 Seiten (SAP-Liste, Übertrag auf jeder Seite)</td><td><span class="cat g">Avis</span></td><td>2.710.880,94 …</td></tr>
+        <tr><td>Avis mit 27 Seiten, Zwischensumme je Filiale, Dateiname „Dokument_…“</td><td><span class="cat g">Avis</span></td><td>826.636,07 …</td></tr>
+        <tr><td>Gutschriftsanzeige der Bank mit Kontostand vorher und nachher</td><td><span class="cat g">Avis</span></td><td>27.851,73 …</td></tr>
+        <tr><td>Englisches Remittance Advice, französisches Avis de paiement, Schweizer Avis in CHF</td><td><span class="cat g">Avis</span></td><td>145.118,91 …, 48.601,59 …, 42.761,38 …</td></tr>
+        <tr><td>Avis mit Skonto, Abzug und Gutschrift; Excel-Avis; Avis mit drei Rechnungskopien; Weiterleitung mit angehängter Mail</td><td><span class="cat g">Avis</span></td><td>Betrag des Avis</td></tr>
+        <tr><td>Avis nur im Mailtext (Tabelle)</td><td><span class="cat g">Avis</span></td><td>12.186,83 (prüfen) …</td></tr>
+        <tr><td>Mailtext nennt einen anderen Betrag als das Avis (Zahlendreher)</td><td><span class="cat o">Avis prüfen</span></td><td>27.732,85 ? …</td></tr>
+        <tr><td>Mailtext nennt eine zusätzliche Zahlung; zwei Avise in einer Mail</td><td><span class="cat p">mehrere Avise</span></td><td>unverändert</td></tr>
+        <tr><td>Eingescanntes Avis ohne Text</td><td><span class="cat o">Avis prüfen</span></td><td>unverändert</td></tr>
+        <tr><td>Avis als 20. Anlage zwischen 19 Rechnungen, neutraler Dateiname</td><td><span class="cat g">Avis</span></td><td>6.796,17 …</td></tr>
+        <tr><td>20 Rechnungen in einer Mail, kein Avis</td><td><span class="cat n">keine</span></td><td>unverändert</td></tr>
+        <tr><td>23 Fallen: Rechnungen (auch mit „Zahlbetrag bei Skonto“ und „bitte Zahlungsavis senden“), Gutschrift, Abschlags-, Proforma- und Stornorechnung, Mahnung, Zahlungserinnerung, Kontoauszug, Saldenbestätigung, Lastschrift-Ankündigung, Shop-Zahlungsbestätigung, neue Bankverbindung, Preisanpassung, Lieferavis, Speditionsavis, Bestellung, Reklamation mit Einbehalt, Antwort auf ein Avis</td><td><span class="cat n">keine</span></td><td>unverändert</td></tr>
+        <tr><td>Quittung über eine Barzahlung, englische Rechnung mit „Remittance information“</td><td><span class="cat o">Avis prüfen</span></td><td>unverändert (vertretbar)</td></tr>
+      </table></div></div></details>
+    <details><summary>Was das Skript zurückgibt</summary><div class="dc"><div class="tblwrap"><table class="tbl">
+      <tr><th>Feld</th><th>Inhalt</th></tr>
+      <tr><td><code>verdict</code></td><td><code>advice</code> (ein Avis), <code>several</code> (mehrere), <code>unclear</code>, <code>other</code> (kein Avis)</td></tr>
+      <tr><td><code>verdictWhy</code></td><td>Kurzer Grund auf Englisch, z. B. <code>advice title 'Zahlungsavis' in Zahlung_4711.pdf</code></td></tr>
+      <tr><td><code>category</code></td><td><code>Avis</code>, <code>Avis prüfen</code>, <code>mehrere Avise</code> oder leer</td></tr>
+      <tr><td><code>subjectPrefix</code> / <code>newSubject</code></td><td>Betrag vor dem Betreff (z. B. <code>2.601,35 </code>) / der fertige neue Betreff (leer = keine Änderung)</td></tr>
+      <tr><td><code>patchCategory</code> / <code>patchSubject</code></td><td>Fertiger Text für Kategorie setzen und Betreff setzen (leer = nichts tun)</td></tr>
+      <tr><td><code>documents</code></td><td>Je geprüftem Dokument eine Zeile: Name, Art, Urteil, Betrag, Sicherheit</td></tr>
+      <tr><td><code>amount</code>, <code>currency</code>, <code>confidence</code>, <code>line</code>, <code>candidates</code>, <code>text</code>, <code>warnings</code>, <code>error</code></td><td>Zur Fehlersuche im Ausführungsverlauf (Gründe auf Deutsch: Anleitung, Anhang B)</td></tr>
+    </table></div><p>Ansehen: Ausführungsverlauf → Lauf anklicken → Keine Automatik aufklappen → Run script → Ausgaben.</p></div></details>
+    <details><summary>Fehler finden</summary><div class="dc"><div class="tblwrap"><table class="tbl">
+      <tr><th>Was du siehst</th><th>Ursache</th><th>Was tun</th></tr>
+      <tr><td>Flow startet nicht</td><td>Flow aus, falsche Postfachadresse oder falscher Ordner im Trigger</td><td>Trigger prüfen; Ausführungsverlauf ansehen</td></tr>
+      <tr><td>Kategorie setzen oder Betreff setzen: <b>403</b></td><td>Kein Vollzugriff, falsches Konto in der Verbindung oder Rechte noch nicht aktiv</td><td>IT-Schritt prüfen; bis zu 2 Stunden warten; Verbindung unten in der Aktion prüfen</td></tr>
+      <tr><td><b>404</b></td><td>Postfachadresse in der URI falsch, oder die Mail wurde verschoben oder gelöscht, bevor der Flow lief</td><td>URI-Formel prüfen; neue Mails ein paar Minuten liegen lassen</td></tr>
+      <tr><td><b>400</b></td><td>Text (Body) falsch</td><td>Formel neu über <span class="kbd">fx</span> einfügen</td></tr>
+      <tr><td>Run script: „We couldn't find the script“ oder „BadGateway“</td><td>Skript nicht gespeichert, anders benannt oder andere Datei gewählt</td><td>In Excel prüfen, dass das Skript <b>AvisV2</b> heißt; Datei und Skript neu wählen</td></tr>
+      <tr><td>Run script: Zeitüberschreitung</td><td>Sehr große Mail</td><td>Mail bekommt „Avis prüfen“; von Hand bearbeiten</td></tr>
+      <tr><td>Kategorie grau statt farbig</td><td>Kategorie nicht im Postfach angelegt</td><td>Kategorien anlegen (Einmalige Einrichtung)</td></tr>
+      <tr><td>Betreff setzen rot, Kategorie gesetzt, ab Januar 2027</td><td>Microsofts Betreff-Sperre ist aktiv</td><td>Plan B</td></tr>
+      <tr><td>Abwesenheitsnotiz bekommt eine Kategorie</td><td>Text der Notiz fehlt in Keine Automatik</td><td>Zeile in Keine Automatik ergänzen</td></tr>
+    </table></div></div></details>
+    <details><summary>Grenzen</summary><div class="dc"><ul>
+      <li>Etwa 150 Avise und 150 andere Mails am Tag: rund 300 Skript-Aufrufe (Limit 1.600 pro Nutzer und Tag) und rund 1.500 Power-Automate-Anfragen (Limit bei Microsoft-365-Lizenz offiziell 6.000 in 24 Stunden).</li>
+      <li>Das Skript darf höchstens 3-mal in 10 Sekunden laufen (daher Grad der Parallelität 1 und Wiederholungsrichtlinie) und höchstens 120 Sekunden; es hört nach 90 Sekunden selbst auf.</li>
+      <li>Sehr große Mails (über etwa 4 MB) können am Größenlimit scheitern und bekommen „Avis prüfen“.</li>
+      <li>Nicht lesbar: reine Scans ohne Text, verschlüsselte Mails und PDFs mit Kennwort, altes Excel-Format .xls, Word-Dateien, mit Microsoft Purview geschützte Mails, Bilder als Anlage. Mit Avis-Hinweis bekommen sie „Avis prüfen“.</li>
+      <li>Je Mail höchstens 30 Anlagen (Dateien mit „Avis“ im Namen zuerst). Bei mehr: „Avis prüfen“, wenn unter den gelesenen kein Avis war.</li>
+    </ul></div></details>
+    <details><summary>Plan B – nur falls Microsoft den Betreff sperrt</summary><div class="dc">
+      <p>Microsoft will ab 31.12.2026 Betreffänderungen an empfangenen Mails sperren. Im Januar den 5-Minuten-Test wiederholen. Ist die Kategorie grün und der Betreff rot (meist 403), auf Plan B umstellen.</p>
+      <p>Plan B legt statt der Betreffänderung eine Weiterleitung als Entwurf an, setzt dort den Betreff (Entwürfe dürfen weiter geändert werden), schickt sie an das Postfach und verschiebt das Original in den Ordner „Avis-Original“. Absender der Kopie ist das Postfach; Antworten gehen über „Antwort an“ an den Kunden. Braucht „Senden als“. Je Avis landet eine Kopie in „Gesendete Elemente“. Plan B ist noch nicht im Testzugang gebaut.</p>
+      <p><button type="button" class="btn primary" id="toPlanB">Plan B auf der Fläche zeigen</button></p>
+    </div></details>
+    <details><summary>Fortschritt</summary><div class="dc"><p>Die Häkchen „Erledigt“ merkt sich nur dieser Browser.</p><p><button type="button" class="btn" id="resetDone">Alle Häkchen entfernen</button></p></div></details>
+  </div>
+</aside>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<noscript><p style="padding:16px">Diese Seite braucht JavaScript. Die Klick-Anleitung steht ohne JavaScript in docs/ANLEITUNG.md.</p></noscript>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ---------- helpers ---------- */
+  var esc = function (s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
+  var store = {
+    get: function (k, d) { try { var v = localStorage.getItem('avisflow.' + k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } },
+    set: function (k, v) { try { localStorage.setItem('avisflow.' + k, JSON.stringify(v)); } catch (e) { /* storage blocked */ } }
+  };
+  var DEFAULT_MB = 'avis@firma.de';
+  var MB = String(store.get('mb', '') || '');
+  function mb() { return MB.trim() || DEFAULT_MB; }
+  function sub(s) { return String(s).split('{{MB}}').join(mb()).split('{{mb}}').join(mb().toLowerCase()); }
+  function subH(s) { return String(s).split('{{MB}}').join(esc(mb())).split('{{mb}}').join(esc(mb().toLowerCase())); }
+
+  /* ---------- icons ---------- */
+  var IC = {
+    outlook: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="1.5" y="3.5" width="21" height="17" rx="3" fill="#0f6cbd"/><rect x="5" y="7.5" width="14" height="9.5" rx="1" fill="none" stroke="#fff" stroke-width="1.5"/><path d="M5.6 8.2 12 12.6l6.4-4.4" fill="none" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"/></svg>',
+    excel: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="1.5" y="1.5" width="21" height="21" rx="3" fill="#217346"/><path d="M6 6.5h12v11H6zM6 10.2h12M6 13.8h12M10.5 6.5v11" fill="none" stroke="#fff" stroke-width="1.4"/></svg>',
+    cond: '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 2h11v3.2h-11zM2 10.8h4.6V14H2zM9.4 10.8H14V14H9.4zM8 5.2v2.6M4.3 10.8V7.8h7.4v3" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>',
+    up: '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.8 7.6 6 4.4l3.2 3.2" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    down: '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.8 4.4 6 7.6l3.2-3.2" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    bolt: '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M9.5 1 3.5 9h4l-1 6 6-8.2h-4z" fill="currentColor"/></svg>',
+    folder: '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M1.5 3.5h4.6l1.5 1.6h6.9v7.4h-13z" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>',
+    link: '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6.5 9.5l3-3M7 4.5l1.2-1.2a2.6 2.6 0 0 1 3.7 3.7L10.7 8.2M9 11.5l-1.2 1.2a2.6 2.6 0 0 1-3.7-3.7L5.3 7.8" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>',
+    check: '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 6.3 5 8.6l4.6-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    more: '<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="3.5" r="1.2" fill="currentColor"/><circle cx="8" cy="8" r="1.2" fill="currentColor"/><circle cx="8" cy="12.5" r="1.2" fill="currentColor"/></svg>',
+    collapse: '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8.5 3.5 4 8l4.5 4.5M12.5 3.5 8 8l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    trash: '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 4.5h10M6.5 4.5V3h3v1.5M4.5 4.5l.7 9h5.6l.7-9" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>',
+    prev: '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3.5 5.5 8l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    next: '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3.5 10.5 8 6 12.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+  };
+  IC.finish = IC.check;
+  var BOLT = '<span class="kbd" title="Blitz: dynamischer Inhalt">' + IC.bolt + '</span>';
+  var FX = '<span class="kbd" title="Ausdruck">fx</span>';
+  IC.search = '<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="6.8" cy="6.8" r="4.3" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="m10 10 4 4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>';
+
+  /* the dynamic content picker (Blitz) as the designer shows it, checked in the live flow on 31.10.2026 */
+  var TRIGGER_GROUP = 'Wenn eine neue E-Mail in einem freigegebenen Postfach eingeht (V2)';
+  var PICK = {
+    betreff: { search: 'Betreff', items: [['Betreff', 'Der Betreff der Nachricht', 'pick']],
+      note: 'Unter dieser Überschrift gibt es nur einen Eintrag „Betreff“. Ohne Suche steht er in der Liste unter Von und An („Mehr anzeigen“ zeigt alle 39 Werte des Triggers).' },
+    msgid: { search: 'Nachrichten', items: [['Internetnachrichten-ID', 'Die Nachrichten-ID im von RFC2822 angegebenen Format.', 'wrong'], ['Nachrichten-ID', 'Der eindeutige Bezeichner der Nachricht', 'pick'],
+      ['Empfangszeit', 'Datum und Uhrzeit des Nachrichtenempfangs', 'dim'], ['An', 'Die Empfänger der Nachricht', 'dim'], ['Betreff', 'Der Betreff der Nachricht', 'dim'], ['Text', 'Der Text der Nachricht', 'dim']],
+      note: 'Achtung: „Internetnachrichten-ID“ steht direkt darüber und sieht ähnlich aus. Damit findet der Flow die Mail nicht.' }
+  };
+  function pickerHTML(key) {
+    var p = PICK[key];
+    return '<div class="dcp" aria-label="Blitz-Menü wie im Designer"><div class="top"><span>So sieht das Blitz-Menü im Designer aus</span></div>' +
+      '<div class="srch">' + IC.search + esc(p.search) + '</div>' +
+      '<div class="grp"><span class="ic">' + IC.outlook + '</span>' + esc(TRIGGER_GROUP) + '</div>' +
+      p.items.map(function (it) {
+        return '<div class="it ' + it[2] + '"><b>' + esc(it[0]) + '</b><span>' + esc(it[1]) + '</span>' + (it[2] === 'pick' ? '<em>✓ dieses anklicken</em>' : it[2] === 'wrong' ? '<em>✗ nicht dieses</em>' : '') + '</div>';
+      }).join('') + '<div class="nt">' + esc(p.note) + '</div></div>';
+  }
+
+  /* ---------- the flow, exactly as in the designer (Codeansicht of 30.10.2026) ---------- */
+  var OUTLOOK_API = '/providers/Microsoft.PowerApps/apis/shared_office365';
+  var EXCEL_API = '/providers/Microsoft.PowerApps/apis/shared_excelonlinebusiness';
+  var ID = {
+    folder: 'Id::(Ordner-ID von Posteingang)',
+    drive: '(ID der Bibliothek Dokumente)',
+    file: '(ID von AvisParser.xlsx)',
+    script: 'ms-officescript%3A%2F%2Fonedrive_business_itemlink%2F(ID von AvisV2)'
+  };
+  var AUTO = ['Automatische Antwort', 'Abwesend', 'Unzustellbar', 'Automatic reply', 'Undeliverable'];
+  var F = {
+    pdf: "base64(body('Export_email'))",
+    katLinks: "or(not(equals(actions('Run_script')?['status'], 'Succeeded')), not(empty(outputs('Run_script')?['body/result/patchCategory'])))",
+    uri: "concat('https://graph.microsoft.com/v1.0/users/{{MB}}/messages/', triggerOutputs()?['body/id'])",
+    katText: "if(equals(actions('Run_script')?['status'], 'Succeeded'), outputs('Run_script')?['body/result/patchCategory'], '{\"categories\":[\"Avis prüfen\"]}')",
+    betLinks: "and(equals(actions('Run_script')?['status'], 'Succeeded'), not(empty(outputs('Run_script')?['body/result/patchSubject'])))",
+    betText: "outputs('Run_script')?['body/result/patchSubject']",
+    subject: "triggerOutputs()?['body/subject']",
+    msgId: "triggerOutputs()?['body/id']",
+    eigen: "equals(toLower(coalesce(triggerOutputs()?['body/from'], '')), '{{mb}}')",
+    katKopie: "if(or(equals(split(trim(coalesce(triggerOutputs()?['body/subject'], '')), ' ')?[1], '?'), and(contains(' EUR CHF USD GBP PLN CZK SEK DKK NOK HUF RON BGN JPY CNY CAD AUD TRY SGD NZD HKD ZAR MXN ', concat(' ', coalesce(split(trim(coalesce(triggerOutputs()?['body/subject'], '')), ' ')?[1], ''), ' ')), endsWith(first(split(coalesce(triggerOutputs()?['body/subject'], ''), ' - ')), ' ?'))), '{\"categories\":[\"Avis prüfen\"]}', '{\"categories\":[\"Avis\"]}')",
+    uriFwd: "concat('https://graph.microsoft.com/v1.0/users/{{MB}}/messages/', triggerOutputs()?['body/id'], '/createForward')",
+    fwdBody: '{"toRecipients":[{"emailAddress":{"address":"{{MB}}"}}]}',
+    uriCopy: "concat('https://graph.microsoft.com/v1.0/users/{{MB}}/messages/', body('Kopie_anlegen')?['id'])",
+    copyText: "string(setProperty(setProperty(json('{}'), 'subject', outputs('Run_script')?['body/result/newSubject']), 'replyTo', createArray(setProperty(json('{}'), 'emailAddress', setProperty(json('{}'), 'address', triggerOutputs()?['body/from'])))))",
+    uriSend: "concat('https://graph.microsoft.com/v1.0/users/{{MB}}/messages/', body('Kopie_anlegen')?['id'], '/send')"
+  };
+  function host(api, conn, op) { return { apiId: api, connection: conn, operationId: op }; }
+  function httpCode(uri, body) {
+    return { type: 'OpenApiConnection', inputs: { parameters: { Uri: '@' + sub(uri), Method: 'PATCH', Body: '@' + body, ContentType: 'application/json' }, host: host(OUTLOOK_API, 'shared_office365', 'HttpRequest') } };
+  }
+  var CODE = {
+    trigger: function () {
+      var meta = {}; meta[ID.folder] = 'Posteingang';
+      return { type: 'OpenApiConnection', inputs: { parameters: { mailboxAddress: mb(), hasAttachments: false, includeAttachments: false, folderId: ID.folder }, host: host(OUTLOOK_API, 'shared_office365', 'SharedMailboxOnNewEmailV2') }, recurrence: { frequency: 'Minute', interval: 1 }, runtimeConfiguration: { concurrency: { runs: 1, maximumWaitingRuns: 100 } }, splitOn: "@triggerOutputs()?['body/value']", metadata: meta };
+    },
+    Keine_Automatik: function () {
+      return { type: 'If', expression: { and: AUTO.map(function (t) { return { not: { contains: ["@triggerOutputs()?['body/subject']", t] } }; }) }, actions: { Export_email: CODE.Export_email(), Run_script: CODE.Run_script(), Kategorie_noetig: CODE.Kategorie_noetig() }, else: { actions: {} }, runAfter: {} };
+    },
+    Export_email: function () {
+      return { type: 'OpenApiConnection', inputs: { parameters: { messageId: "@triggerOutputs()?['body/id']", mailboxAddress: mb() }, host: host(OUTLOOK_API, 'shared_office365', 'ExportEmail_V2') } };
+    },
+    Run_script: function () {
+      var meta = {}; meta[ID.file] = '/AvisParser.xlsx'; meta.tableId = null;
+      return { type: 'OpenApiConnection', inputs: { parameters: { source: 'me', drive: ID.drive, file: ID.file, scriptId: ID.script, 'ScriptParameters/pdfBase64': '@' + F.pdf, 'ScriptParameters/mailSubject': "@triggerOutputs()?['body/subject']" }, host: host(EXCEL_API, 'shared_excelonlinebusiness', 'RunScriptProd'), retryPolicy: { type: 'fixed', count: 3, interval: 'PT1M' } }, runAfter: { Export_email: ['Succeeded'] }, metadata: meta };
+    },
+    Kategorie_noetig: function () {
+      return { type: 'If', expression: { and: [{ equals: ['@' + F.katLinks, '@true'] }] }, actions: { Kategorie_setzen: CODE.Kategorie_setzen(), Betreff_noetig: CODE.Betreff_noetig() }, else: { actions: {} }, runAfter: { Run_script: ['Succeeded', 'TimedOut', 'Failed'] } };
+    },
+    Kategorie_setzen: function () { return httpCode(F.uri, F.katText); },
+    Betreff_noetig: function () {
+      return { type: 'If', expression: { and: [{ equals: ['@' + F.betLinks, '@true'] }] }, actions: { Betreff_setzen: CODE.Betreff_setzen() }, else: { actions: {} }, runAfter: { Kategorie_setzen: ['Succeeded'] } };
+    },
+    Betreff_setzen: function () { return httpCode(F.uri, F.betText); }
+  };
+
+  /* settings building blocks */
+  var S = {
+    timeout: { sec: 'Allgemein', items: [{ t: 'input', label: 'Timeout der Aktion', desc: 'Geben Sie die Dauer im ISO-8601-Format an.', ph: 'Beispiel: P1D' }] },
+    retryStd: { sec: 'Netzwerk', items: [{ t: 'dropdown', label: 'Wiederholungsrichtlinie', value: 'Standard' }] },
+    retryNone: { sec: 'Netzwerk', items: [{ t: 'dropdown', label: 'Wiederholungsrichtlinie', value: 'Keine', chg: true }] },
+    security: { sec: 'Sicherheit', items: [{ t: 'toggle', label: 'Sichere Eingaben', on: false }, { t: 'toggle', label: 'Sichere Ausgaben', on: false }] },
+    tracking: { sec: 'Nachverfolgung', items: [{ t: 'kv', label: 'Nachverfolgte Eigenschaften' }] },
+    after: function (action, conn, st, chg) { return { sec: 'Ausführen nach', items: [{ t: 'runafter', action: action, conn: conn, st: st, chg: chg }] }; }
+  };
+  var ACTION_SETTINGS = [S.timeout, S.retryStd, S.security, S.tracking];
+
+  /* fields: people, dropdown, folder, file, text, token, fx, advanced, conn, condition */
+  var N = {
+    trigger: {
+      kind: 'action', conn: 'outlook', trig: true,
+      title: 'Wenn eine neue E-Mail in einem freigegebenen Postfach eingeht (V2)',
+      sub: 'Office 365 Outlook · Trigger',
+      rename: null,
+      add: ['Power Automate → <b>Erstellen</b> → <b>Automatisierter Cloud-Flow</b> → Name <code>Avis V2</code>.',
+        'Trigger suchen: <code>freigegebenen Postfach</code> → <b>Wenn eine neue E-Mail in einem freigegebenen Postfach eingeht (V2)</b> → <b>Erstellen</b>.'],
+      params: [
+        { t: 'people', label: 'Ursprüngliche Postfachadresse', req: true, how: 'Adresse eintippen → in der Liste <b>„{{MB}}“ verwenden</b> anklicken.' },
+        { t: 'advanced', text: '3 von 9 wird/werden angezeigt', how: 'Beim Bauen auf <b>Alle anzeigen</b> klicken, die drei Felder darunter ausfüllen, alle anderen leer lassen. Nach dem Speichern zeigt der Designer nur noch die ausgefüllten („3 von 9“).' },
+        { t: 'dropdown', label: 'Nur mit Anlagen', value: 'Nein', clear: true, how: '<b>Nein</b> – auch Avise nur im Mailtext sollen ankommen.' },
+        { t: 'dropdown', label: 'Anlagen einschließen', value: 'Nein', clear: true, how: '<b>Nein</b> – die Anlagen holt „Export email“.' },
+        { t: 'folder', label: 'Ordner', value: 'Posteingang', clear: true, how: 'Ordnersymbol rechts im Feld → <b>Posteingang</b>.' },
+        { t: 'conn' }
+      ],
+      summary: { chg: true, html: '<b>Ändern:</b> Parallelitätssteuerung → Grenzwert <b>Ein</b>, Grad der Parallelität <b>1</b>, Maximale Anzahl wartender Ausführungen <b>100</b>. Alles andere bleibt Standard.' },
+      settings: [
+        { sec: 'Allgemein', items: [
+          { t: 'toggle', label: 'Teilen bei', on: true },
+          { t: 'dropdown', label: 'Array', value: "@triggerOutputs()?['body/value']" },
+          { t: 'input', label: '„Teilen bei“-Nachverfolgungs-ID' },
+          { t: 'head', label: 'Parallelitätssteuerung', desc: 'Legt fest, wie viele Läufe gleichzeitig laufen. Lässt sich nach dem Einschalten nicht wieder ausschalten, nur der Grenzwert lässt sich ändern.' },
+          { t: 'toggle', label: 'Grenzwert', on: true, chg: true },
+          { t: 'slider', label: 'Grad der Parallelität', value: '1', chg: true },
+          { t: 'input', label: 'Maximale Anzahl wartender Ausführungen', value: '100', chg: true },
+          { t: 'add', label: 'Auslöserbedingungen' }
+        ] },
+        S.retryStd, S.security,
+        { sec: 'Nachverfolgung', items: [{ t: 'input', label: 'Benutzerdefinierte Nachverfolgungs-ID', ph: 'Benutzerdefinierte Nachverfolgungs-ID' }] }
+      ],
+      code: CODE.trigger,
+      codeNote: 'Ordner-ID setzt der Designer selbst, wenn Sie „Posteingang“ wählen. Den Wert „recurrence“ (Abfrage jede Minute) legt Power Automate fest; der Vergleich ignoriert ihn.',
+      info: '<p>Startet den Flow für jede neue Mail im Posteingang des freigegebenen Postfachs, auch für Mails ohne Anlage (Avise stehen manchmal nur im Mailtext).</p>' +
+        '<h4>Welches Postfach?</h4><p>Das freigegebene Postfach, in dem die Zahlungsavise ankommen (z. B. <code>avis@firma.de</code>) – nicht das eigene Postfach und keine Microsoft-365-Gruppe. Das Konto des Flows braucht darauf Vollzugriff. Dieselbe Adresse steht in Export email und in den URI-Formeln von Kategorie setzen und Betreff setzen. <a href="#" class="lnk" data-mbhelp>Mehr dazu</a></p>' +
+        '<h4>Warum Grad der Parallelität 1?</h4><p>Excel lässt ein Skript höchstens 3-mal in 10 Sekunden laufen. Mit Grad 1 arbeitet der Flow die Mails nacheinander ab; bis zu 100 warten in der Schlange. Die Flowprüfung zeigt dazu „Drosselung der Trigger-Parallelität erkannt“ – den Hinweis ignorieren.</p>' +
+        '<h4>Gut zu wissen</h4><ul><li>Power Automate fragt das Postfach regelmäßig ab; eine neue Mail ist nach 1 bis 5 Minuten dran.</li><li>Mails, die vor dem Einschalten kamen, bearbeitet der Flow nicht.</li><li>Bei vielen gleichzeitigen Mails startet Power Automate manchmal zwei Läufe für dieselbe Mail. Das schadet nicht: Der Betrag steht nie doppelt im Betreff.</li></ul>'
+    },
+    Keine_Automatik: {
+      kind: 'cond', title: 'Keine Automatik', rename: 'Keine_Automatik', sub: 'Steuerung · Bedingung',
+      add: ['<b>+</b> unter dem Trigger → <b>Aktion hinzufügen</b> → Suche <code>Bedingung</code> → <b>Bedingung</b> (Steuerung).'],
+      params: [{ t: 'condition', group: 'Und', rows: AUTO.map(function (txt) { return { l: { tok: 'Betreff', conn: 'outlook' }, op: 'enthält nicht', r: { text: txt } }; }),
+        how: 'Jede Zeile: links ins Feld klicken → links am Feld erscheinen ' + BOLT + ' und ' + FX + ' → ' + BOLT + ' → unter der Überschrift „Wenn eine neue E-Mail in einem freigegebenen Postfach eingeht (V2)“ → <b>Betreff</b> („Der Betreff der Nachricht“). Mitte <b>enthält nicht</b>, rechts den Text eintippen oder einfügen. Neue Zeile: <b>Zeile hinzufügen</b>.' }],
+      summary: { chg: false, html: 'Nichts ändern.' },
+      settings: [S.tracking],
+      code: CODE.Keine_Automatik,
+      codeNote: 'Die Codeansicht dieser Bedingung enthält alle Aktionen darunter. Ein Vergleich hier prüft also den ganzen Flow ab „Export email“ auf einmal.',
+      info: '<p>Lässt Abwesenheitsnotizen und Zustellmeldungen in den Zweig <b>Falsch</b> fallen: Dort passiert nichts. Alle anderen Mails gehen in <b>Wahr</b>.</p><ul><li>Alle folgenden Aktionen kommen in den Zweig <b>Wahr</b>.</li><li>Der Zweig <b>Falsch</b> bleibt leer.</li><li>Kommt eine automatische Antwort mit anderem Text durch (z. B. „Out of Office“), eine Zeile ergänzen. Das Skript erkennt die meisten automatischen Antworten auch selbst.</li></ul>'
+    },
+    Export_email: {
+      kind: 'action', conn: 'outlook', title: 'Export email', rename: 'Export_email', sub: 'Office 365 Outlook · E-Mail exportieren (V2)',
+      add: ['Im Zweig <b>Wahr</b> von Keine Automatik: <b>+</b> → Suche <code>E-Mail exportieren</code> → <b>E-Mail exportieren (V2)</b> (Office 365 Outlook).'],
+      params: [
+        { t: 'token', label: 'Nachrichten-ID', req: true, tok: 'Nachrichten-ID', conn: 'outlook', alt: F.msgId, pick: 'msgid', how: 'Ins Feld klicken → ' + BOLT + ' → im Suchfeld <code>Nachrichten</code> eintippen → unter der Überschrift des Triggers <b>Nachrichten-ID</b> („Der eindeutige Bezeichner der Nachricht“). <b>Nicht</b> „Internetnachrichten-ID“, die direkt darüber steht.' },
+        { t: 'advanced', text: '1 von 1 wird/werden angezeigt', how: '<b>Alle anzeigen</b> klicken.' },
+        { t: 'people', label: 'Ursprüngliche Postfachadresse', how: 'Adresse eintippen → <b>„{{MB}}“ verwenden</b>.' },
+        { t: 'conn' }
+      ],
+      summary: { chg: false, html: 'Nichts ändern.' },
+      settings: ACTION_SETTINGS,
+      code: CODE.Export_email,
+      info: '<p>Holt die ganze Mail als Datei (.eml): Text, alle Anlagen, auch weitergeleitete Mails. Genau diese Datei bekommt das Skript.</p>'
+    },
+    Run_script: {
+      kind: 'action', conn: 'excel', title: 'Run script', rename: 'Run_script', sub: 'Excel Online (Business) · Skript ausführen',
+      add: ['<b>+</b> unter Export email → Suche <code>Skript ausführen</code> → <b>Skript ausführen</b> (Excel Online (Business)).',
+        'Fragt Power Automate nach einer Anmeldung für Excel: <b>Anmelden</b> → Konto des Flows. Kommt kein Fenster, Pop-ups für make.powerautomate.com erlauben.'],
+      params: [
+        { t: 'dropdown', label: 'Speicherort', req: true, value: 'OneDrive for Business', how: '<b>OneDrive for Business</b> wählen.' },
+        { t: 'dropdown', label: 'Dokumentbibliothek', req: true, value: 'Dokumente', how: '<b>Dokumente</b> (englische Oberfläche: OneDrive).' },
+        { t: 'file', label: 'Datei', req: true, value: '/AvisParser.xlsx', how: 'Ordnersymbol → <b>AvisParser.xlsx</b>.' },
+        { t: 'dropdown', label: 'Skript', req: true, value: 'AvisV2', how: '<b>AvisV2</b> wählen. Erscheint erst, wenn das Skript in Excel gespeichert und so benannt ist.' },
+        { t: 'fx', label: 'ScriptParameters/pdfBase64', req: true, short: 'base64(...)', expr: F.pdf, how: 'Ins Feld klicken → ' + FX + ' → Formel einfügen → <b>Hinzufügen</b>. Beim Bauen heißt das Feld nur „pdfBase64“.' },
+        { t: 'advanced', text: '1 von 2 wird/werden angezeigt', how: '<b>Alle anzeigen</b> → nur <b>mailSubject</b> ausfüllen, <b>extraKeywords</b> leer lassen (nach dem Speichern ausgeblendet).' },
+        { t: 'token', label: 'ScriptParameters/mailSubject', tok: 'Betreff', conn: 'outlook', alt: F.subject, pick: 'betreff', how: 'Ins Feld klicken → ' + BOLT + ' → unter der Überschrift „Wenn eine neue E-Mail in einem freigegebenen Postfach eingeht (V2)“ → <b>Betreff</b>. Beim Bauen heißt das Feld nur „mailSubject“.' },
+        { t: 'conn' }
+      ],
+      summary: { chg: true, html: '<b>Ändern:</b> Wiederholungsrichtlinie <b>Festes Intervall</b>, Anzahl <b>3</b>, Intervall <b>PT1M</b>. „Ausführen nach“ bleibt: Export email ist erfolgreich.' },
+      settings: [S.timeout,
+        { sec: 'Netzwerk', items: [
+          { t: 'dropdown', label: 'Wiederholungsrichtlinie', value: 'Festes Intervall', chg: true },
+          { t: 'input', label: 'Anzahl', value: '3', chg: true, ph: 'Wiederholungsanzahl von 1 bis 90 angeben' },
+          { t: 'input', label: 'Intervall', value: 'PT1M', chg: true, ph: 'Beispiel: PT20S' }
+        ] },
+        S.after('Export email', 'outlook', { s: true }), S.security, S.tracking],
+      code: CODE.Run_script,
+      codeNote: 'Die IDs von Bibliothek, Datei und Skript setzt der Designer selbst, wenn Sie sie auswählen; der Vergleich ignoriert sie.',
+      info: '<p>Startet das Skript <b>AvisV2</b> mit der ganzen Mail. Es liest PDF, Excel (.xlsx/.xlsm), CSV, SAP-Exporte und den Mailtext (ohne zitierten Verlauf bei Antworten) und entscheidet je Mail: Avis, mehrere Avise, unklar oder kein Avis. Zurück kommen die fertigen Texte für Kategorie und Betreff (<code>patchCategory</code>, <code>patchSubject</code>).</p>' +
+        '<ul><li>Dauer im Lasttest: meist 8 bis 20 Sekunden je Mail, auch bei 72 Seiten oder 20 PDF-Anlagen (das meiste ist der Start von Excel).</li><li>Wiederholung: Wird Excel gedrosselt, versucht es der Flow nach 1 Minute erneut, bis zu 3-mal.</li><li>Neues Skript einspielen: Excel → Automatisieren → Alle Skripts → AvisV2 → Bearbeiten → alles ersetzen → Speichern. Der Flow nimmt ab dem nächsten Lauf das neue Skript.</li></ul>'
+    },
+    Kategorie_noetig: {
+      kind: 'cond', title: 'Kategorie noetig', rename: 'Kategorie_noetig', sub: 'Steuerung · Bedingung',
+      add: ['<b>+</b> unter Run script → <b>Bedingung</b>.'],
+      params: [{ t: 'condition', group: 'Und', rows: [{ l: { fx: 'or(...)', expr: F.katLinks }, op: 'ist gleich', r: { fx: 'true', expr: 'true' } }],
+        how: 'Links: ins Feld → ' + FX + ' → Formel (oben) → <b>Hinzufügen</b>. Mitte: <b>ist gleich</b>. Rechts: ' + FX + ' → <code>true</code> → <b>Hinzufügen</b> (nicht als Text tippen, sonst ist es das Wort „true“).' }],
+      summary: { chg: true, html: '<b>Ändern:</b> Ausführen nach → <b>Run script</b> aufklappen → <b>Ist erfolgreich</b>, <b>Timeout</b> und <b>Ist fehlgeschlagen</b> anhaken. Auf der Fläche erscheinen dann drei Punkte über der Karte.' },
+      settings: [S.after('Run script', 'excel', { s: true, t: true, f: true }, true), S.tracking],
+      code: CODE.Kategorie_noetig,
+      info: '<p><b>Wahr</b>, wenn das Skript gescheitert ist (dann „Avis prüfen“) oder eine Kategorie liefert. Bei „kein Avis“ ist <code>patchCategory</code> leer → <b>Falsch</b> → nichts passiert.</p><p>„Ausführen nach“ auch bei Fehler und Timeout: Sonst bliebe eine Mail, bei der das Skript nicht laufen konnte, ohne Kategorie.</p>'
+    },
+    Kategorie_setzen: {
+      kind: 'action', conn: 'outlook', title: 'Kategorie setzen', rename: 'Kategorie_setzen', sub: 'Office 365 Outlook · HTTP-Anforderung senden',
+      add: ['Im Zweig <b>Wahr</b> von Kategorie noetig: <b>+</b> → Suche <code>HTTP-Anforderung senden Office 365 Outlook</code> → <b>HTTP-Anforderung senden</b> (Office 365 Outlook).'],
+      params: [
+        { t: 'fx', label: 'URI', req: true, short: 'concat(...)', expr: F.uri, how: FX + ' → Formel (mit Ihrer Postfachadresse) → <b>Hinzufügen</b>.' },
+        { t: 'dropdown', label: 'Methode', req: true, value: 'PATCH', how: '<b>PATCH</b> wählen.' },
+        { t: 'advanced', text: '2 von 7 wird/werden angezeigt', how: '<b>Alle anzeigen</b> → nur <b>Text</b> und <b>Content-Type</b> ausfüllen.' },
+        { t: 'fx', label: 'Text', short: 'if(...)', expr: F.katText, how: FX + ' → Formel → <b>Hinzufügen</b>.' },
+        { t: 'text', label: 'Content-Type', value: 'application/json', how: 'Steht meist schon da.' },
+        { t: 'conn' }
+      ],
+      summary: { chg: false, html: 'Nichts ändern.' },
+      settings: ACTION_SETTINGS,
+      code: CODE.Kategorie_setzen,
+      info: '<p>Setzt an der Original-Mail die Kategorie, die das Skript liefert, z. B. <code>{"categories":["Avis"]}</code>. Kategorien, die schon an der Mail hingen, bleiben. Ist das Skript gescheitert, setzt sie „Avis prüfen“.</p><ul><li><b>403</b>: kein Vollzugriff oder falsches Konto in der Verbindung.</li><li><b>404</b>: Postfachadresse in der URI falsch, oder die Mail wurde vorher verschoben.</li><li><b>400</b>: Text falsch – Formel neu über ' + FX + ' einfügen.</li></ul>'
+    },
+    Betreff_noetig: {
+      kind: 'cond', title: 'Betreff noetig', rename: 'Betreff_noetig', sub: 'Steuerung · Bedingung',
+      add: ['<b>+</b> unter Kategorie setzen (noch im Zweig <b>Wahr</b> von Kategorie noetig) → <b>Bedingung</b>.'],
+      params: [{ t: 'condition', group: 'Und', rows: [{ l: { fx: 'and(...)', expr: F.betLinks }, op: 'ist gleich', r: { fx: 'true', expr: 'true' } }],
+        how: 'Links: ' + FX + ' → Formel (oben) → <b>Hinzufügen</b>. Mitte: <b>ist gleich</b>. Rechts: ' + FX + ' → <code>true</code> → <b>Hinzufügen</b>.' }],
+      summary: { chg: false, html: 'Nichts ändern. „Ausführen nach“ steht schon richtig: Kategorie setzen ist erfolgreich.' },
+      settings: [S.after('Kategorie setzen', 'outlook', { s: true }), S.tracking],
+      code: CODE.Betreff_noetig,
+      info: '<p>Nur wenn das Skript einen neuen Betreff liefert (ein Avis mit Betrag). Bei „mehrere Avise“, unklaren Fällen und schon ergänzten Betreffs bleibt es bei der Kategorie.</p><p>Diese Bedingung liegt bewusst <b>in</b> Kategorie noetig: Einen neuen Betreff gibt es nur zusammen mit einer Kategorie.</p>'
+    },
+    Betreff_setzen: {
+      kind: 'action', conn: 'outlook', title: 'Betreff setzen', rename: 'Betreff_setzen', sub: 'Office 365 Outlook · HTTP-Anforderung senden',
+      add: ['Im Zweig <b>Wahr</b> von Betreff noetig: <b>+</b> → <b>HTTP-Anforderung senden</b> (Office 365 Outlook).'],
+      params: [
+        { t: 'fx', label: 'URI', req: true, short: 'concat(...)', expr: F.uri, how: FX + ' → dieselbe Formel wie bei Kategorie setzen → <b>Hinzufügen</b>.' },
+        { t: 'dropdown', label: 'Methode', req: true, value: 'PATCH', how: '<b>PATCH</b> wählen.' },
+        { t: 'advanced', text: '2 von 7 wird/werden angezeigt', how: '<b>Alle anzeigen</b> → nur <b>Text</b> und <b>Content-Type</b> ausfüllen.' },
+        { t: 'token', label: 'Text', tok: 'body/result/patchSubject', conn: 'excel', expr: F.betText, how: FX + ' → Formel → <b>Hinzufügen</b>. Nach dem Speichern zeigt der Designer daraus den Baustein „body/result/patchSubject“ (wie hier). Das ist richtig.' },
+        { t: 'text', label: 'Content-Type', value: 'application/json', how: 'Steht meist schon da.' },
+        { t: 'conn' }
+      ],
+      summary: { chg: false, html: 'Nichts ändern.' },
+      settings: ACTION_SETTINGS,
+      code: CODE.Betreff_setzen,
+      info: '<p>Setzt den Betrag vor den Betreff der Original-Mail, z. B. <code>2.601,35 Zahlungsavis</code>.</p><div class="callout warn"><b>Ab 31.12.2026</b> will Microsoft Betreffänderungen an empfangenen Mails sperren. Dann schlägt nur diese Aktion fehl; die Kategorie ist schon gesetzt. Im Januar testen; falls gesperrt: Plan B (oben umschalten).</div>'
+    },
+    finish: {
+      kind: 'finish', conn: 'finish', title: 'Speichern und testen', sub: 'Zum Schluss',
+      html: '<ol><li>Oben <b>Speichern</b>. Die Meldung „Ihr Flow ist fertiggestellt“ erscheint. Der Flow ist sofort eingeschaltet und bearbeitet jede neue Mail im Posteingang (ältere nicht).</li>' +
+        '<li>Die Flowprüfung zeigt „Drosselung der Trigger-Parallelität erkannt“. Das ist gewollt.</li>' +
+        '<li><b>1:1-Kontrolle:</b> Im echten Designer die Karte <b>Keine Automatik</b> anklicken → <b>Codeansicht</b> → in den Code klicken → Strg+A, Strg+C (Mac: ⌘). Hier bei <b>Keine Automatik</b> → Codeansicht → einfügen → <b>Vergleichen</b>. Das prüft alle Aktionen darunter. Dasselbe für den Trigger.</li>' +
+        '<li><b>Testen:</b> Aus dem eigenen Postfach eine Mail mit einem Zahlungsavis-PDF an <code>{{MB}}</code> schicken, eine zweite ohne Avis (z. B. eine Rechnung). 1 bis 5 Minuten warten.</li>' +
+        '<li>In Outlook: Die Avis-Mail hat die Kategorie „Avis“ und den Betrag im Betreff, die andere ist unverändert.</li>' +
+        '<li>Ausführungsverlauf: Meine Flows → Avis V2 → Lauf anklicken → <b>Keine Automatik</b> aufklappen → <b>Run script</b> → Ausgaben: <code>result.verdict</code>, <code>result.category</code>, <code>result.newSubject</code>, <code>result.verdictWhy</code>, <code>result.documents</code>.</li></ol>' +
+        '<div class="callout">Lief der alte Flow (Version 1) auf demselben Postfach: dort <b>⋯ → Deaktivieren</b>. Nie zwei Flows gleichzeitig auf ein Postfach.</div>'
+    }
+  };
+
+  /* ---------- Plan B ---------- */
+  var PB_NOTE = 'Plan B ist noch nicht im Testzugang gebaut. Deshalb gibt es hier keine geprüfte Codeansicht. Felder und Einstellungen stehen im Reiter Parameter und Einstellungen.';
+  var PB = {
+    Eigene_Kopie: {
+      kind: 'cond', planB: true, title: 'Eigene Kopie', rename: 'Eigene_Kopie', sub: 'Steuerung · Bedingung · Plan B',
+      add: ['Direkt unter dem Trigger: <b>+</b> → <b>Bedingung</b>.', 'Danach die ganze Karte <b>Keine Automatik</b> mit der Maus auf das <b>+</b> im Zweig <b>Falsch</b> ziehen.'],
+      params: [{ t: 'condition', group: 'Und', rows: [{ l: { fx: 'equals(...)', expr: F.eigen }, op: 'ist gleich', r: { fx: 'true', expr: 'true' } }],
+        how: 'Links: ' + FX + ' → Formel → <b>Hinzufügen</b> (Adresse in Kleinbuchstaben). Mitte: <b>ist gleich</b>. Rechts: ' + FX + ' → <code>true</code>.' }],
+      summary: { chg: false, html: 'Nichts ändern.' },
+      settings: [S.tracking],
+      info: '<p>Die Kopie aus Plan B kommt vom Postfach selbst und startet den Flow noch einmal. Diese Bedingung erkennt das: <b>Wahr</b> setzt nur die Kategorie (kein Skript, sonst käme der Betrag doppelt), <b>Falsch</b> ist der normale Flow.</p>'
+    },
+    Kategorie_Kopie: {
+      kind: 'action', conn: 'outlook', planB: true, title: 'Kategorie Kopie', rename: 'Kategorie_Kopie', sub: 'Office 365 Outlook · HTTP-Anforderung senden · Plan B',
+      add: ['Im Zweig <b>Wahr</b> von Eigene Kopie: <b>+</b> → <b>HTTP-Anforderung senden</b> (Office 365 Outlook).'],
+      params: [
+        { t: 'fx', label: 'URI', req: true, short: 'concat(...)', expr: F.uri, how: FX + ' → Formel → <b>Hinzufügen</b>.' },
+        { t: 'dropdown', label: 'Methode', req: true, value: 'PATCH' },
+        { t: 'advanced', text: '2 von 7 wird/werden angezeigt', how: '<b>Alle anzeigen</b> → <b>Text</b> und <b>Content-Type</b>.' },
+        { t: 'fx', label: 'Text', short: 'if(...)', expr: F.katKopie, how: FX + ' → Formel → <b>Hinzufügen</b>.' },
+        { t: 'text', label: 'Content-Type', value: 'application/json' },
+        { t: 'conn' }
+      ],
+      summary: { chg: false, html: 'Nichts ändern.' },
+      settings: ACTION_SETTINGS,
+      info: '<p>Gibt der Kopie die Kategorie: „Avis prüfen“, wenn der Betrag vorne im Betreff ein „ ?“ trägt (z. B. <code>2.601,35 ? Zahlungsavis</code>), sonst „Avis“.</p>'
+    },
+    Kopie_anlegen: {
+      kind: 'action', conn: 'outlook', planB: true, title: 'Kopie anlegen', rename: 'Kopie_anlegen', sub: 'Office 365 Outlook · HTTP-Anforderung senden · Plan B',
+      add: ['Ersetzt <b>Betreff setzen</b>: Im Zweig <b>Wahr</b> von Betreff noetig <b>+</b> → <b>HTTP-Anforderung senden</b> (Office 365 Outlook). Betreff setzen löschen.'],
+      params: [
+        { t: 'fx', label: 'URI', req: true, short: 'concat(...)', expr: F.uriFwd, how: FX + ' → Formel → <b>Hinzufügen</b>.' },
+        { t: 'dropdown', label: 'Methode', req: true, value: 'POST' },
+        { t: 'advanced', text: '2 von 7 wird/werden angezeigt', how: '<b>Alle anzeigen</b> → <b>Text</b> und <b>Content-Type</b>.' },
+        { t: 'text', label: 'Text', value: F.fwdBody, how: 'Als Text einfügen (kein fx).' },
+        { t: 'text', label: 'Content-Type', value: 'application/json' },
+        { t: 'conn' }
+      ],
+      summary: { chg: true, html: '<b>Ändern:</b> Wiederholungsrichtlinie <b>Keine</b> – eine Wiederholung hinterließe einen zweiten Entwurf.' },
+      settings: [S.timeout, S.retryNone, S.security, S.tracking],
+      info: '<p>Legt eine Weiterleitung der Original-Mail als Entwurf an, adressiert an das Postfach selbst (Antwortcode 201).</p>'
+    },
+    Kopie_anpassen: {
+      kind: 'action', conn: 'outlook', planB: true, title: 'Kopie anpassen', rename: 'Kopie_anpassen', sub: 'Office 365 Outlook · HTTP-Anforderung senden · Plan B',
+      add: ['<b>+</b> unter Kopie anlegen → <b>HTTP-Anforderung senden</b> (Office 365 Outlook).'],
+      params: [
+        { t: 'fx', label: 'URI', req: true, short: 'concat(...)', expr: F.uriCopy, how: FX + ' → Formel → <b>Hinzufügen</b>.' },
+        { t: 'dropdown', label: 'Methode', req: true, value: 'PATCH' },
+        { t: 'advanced', text: '2 von 7 wird/werden angezeigt', how: '<b>Alle anzeigen</b> → <b>Text</b> und <b>Content-Type</b>.' },
+        { t: 'fx', label: 'Text', short: 'string(...)', expr: F.copyText, how: FX + ' → Formel → <b>Hinzufügen</b>.' },
+        { t: 'text', label: 'Content-Type', value: 'application/json' },
+        { t: 'conn' }
+      ],
+      summary: { chg: false, html: 'Nichts ändern.' },
+      settings: [S.timeout, S.retryStd, S.after('Kopie anlegen', 'outlook', { s: true }), S.security, S.tracking],
+      info: '<p>Setzt im Entwurf den neuen Betreff mit Betrag und „Antwort an“ = Absender der Original-Mail (Antwortcode 200).</p>'
+    },
+    Kopie_senden: {
+      kind: 'action', conn: 'outlook', planB: true, title: 'Kopie senden', rename: 'Kopie_senden', sub: 'Office 365 Outlook · HTTP-Anforderung senden · Plan B',
+      add: ['<b>+</b> unter Kopie anpassen → <b>HTTP-Anforderung senden</b> (Office 365 Outlook).'],
+      params: [
+        { t: 'fx', label: 'URI', req: true, short: 'concat(...)', expr: F.uriSend, how: FX + ' → Formel → <b>Hinzufügen</b>.' },
+        { t: 'dropdown', label: 'Methode', req: true, value: 'POST' },
+        { t: 'advanced', text: '0 von 7 wird/werden angezeigt', how: 'Nichts weiter ausfüllen, Text bleibt leer.' },
+        { t: 'conn' }
+      ],
+      summary: { chg: true, html: '<b>Ändern:</b> Wiederholungsrichtlinie <b>Keine</b> – sonst kann die Kopie doppelt ankommen.' },
+      settings: [S.timeout, S.retryNone, S.after('Kopie anpassen', 'outlook', { s: true }), S.security, S.tracking],
+      info: '<p>Schickt die Kopie an das Postfach (Antwortcode 202). Sie startet den Flow noch einmal; dort greift <b>Eigene Kopie</b>.</p>'
+    },
+    Original_verschieben: {
+      kind: 'action', conn: 'outlook', planB: true, title: 'Original verschieben', rename: 'Original_verschieben', sub: 'Office 365 Outlook · E-Mail verschieben (V2) · Plan B',
+      add: ['<b>+</b> unter Kopie senden → Suche <code>E-Mail verschieben</code> → <b>E-Mail verschieben (V2)</b> (Office 365 Outlook).', 'Vorher im Postfach den Ordner <b>Avis-Original</b> anlegen.'],
+      params: [
+        { t: 'token', label: 'Nachrichten-ID', req: true, tok: 'Nachrichten-ID', conn: 'outlook', alt: F.msgId, pick: 'msgid', how: 'Ins Feld klicken → ' + BOLT + ' → <b>Nachrichten-ID</b> unter der Überschrift des Triggers, nicht „Internetnachrichten-ID“.' },
+        { t: 'folder', label: 'Ordner', req: true, value: 'Avis-Original', how: 'Erst unten die Postfachadresse eintragen, dann über das Ordnersymbol <b>Avis-Original</b> wählen – sonst zeigt die Liste das eigene Postfach.' },
+        { t: 'advanced', text: '1 von 1 wird/werden angezeigt', how: '<b>Alle anzeigen</b>.' },
+        { t: 'people', label: 'Ursprüngliche Postfachadresse', how: 'Adresse eintippen → <b>„{{MB}}“ verwenden</b>.' },
+        { t: 'conn' }
+      ],
+      summary: { chg: false, html: 'Nichts ändern.' },
+      settings: [S.timeout, S.retryStd, S.after('Kopie senden', 'outlook', { s: true }), S.security, S.tracking],
+      info: '<p>Immer als letzte Aktion. Schlägt die Kopie fehl, bleibt das Original mit seiner Kategorie im Posteingang – nichts verschwindet.</p>'
+    },
+    finishB: {
+      kind: 'finish', conn: 'finish', title: 'Plan B testen', sub: 'Zum Schluss',
+      html: '<p>Vor dem Umstellen mit einer Testmail prüfen:</p><ol><li>Kopie anlegen <b>201</b>, Kopie anpassen <b>200</b>, Kopie senden <b>202</b>, Original verschieben grün.</li><li>Ein zweiter Lauf startet für die Kopie: Eigene Kopie = Wahr, nur Kategorie Kopie läuft.</li><li>Die Kopie hat den Betreff mit Betrag, alle Anhänge und „Antwort an“ = Kunde; das Original liegt in „Avis-Original“.</li></ol><p>Plan B braucht „Senden als“ für das Konto des Flows. Je Avis landet eine Kopie in „Gesendete Elemente“ des Postfachs.</p>'
+    }
+  };
+  Object.keys(PB).forEach(function (k) { N[k] = PB[k]; });
+
+  var TREE = {
+    main: ['trigger', { cond: 'Keine_Automatik', yes: ['Export_email', 'Run_script', { cond: 'Kategorie_noetig', yes: ['Kategorie_setzen', { cond: 'Betreff_noetig', yes: ['Betreff_setzen'], no: [] }], no: [] }], no: [] }],
+    planB: ['trigger', { cond: 'Eigene_Kopie', yes: ['Kategorie_Kopie'], no: [{ cond: 'Keine_Automatik', yes: ['Export_email', 'Run_script', { cond: 'Kategorie_noetig', yes: ['Kategorie_setzen', { cond: 'Betreff_noetig', yes: ['Kopie_anlegen', 'Kopie_anpassen', 'Kopie_senden', 'Original_verschieben'], no: [] }], no: [] }], no: [] }] }]
+  };
+  var ORDER = {
+    main: ['trigger', 'Keine_Automatik', 'Export_email', 'Run_script', 'Kategorie_noetig', 'Kategorie_setzen', 'Betreff_noetig', 'Betreff_setzen', 'finish'],
+    planB: ['trigger', 'Eigene_Kopie', 'Kategorie_Kopie', 'Keine_Automatik', 'Export_email', 'Run_script', 'Kategorie_noetig', 'Kategorie_setzen', 'Betreff_noetig', 'Kopie_anlegen', 'Kopie_anpassen', 'Kopie_senden', 'Original_verschieben', 'finishB']
+  };
+  /* in Plan B these nodes change below them, so the current Codeansicht no longer applies */
+  var PB_CHANGED = { Keine_Automatik: 1, Kategorie_noetig: 1, Betreff_noetig: 1 };
+  var RUNAFTER = { Kategorie_noetig: { s: true, t: true, f: true } };
+
+  /* expose the data for tests (node) */
+  if (typeof window !== 'undefined') window.AvisFlow = { code: function (id, m) { var old = MB; if (m) MB = m; try { return CODE[id](); } finally { MB = old; } }, ID: ID, F: F };
+  if (typeof document === 'undefined') return;
+
+  /* ---------- state ---------- */
+  var view = store.get('view', 'main') === 'planB' ? 'planB' : 'main';
+  var done = store.get('done', []);
+  if (!Array.isArray(done)) done = [];
+  var current = null, tab = 'param', Z = 1;
+  var $ = function (s) { return document.querySelector(s); };
+  var flow = $('#flow'), canvas = $('#canvas'), panel = $('#panel');
+
+  /* ---------- canvas ---------- */
+  function rdots(st) {
+    var c = function (on, color) { return '<i class="' + (on ? '' : 'off') + '" style="background:' + (on ? color : 'var(--sk)') + '"></i>'; };
+    return c(st.s, 'var(--ok)') + c(st.t, 'var(--to)') + c(st.k, 'var(--sk)') + c(st.f, 'var(--fa)');
+  }
+  function edge(target) {
+    var ra = RUNAFTER[target];
+    var dots = ra ? '<span class="rdots" title="Ausführen nach: Ist erfolgreich, Timeout, Ist fehlgeschlagen">' + rdots(ra) + '</span>' : '';
+    return '<div class="edge"><span class="plus"></span>' + dots + '</div>';
+  }
+  function cardHTML(id) {
+    var n = N[id];
+    var cls = 'card c-' + n.conn + (n.trig ? ' trig' : '') + (n.planB && view === 'planB' ? ' pb' : '') + (done.indexOf(id) >= 0 ? ' done' : '');
+    return '<div class="' + cls + '" data-id="' + id + '" role="button" tabindex="0" aria-label="' + esc(n.title) + ': Details öffnen">' +
+      (n.planB && view === 'planB' ? '<span class="pbtag">Plan B</span>' : '') +
+      '<span class="ic">' + IC[n.conn] + '</span><span class="tt">' + esc(n.title) + '</span><span class="badge">' + IC.check + '</span></div>';
+  }
+  function seqHTML(items, inBranch) {
+    var h = '';
+    items.forEach(function (it, i) {
+      var id = typeof it === 'string' ? it : it.cond;
+      if (i > 0 || inBranch) h += edge(id);
+      h += typeof it === 'string' ? cardHTML(id) : scopeHTML(it);
+    });
+    return h + '<div class="edge end"><span class="plus"></span></div>';
+  }
+  function branchHTML(kind, items, condId) {
+    var label = kind === 'yes' ? 'Wahr' : 'Falsch';
+    var inner = items.length ? seqHTML(items, true) : '<div class="edge solo"><span class="plus"></span></div><div class="leer">leer lassen</div>';
+    return '<div class="branch ' + kind + '"><button type="button" class="pill ' + kind + '" data-branch aria-expanded="true" aria-label="Zweig ' + label + ' von ' + esc(N[condId].title) + ' zuklappen">' + label + IC.up + '</button>' +
+      '<div class="bbox">' + inner + '</div><div class="bcol">' + items.length + ' Aktionen</div></div>';
+  }
+  function scopeHTML(it) {
+    var n = N[it.cond];
+    var pb = n.planB && view === 'planB';
+    return '<div class="scope' + (pb ? ' pb' : '') + (done.indexOf(it.cond) >= 0 ? ' done' : '') + '" data-scope="' + it.cond + '">' +
+      '<div class="shead" data-id="' + it.cond + '" role="button" tabindex="0" aria-label="' + esc(n.title) + ': Details öffnen">' +
+      (pb ? '<span class="pbtag">Plan B</span>' : '') +
+      '<span class="ic">' + IC.cond + '</span><span class="tt">' + esc(n.title) + '</span><span class="badge">' + IC.check + '</span>' +
+      '<button type="button" class="chev" data-toggle aria-expanded="true" aria-label="' + esc(n.title) + ' zuklappen">' + IC.up + '</button></div>' +
+      '<div class="sbox"><div class="branches">' + branchHTML('yes', it.yes, it.cond) + branchHTML('no', it.no, it.cond) + '</div></div>' +
+      '<div class="scol">2 Vorgänge</div></div>';
+  }
+  function renderFlow() {
+    var t = TREE[view];
+    flow.innerHTML = cardHTML(t[0]) + edge(t[1].cond) + scopeHTML(t[1]) + '<div class="edge end"><span class="plus"></span></div>';
+    markSel();
+    updateProgress();
+  }
+  function markSel() {
+    flow.querySelectorAll('.sel').forEach(function (e) { e.classList.remove('sel'); });
+    if (current) { var el = flow.querySelector('[data-id="' + current + '"]'); if (el) el.classList.add('sel'); }
+  }
+  function updateProgress() {
+    var steps = ORDER[view].filter(function (id) { return N[id].kind !== 'finish'; });
+    var n = steps.filter(function (id) { return done.indexOf(id) >= 0; }).length;
+    $('#progress').textContent = 'Erledigt: ' + n + ' von ' + steps.length;
+  }
+
+  /* zoom: fit on wide screens (never below 0.6), fixed 0.8 on phones; manual zoom wins until the next fit */
+  var manualZoom = false;
+  function setZoom(z) { Z = Math.max(0.35, Math.min(1.6, z)); flow.style.zoom = Z; }
+  function fitZoom(minZ) {
+    var natural = flow.getBoundingClientRect().width / Z;
+    var avail = canvas.clientWidth - 16;
+    setZoom(Math.max(minZ || 0.35, Math.min(1, avail / natural)));
+  }
+  function autoZoom() {
+    if (window.innerWidth <= 760) setZoom(0.8); else fitZoom(0.6);
+    centerScroll();
+  }
+  function centerScroll() { canvas.scrollLeft = Math.max(0, (canvas.scrollWidth - canvas.clientWidth) / 2); }
+
+  /* ---------- panel: fields ---------- */
+  function copyBtn(text, label) { return '<button type="button" class="cp" data-copy="' + esc(text) + '">' + (label || 'Kopieren') + '</button>'; }
+  function tokenHTML(label, conn) { return '<span class="tok' + (conn === 'excel' ? ' xl' : '') + '"><span class="ti">' + IC[conn] + '</span><span class="tl">' + esc(label) + '</span><span class="tx">×</span></span>'; }
+  function fxTokHTML(short) { return '<span class="tok fx"><span class="fxi">fx</span><span class="tl">' + esc(short) + '</span><span class="tx">×</span></span>'; }
+  function markMB(html) {
+    var a = esc(mb()), b = esc(mb().toLowerCase());
+    var out = html.split(a).join('\u0001' + a + '\u0002');
+    if (b !== a) out = out.split(b).join('\u0001' + b + '\u0002');
+    return out.split('\u0001').join('<mark class="mbm" title="Adresse des freigegebenen Avis-Postfachs">').split('\u0002').join('</mark>');
+  }
+  function exprHTML(expr, title) {
+    var e = sub(expr);
+    var hasMB = expr.indexOf('{{MB}}') >= 0 || expr.indexOf('{{mb}}') >= 0;
+    return '<div class="expr"><div class="eh"><span>' + (title || '<b>fx</b> Formel') + '</span>' + copyBtn(e) + '</div><code>' + (hasMB ? markMB(esc(e)) : esc(e)) + '</code></div>' +
+      (hasMB ? mbNote('Markiert: die Adresse des freigegebenen Avis-Postfachs.') : '');
+  }
+  function mbIsSet() { return MB.trim() !== '' && MB.trim().toLowerCase() !== DEFAULT_MB; }
+  function mbValid() { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(MB.trim()); }
+  function mbNote(text) {
+    if (!mbIsSet()) return '<div class="mbnote warn">Noch Beispieladresse <code>' + esc(DEFAULT_MB) + '</code>: oben rechts bei „Avis-Postfach“ die Adresse eures freigegebenen Postfachs eintragen, dann steht sie hier richtig.</div>';
+    if (!mbValid()) return '<div class="mbnote warn">Oben bei „Avis-Postfach“ steht keine gültige E-Mail-Adresse.</div>';
+    return text ? '<div class="mbnote">' + text + '</div>' : '';
+  }
+  function howHTML(f) { return f.how ? '<div class="how">' + subH(f.how) + (f.alt ? '<span class="alt">Oder über ' + FX + ': <code>' + esc(f.alt) + '</code> ' + copyBtn(f.alt) + '</span>' : '') + '</div>' : ''; }
+  function fieldHTML(f) {
+    var box = '', copy = null, extra = '';
+    switch (f.t) {
+      case 'people':
+        box = '<span class="persona"><span class="av">' + esc(mb().charAt(0).toUpperCase()) + '</span>' + esc(mb()) + '<span class="x">×</span></span><span class="phtext">Einen Teil eines Namens oder einer E-Mail-Adresse eingeben …</span><span class="dd">' + IC.down + '</span>';
+        copy = mb();
+        extra = mbNote('<b>Adresse des freigegebenen Avis-Postfachs</b>, nicht deine eigene Adresse und keine Microsoft-365-Gruppe. Überall dieselbe: Trigger, Export email und URI-Formeln. <a href="#" class="lnk" data-mbhelp>Welche Adresse?</a>');
+        break;
+      case 'dropdown': box = '<span class="val">' + esc(f.value) + '</span><span class="dd">' + IC.down + '</span>'; break;
+      case 'folder': case 'file': box = '<span class="val">' + esc(f.value) + '</span><span class="fi">' + IC.folder + '</span>'; break;
+      case 'text':
+        box = '<span class="val mono">' + (f.value.indexOf('{{MB}}') >= 0 ? markMB(esc(sub(f.value))) : esc(sub(f.value))) + '</span>'; copy = sub(f.value);
+        if (f.value.indexOf('{{MB}}') >= 0) extra = mbNote('Markiert: die Adresse des freigegebenen Avis-Postfachs.');
+        break;
+      case 'token': box = tokenHTML(f.tok, f.conn); if (f.expr) extra = exprHTML(f.expr); break;
+      case 'fx': box = fxTokHTML(f.short); extra = exprHTML(f.expr); break;
+      case 'advanced':
+        return '<div class="adv"><div class="flabel">Erweiterte Parameter</div><div class="advrow"><div class="fbox"><span class="val">' + esc(f.text) + '</span><span class="dd">' + IC.down + '</span></div><span class="btnlike">Alle anzeigen</span><span class="btnlike">Alle löschen</span></div>' + howHTML(f) + '</div>';
+      case 'conn':
+        return '<div class="conninfo">' + IC.link + '<span>Verbunden mit dem Konto des Flows. <span class="lnk">Verbindung ändern</span></span></div>';
+      case 'condition': return condHTML(f);
+    }
+    return '<div class="field"><div class="flabel">' + esc(f.label) + (f.req ? '<span class="req">*</span>' : '') + '</div>' +
+      '<div class="frow"><div class="fbox">' + box + '</div>' + (f.clear ? '<span class="clr" aria-hidden="true">×</span>' : '') + (copy !== null ? copyBtn(copy) : '') + '</div>' +
+      extra + howHTML(f) + (f.pick ? pickerHTML(f.pick) : '') + '</div>';
+  }
+  function condVal(v) {
+    if (v.tok) return tokenHTML(v.tok, v.conn);
+    if (v.fx) return fxTokHTML(v.fx);
+    return '<span class="val">' + esc(v.text) + '</span>';
+  }
+  function condHTML(f) {
+    var h = '<div class="cond"><div class="flabel">Condition expression<span class="req">*</span></div><div class="cdesc">Geben Sie die zu vergleichenden Werte an, und wählen Sie den zu verwendenden Operator aus.</div>' +
+      '<div class="cgroup"><div class="fbox"><span class="val">' + esc(f.group) + '</span><span class="dd">' + IC.down + '</span></div></div>';
+    f.rows.forEach(function (r) {
+      h += '<div class="crow"><span class="cbx"></span><div class="fbox">' + condVal(r.l) + '</div><div class="fbox"><span class="val">' + esc(r.op) + '</span><span class="dd">' + IC.down + '</span></div><div class="fbox">' + condVal(r.r) + '</div><span class="more">⋯</span></div>';
+      var parts = [];
+      if (r.l.fx) parts.push(exprHTML(r.l.expr, '<b>fx</b> Formel links'));
+      if (r.r.text) parts.push('<div class="how">Rechts: <code>' + esc(r.r.text) + '</code> ' + copyBtn(r.r.text) + '</div>');
+      if (parts.length) h += '<div style="margin:2px 0 10px 24px">' + parts.join('') + '</div>';
+    });
+    h += '<div class="crow empty" title="Leere Zeile: zeigt der Designer nach dem Laden immer an. Sie wird nicht gespeichert."><span class="cbx"></span><div class="fbox"><span class="phtext">Wert auswählen</span></div><div class="fbox"><span class="val">ist gleich</span><span class="dd">' + IC.down + '</span></div><div class="fbox"><span class="phtext">Wert auswählen</span></div><span class="more">⋯</span></div>';
+    h += '<div class="addrow">+ Zeile hinzufügen</div>';
+    h += '<div class="how">' + subH(f.how) + '</div>';
+    if (f.rows.some(function (r) { return r.l.tok === 'Betreff'; })) h += '<div class="dcplabel">Links „Betreff“ aus dem Blitz-Menü:</div>' + pickerHTML('betreff');
+    h += '<div class="how">Die blasse leere Zeile am Ende: beim Bauen über <b>⋯ → Löschen</b> entfernen. Nach dem Neuladen zeigt der Designer sie trotzdem wieder an; sie wird nicht gespeichert.</div></div>';
+    return h;
+  }
+
+  /* ---------- panel: settings ---------- */
+  function sItem(it) {
+    var tag = it.chg ? '<span class="tag c">ändern</span>' : '<span class="tag s">Standard</span>';
+    var label = '<div class="sl">' + esc(it.label) + ' ' + (it.t === 'head' ? '' : tag) + '</div>';
+    var desc = it.desc ? '<div class="sdesc">' + esc(it.desc) + '</div>' : '';
+    var val = '';
+    switch (it.t) {
+      case 'toggle': val = '<div class="sv"><span class="sw' + (it.on ? ' on' : '') + '"></span>' + (it.on ? 'Ein' : 'Aus') + '</div>'; break;
+      case 'input': val = '<div class="sv"><div class="fbox">' + (it.value ? '<span class="val mono">' + esc(it.value) + '</span>' : '<span class="phtext">' + esc(it.ph || '') + '</span>') + '</div>' + (it.value && it.chg ? copyBtn(it.value) : '') + '</div>'; break;
+      case 'dropdown': val = '<div class="sv"><div class="fbox"><span class="val">' + esc(it.value) + '</span><span class="dd">' + IC.down + '</span></div></div>'; break;
+      case 'slider': val = '<div class="slider"><span class="tr"><span class="th"></span></span><span class="num">' + esc(it.value) + '</span></div>'; break;
+      case 'add': val = '<span class="btnlike">+ Hinzufügen</span>'; break;
+      case 'kv': val = '<div class="kv"><div class="fbox"><span class="phtext">Schlüssel</span></div><div class="fbox"><span class="phtext">Wert</span></div></div>'; break;
+      case 'head': return '<div class="sf"><div class="sl">' + esc(it.label) + '</div>' + desc + '</div>';
+      case 'runafter': return runAfterHTML(it);
+    }
+    return '<div class="sf' + (it.chg ? ' chg' : '') + '">' + label + desc + val + '</div>';
+  }
+  function runAfterHTML(it) {
+    var st = it.st;
+    var opt = function (key, label, color, sym) {
+      var on = !!st[key];
+      return '<div class="raopt' + (on ? (it.chg ? ' on-chg' : '') : ' off') + '"><span class="cbx' + (on ? ' on' : '') + '">' + (on ? IC.check : '') + '</span><span class="si" style="background:' + color + '">' + sym + '</span>' + label + '</div>';
+    };
+    return '<div class="sf' + (it.chg ? ' chg' : '') + '"><div class="sl">' + (it.chg ? '<span class="tag c">ändern</span>' : '<span class="tag s">Standard</span>') + '</div><div class="ra">' +
+      '<div class="raadd">+ Aktionen auswählen ' + IC.down + '</div>' +
+      '<div class="raact"><span class="tr">' + IC.down + '</span><span class="ic">' + IC[it.conn] + '</span><b>' + esc(it.action) + '</b><span class="rdots">' + rdots(st) + '</span><span class="tr">' + IC.trash + '</span></div>' +
+      opt('s', 'Ist erfolgreich', 'var(--ok)', '✓') + opt('t', 'Timeout', 'var(--to)', '◷') + opt('k', 'Wurde übersprungen', 'var(--sk)', '–') + opt('f', 'Ist fehlgeschlagen', 'var(--fa)', '!') + '</div></div>';
+  }
+  function settingsHTML(n) {
+    var h = '<div class="sumbox ' + (n.summary.chg ? 'chg' : 'std') + '">' + n.summary.html + '</div>';
+    n.settings.forEach(function (s) {
+      h += '<details class="sec" open><summary>' + IC.down + esc(s.sec) + '</summary><div class="secb">' + s.items.map(sItem).join('') + '</div></details>';
+    });
+    return h;
+  }
+
+  /* ---------- panel: Codeansicht + compare ---------- */
+  function hlLine(line) {
+    var re = /("(?:[^"\\]|\\.)*")(\s*:)?|\b(true|false|null)\b|(-?\d+(?:\.\d+)?)/g, out = '', last = 0, m;
+    while ((m = re.exec(line))) {
+      out += esc(line.slice(last, m.index));
+      if (m[1]) out += '<span class="' + (m[2] ? 'jk' : 'js') + '">' + esc(m[1]) + '</span>' + (m[2] ? esc(m[2]) : '');
+      else if (m[3]) out += '<span class="jb">' + m[3] + '</span>';
+      else out += '<span class="jn">' + m[4] + '</span>';
+      last = re.lastIndex;
+    }
+    return out + esc(line.slice(last));
+  }
+  function codeBlock(text) {
+    return '<div class="code">' + text.split('\n').map(function (l, i) { return '<div class="cl"><span class="cn">' + (i + 1) + '</span><span class="ct">' + hlLine(l) + '</span></div>'; }).join('') + '</div>';
+  }
+  function codeHTML(id) {
+    var n = N[id];
+    if (view === 'planB' && (n.planB || PB_CHANGED[id])) {
+      return '<p class="note">' + (n.planB ? PB_NOTE : 'In Plan B ändert sich unterhalb dieser Karte etwas (Betreff setzen wird ersetzt). Die geprüfte Codeansicht gilt nur für den aktuellen Flow: oben auf „Flow“ umschalten.') + '</p>';
+    }
+    var text = JSON.stringify(n.code(), null, 2);
+    return '<p class="note">So zeigt der Designer die Codeansicht dieser Karte (schreibgeschützt). ' + (n.codeNote ? esc(n.codeNote) : '') + '</p>' +
+      '<div class="codeh"><b>Codeansicht</b>' + copyBtn(text, 'Code kopieren') + '</div>' + codeBlock(text) +
+      '<div class="cmp"><h4>Mit Ihrem Flow vergleichen</h4><p class="note">Im echten Designer diese Karte anklicken → <b>Codeansicht</b> → in den Code klicken → <b>Strg+A</b>, <b>Strg+C</b> (Mac: ⌘) → hier einfügen.</p>' +
+      '<textarea id="cmpIn" spellcheck="false" placeholder="Codeansicht hier einfügen"></textarea><button type="button" class="btn primary" id="cmpBtn">Vergleichen</button><div class="cmpres" id="cmpOut"></div></div>';
+  }
+  function isObj(x) { return x !== null && typeof x === 'object' && !Array.isArray(x); }
+  function norm(x, key, addrs) {
+    if (Array.isArray(x)) return x.map(function (v) { return norm(v, null, addrs); });
+    if (isObj(x)) {
+      var o = {};
+      Object.keys(x).forEach(function (k) {
+        if (k === 'metadata' || k === 'recurrence') return;
+        if (k === 'connection' && typeof x[k] === 'string') { o[k] = '(Verbindung)'; return; }
+        if (/^(folderId|drive|file|scriptId)$/.test(k) && typeof x[k] === 'string' && x[k] !== '') { o[k] = '(ID)'; return; }
+        o[k] = norm(x[k], k, addrs);
+      });
+      return o;
+    }
+    if (typeof x === 'string') {
+      if (key === 'mailboxAddress') { if (addrs) addrs.push(x.toLowerCase()); return '(Postfach)'; }
+      return x.replace(/(users\/)([^\/'"\s]+@[^\/'"\s]+)(\/messages)/gi, function (m, a, b, c) { if (addrs) addrs.push(b.toLowerCase()); return a + '(Postfach)' + c; });
+    }
+    return x;
+  }
+  function squash(s) { return s.replace(/\s+(?=(?:[^']*'[^']*')*[^']*$)/g, ''); }
+  function diff(e, a, path, out) {
+    if (Array.isArray(e) && Array.isArray(a)) {
+      if (/runAfter\.[^.]+$/.test(path)) {
+        if (e.slice().sort().join(',') !== a.slice().sort().join(',')) out.push({ path: path, kind: 'diff', e: e, a: a });
+        return;
+      }
+      for (var i = 0; i < Math.max(e.length, a.length); i++) {
+        var p = path + '[' + i + ']';
+        if (i >= a.length) out.push({ path: p, kind: 'missing', e: e[i] });
+        else if (i >= e.length) out.push({ path: p, kind: 'extra', a: a[i] });
+        else diff(e[i], a[i], p, out);
+      }
+      return;
+    }
+    if (isObj(e) && isObj(a)) {
+      Object.keys(e).forEach(function (k) { var p = path ? path + '.' + k : k; if (!(k in a)) out.push({ path: p, kind: 'missing', e: e[k] }); else diff(e[k], a[k], p, out); });
+      Object.keys(a).forEach(function (k) { if (!(k in e)) out.push({ path: path ? path + '.' + k : k, kind: 'extra', a: a[k] }); });
+      return;
+    }
+    if (typeof e === 'string' && typeof a === 'string' && e !== a && squash(e) === squash(a)) { out.push({ path: path, kind: 'space' }); return; }
+    if (e === a) return;
+    out.push({ path: path, kind: 'diff', e: e, a: a });
+  }
+  function where(path) {
+    if (/runtimeConfiguration/.test(path)) return 'Trigger → Einstellungen → Parallelitätssteuerung';
+    if (/splitOn/.test(path)) return 'Trigger → Einstellungen → Teilen bei';
+    if (/retryPolicy/.test(path)) return 'Einstellungen → Wiederholungsrichtlinie';
+    if (/runAfter/.test(path)) return 'Einstellungen → Ausführen nach';
+    if (/expression/.test(path)) return 'Parameter → Zeilen der Bedingung';
+    if (/operationId|apiId/.test(path)) return 'Andere Aktion gewählt (Konnektor oder Vorgang prüfen)';
+    if (/parameters/.test(path)) return 'Parameter';
+    return '';
+  }
+  function show(v) { var s = JSON.stringify(v); if (s === undefined) s = String(v); return esc(s.length > 260 ? s.slice(0, 260) + ' …' : s); }
+  function runCompare(id) {
+    var raw = ($('#cmpIn').value || '').trim(), out = $('#cmpOut');
+    if (!raw) { out.innerHTML = '<div class="warnline">Erst die Codeansicht aus Ihrem Flow einfügen.</div>'; return; }
+    var actual;
+    try { actual = JSON.parse(raw); } catch (e1) {
+      try { actual = JSON.parse('{' + raw.replace(/,\s*$/, '') + '}'); var ks = Object.keys(actual); if (ks.length === 1) actual = actual[ks[0]]; } catch (e2) {
+        out.innerHTML = '<div class="badline">Das ist kein vollständiger Code. Im Designer in die Codeansicht klicken, <b>Strg+A</b> (alles markieren), dann <b>Strg+C</b>, und hier alles ersetzen.</div>'; return;
+      }
+    }
+    var addrs = [];
+    var E = norm(N[id].code(), null, null), A = norm(actual, null, addrs), list = [];
+    diff(E, A, '', list);
+    var spaces = list.filter(function (d) { return d.kind === 'space'; }).length;
+    list = list.filter(function (d) { return d.kind !== 'space'; });
+    /* a missing and an extra action at the same place usually means a different name */
+    var renames = [];
+    list.forEach(function (m) {
+      if (m.kind !== 'missing' || !/(^|\.)actions\.[^.]+$/.test(m.path)) return;
+      var parent = m.path.replace(/\.[^.]+$/, '');
+      list.forEach(function (x) { if (!m.renamed && x.kind === 'extra' && x.path.replace(/\.[^.]+$/, '') === parent && !x.used) { x.used = true; m.renamed = x.path.split('.').pop(); renames.push(m); } });
+    });
+    list = list.filter(function (d) { return !d.used; });
+    var h = '';
+    if (!list.length) h += '<div class="okline"><b>✓ Stimmt überein.</b> Diese Karte' + (/^If$/.test(String(actual.type)) && actual.actions && Object.keys(actual.actions).length ? ' und alles darunter' : '') + ' entspricht genau dem Nachbau.' + (spaces ? ' (Nur Leerzeichen in Formeln weichen ab – das ist egal.)' : '') + '</div>';
+    else {
+      h += '<div class="badline"><b>' + list.length + (list.length === 1 ? ' Abweichung' : ' Abweichungen') + '</b> zum Nachbau:</div><ul>';
+      list.slice(0, 40).forEach(function (d) {
+        var w = where(d.path), p = '<code>' + esc(d.path || '(ganze Karte)') + '</code>';
+        if (d.renamed) h += '<li>' + p + ': Aktion heißt bei Ihnen <code>' + esc(d.renamed) + '</code>. Umbenennen in <code>' + esc(d.path.split('.').pop()) + '</code>.</li>';
+        else if (d.kind === 'missing') h += '<li>' + p + ' fehlt. Erwartet: <code>' + show(d.e) + '</code>' + (w ? '<br><span class="hint">Wo: ' + w + '</span>' : '') + '</li>';
+        else if (d.kind === 'extra') h += '<li>' + p + ' ist zusätzlich da: <code>' + show(d.a) + '</code>' + (w ? '<br><span class="hint">Wo: ' + w + '</span>' : '') + '</li>';
+        else h += '<li>' + p + '<br>erwartet: <code>' + show(d.e) + '</code><br>gefunden: <code>' + show(d.a) + '</code>' + (w ? '<br><span class="hint">Wo: ' + w + '</span>' : '') + '</li>';
+      });
+      h += '</ul>';
+      if (list.length > 40) h += '<p class="hint">… und ' + (list.length - 40) + ' weitere.</p>';
+    }
+    var uniq = addrs.filter(function (a, i) { return addrs.indexOf(a) === i; });
+    if (uniq.length > 1) h += '<div class="warnline">Im Code stehen verschiedene Postfachadressen: <code>' + esc(uniq.join(', ')) + '</code>. Überall muss dieselbe stehen.</div>';
+    else if (uniq.length === 1 && uniq[0] !== mb().toLowerCase()) h += '<div class="warnline">Im Code steht das Postfach <code>' + esc(uniq[0]) + '</code>, oben ist <code>' + esc(mb()) + '</code> eingetragen. Oben die richtige Adresse eintragen, dann passen auch die Formeln zum Kopieren.</div>';
+    out.innerHTML = h;
+  }
+
+  /* ---------- panel ---------- */
+  function stepList() { return ORDER[view]; }
+  function openNode(id, newTab) {
+    if (!N[id] || stepList().indexOf(id) < 0) return;
+    current = id;
+    if (newTab) tab = newTab;
+    if (N[id].kind === 'finish') tab = 'finish';
+    else if (tab === 'finish') tab = 'param';
+    $('#hint').hidden = true;
+    store.set('hintSeen', true);
+    renderPanel();
+    panel.hidden = false;
+    markSel();
+    try { history.replaceState(null, '', '#' + (view === 'planB' ? 'planb-' : '') + id); } catch (e) { /* file:// in some browsers */ }
+    var el = flow.querySelector('[data-id="' + id + '"]');
+    if (el && window.innerWidth > 760) setTimeout(function () { el.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' }); }, 30);
+  }
+  function closePanel() {
+    panel.hidden = true; current = null; markSel();
+    try { history.replaceState(null, '', location.pathname + location.search); } catch (e) { /* ignore */ }
+  }
+  function renderPanel(keepCompare) {
+    var id = current, n = N[id];
+    var keep = keepCompare && $('#cmpIn') ? $('#cmpIn').value : '';
+    var steps = stepList(), idx = steps.indexOf(id);
+    var icon = n.kind === 'cond' ? '<span class="pic cond">' + IC.cond + '</span>' : n.kind === 'finish' ? '<span class="pic done">' + IC.check + '</span>' : '<span class="pic">' + IC[n.conn] + '</span>';
+    var h = '<div class="ph">' + icon + '<div class="ptitle"><div class="pname">' + esc(n.title) + '</div><div class="psub">' + esc(n.sub) + '</div></div>' +
+      '<button type="button" class="picon" tabindex="-1" aria-hidden="true">' + IC.more + '</button><button type="button" class="picon" id="pClose" aria-label="Bereich schließen" title="Schließen">' + IC.collapse + '</button></div>';
+    if (n.rename) h += '<div class="prename">Umbenennen in <code>' + esc(n.rename) + '</code>' + copyBtn(n.rename) + '<span class="muted">Auf der Fläche steht danach „' + esc(n.title) + '“ – das ist richtig.</span></div>';
+    else if (n.kind === 'action') h += '<div class="prename"><span>Name nicht ändern.</span></div>';
+    if (n.kind !== 'finish') {
+      var tabs = [['param', 'Parameter'], ['settings', 'Einstellungen'], ['code', 'Codeansicht'], ['info', 'Info']];
+      h += '<div class="ptabs" role="tablist">' + tabs.map(function (t) { return '<button type="button" role="tab" data-tab="' + t[0] + '" aria-selected="' + (tab === t[0]) + '">' + t[1] + '</button>'; }).join('') + '</div>';
+    }
+    h += '<div class="pbody" id="pbody" role="tabpanel">' + tabHTML(id) + '</div>';
+    var isDone = done.indexOf(id) >= 0;
+    h += '<div class="pfoot"><button type="button" class="btn" id="pPrev"' + (idx <= 0 ? ' disabled' : '') + '>' + IC.prev + 'Zurück</button>' +
+      '<span class="stepno">Schritt ' + (idx + 1) + ' von ' + steps.length + '</span>' +
+      (n.kind !== 'finish' ? '<label class="donechk"><input type="checkbox" id="pDone"' + (isDone ? ' checked' : '') + '>Erledigt</label>' : '') +
+      '<button type="button" class="btn primary" id="pNext"' + (idx >= steps.length - 1 ? ' disabled' : '') + '>Weiter' + IC.next + '</button></div>';
+    panel.innerHTML = h;
+    if (keep && $('#cmpIn')) $('#cmpIn').value = keep;
+  }
+  function tabHTML(id) {
+    var n = N[id];
+    if (n.kind === 'finish') return '<div class="info">' + subH(n.html) + '</div>';
+    if (tab === 'settings') return settingsHTML(n);
+    if (tab === 'code') return codeHTML(id);
+    if (tab === 'info') return '<div class="info">' + subH(n.info) + (n.planB && view === 'planB' ? '<div class="callout pbc">Teil von Plan B – nur nötig, wenn Microsoft Betreffänderungen sperrt.</div>' : '') + '</div>';
+    var add = '<div class="addbox"><b class="h">Hinzufügen</b><ol>' + n.add.map(function (s) { return '<li>' + s + '</li>'; }).join('') + (n.rename ? '<li>Umbenennen in <code>' + esc(n.rename) + '</code>.</li>' : '') + '</ol></div>';
+    return add + n.params.map(fieldHTML).join('');
+  }
+
+  /* ---------- copy ---------- */
+  var toastTimer;
+  function toast(msg) { var t = $('#toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastTimer); toastTimer = setTimeout(function () { t.classList.remove('on'); }, 1600); }
+  function copyText(text, btn) {
+    var ok = function () { toast('Kopiert'); if (btn) { var old = btn.textContent; btn.classList.add('ok'); btn.textContent = 'Kopiert ✓'; setTimeout(function () { btn.classList.remove('ok'); btn.textContent = old; }, 1400); } };
+    var fallback = function () {
+      var ta = document.createElement('textarea'); ta.value = text; ta.setAttribute('readonly', ''); ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      var good = false; try { good = document.execCommand('copy'); } catch (e) { good = false; }
+      document.body.removeChild(ta);
+      if (good) ok(); else toast('Kopieren nicht möglich – bitte markieren und Strg+C');
+    };
+    if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(text).then(ok, fallback); else fallback();
+  }
+
+  /* ---------- formulas list in the drawer ---------- */
+  function renderFormulas() {
+    var rows = [
+      ['Run script › pdfBase64', F.pdf], ['Kategorie noetig › links (rechts: fx true)', F.katLinks], ['Kategorie setzen und Betreff setzen › URI', F.uri],
+      ['Kategorie setzen › Text', F.katText], ['Betreff noetig › links (rechts: fx true)', F.betLinks], ['Betreff setzen › Text', F.betText]
+    ];
+    $('#formulaList').innerHTML = '<p>Jede Formel im Feld über <span class="kbd">fx</span> einfügen. Die Postfachadresse kommt aus dem Feld oben rechts.</p>' +
+      rows.map(function (r) { return '<div style="margin-bottom:10px"><b style="font-size:13px">' + esc(r[0]) + '</b>' + exprHTML(r[1], 'Formel') + '</div>'; }).join('');
+  }
+  function refreshMB() {
+    document.querySelectorAll('.mbv').forEach(function (e) { e.textContent = mb(); });
+    renderFormulas();
+    if (current && !panel.hidden) renderPanel(true);
+  }
+
+  /* ---------- events ---------- */
+  flow.addEventListener('click', function (ev) {
+    var t = ev.target;
+    var tg = t.closest('[data-toggle]');
+    if (tg) { ev.stopPropagation(); var sc = tg.closest('.scope'); var c = sc.classList.toggle('collapsed'); tg.setAttribute('aria-expanded', String(!c)); return; }
+    var br = t.closest('[data-branch]');
+    if (br) { var b = br.closest('.branch'); var c2 = b.classList.toggle('collapsed'); br.setAttribute('aria-expanded', String(!c2)); return; }
+    var nd = t.closest('[data-id]');
+    if (nd) openNode(nd.getAttribute('data-id'));
+  });
+  flow.addEventListener('keydown', function (ev) {
+    if ((ev.key === 'Enter' || ev.key === ' ') && ev.target.matches('[data-id]')) { ev.preventDefault(); openNode(ev.target.getAttribute('data-id')); }
+  });
+  panel.addEventListener('click', function (ev) {
+    var t = ev.target;
+    var tb = t.closest('[data-tab]');
+    if (tb) { tab = tb.getAttribute('data-tab'); renderPanel(); return; }
+    if (t.closest('#pClose')) { closePanel(); return; }
+    var steps = stepList(), idx = steps.indexOf(current);
+    if (t.closest('#pPrev') && idx > 0) { openNode(steps[idx - 1]); return; }
+    if (t.closest('#pNext') && idx < steps.length - 1) { openNode(steps[idx + 1]); return; }
+    if (t.closest('#cmpBtn')) { runCompare(current); return; }
+  });
+  panel.addEventListener('change', function (ev) {
+    if (ev.target.id !== 'pDone') return;
+    var i = done.indexOf(current);
+    if (ev.target.checked && i < 0) done.push(current);
+    if (!ev.target.checked && i >= 0) done.splice(i, 1);
+    store.set('done', done);
+    var el = flow.querySelector('[data-id="' + current + '"]');
+    if (el) (el.classList.contains('shead') ? el.parentNode : el).classList.toggle('done', ev.target.checked);
+    updateProgress();
+  });
+  document.addEventListener('click', function (ev) {
+    var c = ev.target.closest('[data-copy],[data-copy-tpl]');
+    if (!c) return;
+    copyText(c.hasAttribute('data-copy') ? c.getAttribute('data-copy') : sub(c.getAttribute('data-copy-tpl')), c);
+  });
+  document.addEventListener('keydown', function (ev) {
+    if (ev.key !== 'Escape') return;
+    if (!$('#mbPop').hidden) togglePop(false); else if (!$('#drawer').hidden) closeDrawer(); else if (!panel.hidden) closePanel();
+  });
+
+  var mbInput = $('#mb');
+  mbInput.value = MB;
+  var mbTimer;
+  function updateMBUI() {
+    var v = MB.trim(), valid = mbValid();
+    mbInput.classList.toggle('empty', v === '');
+    mbInput.classList.toggle('bad', v !== '' && !valid);
+    $('#mbBad').hidden = v === '' || valid;
+    $('#setup').hidden = mbIsSet() && valid;
+  }
+  function togglePop(show) {
+    var p = $('#mbPop'), s = show === undefined ? p.hidden : show;
+    p.hidden = !s;
+    $('#mbHelp').setAttribute('aria-expanded', String(s));
+  }
+  mbInput.addEventListener('input', function () {
+    MB = mbInput.value; store.set('mb', MB.trim());
+    updateMBUI();
+    clearTimeout(mbTimer); mbTimer = setTimeout(refreshMB, 150);
+  });
+  mbInput.addEventListener('focus', function () { if (!mbIsSet()) togglePop(true); });
+  $('#mbHelp').addEventListener('click', function (ev) { ev.stopPropagation(); togglePop(); });
+  $('#setupHelp').addEventListener('click', function (ev) { ev.stopPropagation(); togglePop(true); mbInput.focus(); });
+  document.addEventListener('click', function (ev) {
+    var h = ev.target.closest('[data-mbhelp]');
+    if (h) { ev.preventDefault(); ev.stopPropagation(); if (!$('#drawer').hidden) closeDrawer(); togglePop(true); mbInput.focus(); return; }
+    if (!$('#mbPop').hidden && !ev.target.closest('.mbwrap')) togglePop(false);
+  });
+
+  function setView(v) {
+    view = v; store.set('view', v);
+    $('#vMain').setAttribute('aria-pressed', String(v === 'main'));
+    $('#vPlanB').setAttribute('aria-pressed', String(v === 'planB'));
+    var keep = current && stepList().indexOf(current) >= 0 ? current : null;
+    if (!keep && current) closePanel();
+    renderFlow();
+    if (keep) openNode(keep);
+    requestAnimationFrame(function () { if (!manualZoom) autoZoom(); });
+  }
+  $('#vMain').addEventListener('click', function () { setView('main'); });
+  $('#vPlanB').addEventListener('click', function () { setView('planB'); });
+  function openDrawer() { $('#drawer').hidden = false; $('#scrim').hidden = false; $('#dClose').focus(); }
+  function closeDrawer() { $('#drawer').hidden = true; $('#scrim').hidden = true; }
+  $('#bInfo').addEventListener('click', openDrawer);
+  $('#dClose').addEventListener('click', closeDrawer);
+  $('#scrim').addEventListener('click', closeDrawer);
+  $('#toPlanB').addEventListener('click', function () { closeDrawer(); setView('planB'); });
+  $('#resetDone').addEventListener('click', function () { done = []; store.set('done', done); renderFlow(); if (current) renderPanel(); toast('Häkchen entfernt'); });
+  $('#bSave').addEventListener('click', function () { openNode(view === 'planB' ? 'finishB' : 'finish'); });
+  $('#bTest').addEventListener('click', function () { openNode(view === 'planB' ? 'finishB' : 'finish'); });
+  $('#zIn').addEventListener('click', function () { manualZoom = true; setZoom(Z * 1.15); });
+  $('#zOut').addEventListener('click', function () { manualZoom = true; setZoom(Z / 1.15); });
+  $('#zFit').addEventListener('click', function () { manualZoom = false; fitZoom(0.35); centerScroll(); });
+  var resizeTimer;
+  window.addEventListener('resize', function () { clearTimeout(resizeTimer); resizeTimer = setTimeout(function () { if (!manualZoom) autoZoom(); }, 120); });
+  $('#zExpand').addEventListener('click', function () {
+    flow.querySelectorAll('.collapsed').forEach(function (e) { e.classList.remove('collapsed'); });
+    flow.querySelectorAll('[aria-expanded="false"]').forEach(function (e) { e.setAttribute('aria-expanded', 'true'); });
+  });
+
+  function openFromHash() {
+    var h = decodeURIComponent((location.hash || '').slice(1));
+    if (!h || !N[h.replace(/^planb-/, '')]) return;
+    if (/^planb-/.test(h)) { h = h.slice(6); if (view !== 'planB') setView('planB'); }
+    else if (view !== 'main') setView('main');
+    openNode(h);
+  }
+  window.addEventListener('hashchange', openFromHash);
+
+  /* ---------- start ---------- */
+  (function () {
+    var c = $('#mbPop').cloneNode(true);
+    c.querySelectorAll('.h, .mbbad').forEach(function (e) { e.remove(); });
+    $('#mbDrawer').innerHTML = c.innerHTML;
+  })();
+  updateMBUI();
+  if (store.get('hintSeen', false)) $('#hint').hidden = true;
+  $('#vMain').setAttribute('aria-pressed', String(view === 'main'));
+  $('#vPlanB').setAttribute('aria-pressed', String(view === 'planB'));
+  renderFlow();
+  refreshMB();
+  requestAnimationFrame(function () {
+    autoZoom();
+    openFromHash();
+  });
+})();
+</script>
+</body>
+</html>

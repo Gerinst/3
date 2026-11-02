@@ -1,0 +1,1 @@
+concat('https://graph.microsoft.com/v1.0/users/avis@firma.de/messages/', triggerOutputs()?['body/id'])
