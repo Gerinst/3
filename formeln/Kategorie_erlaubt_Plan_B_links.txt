@@ -1,0 +1,1 @@
+or(empty(outputs('Run_script')?['body/result/patchSubject']), equals(actions('Kopie_senden')?['status'], 'Succeeded'))

@@ -24,9 +24,17 @@ function assertReview(result) {
 }
 const two = "1.200,30 + 5.632,21";
 const three = two + " + 500,42";
-function multiple(args, prefix, amounts) {
+function multiple(args, prefix, amounts, needsReview = false) {
   const r = run(args);
   assert.equal(r.verdict, "several", r.verdictWhy);
+  assert.equal(arr(r.paymentAmounts).map(a => a.replace(/ [A-Z]{3}$/, "")).join(" + "), prefix);
+  if (amounts) assert.deepEqual(arr(r.paymentAmounts), amounts);
+  if (needsReview) {
+    assert.notEqual(r.confidence, "high");
+    assertReview(r);
+    return r;
+  }
+  assert.equal(r.confidence, "high");
   assert.equal(r.category, "Avis");
   assert.equal(r.needsReview, false);
   assert.equal(r.subjectPrefix, prefix + " ");
@@ -37,14 +45,13 @@ function multiple(args, prefix, amounts) {
   );
   assert.deepEqual(JSON.parse(r.patchSubject), { subject: r.newSubject });
   assert.deepEqual(JSON.parse(r.patchCategory), { categories: ["Avis"] });
-  if (amounts) assert.deepEqual(arr(r.paymentAmounts), amounts);
   return r;
 }
 for (const name of ["two", "pdf"])
   check(name, () =>
     multiple(fixtures[name], two, ["1.200,30 EUR", "5.632,21 EUR"]),
   );
-for (const name of ["three", "stated", "numbered", "csv", "pdfParts"])
+for (const name of ["three", "pdfParts"])
   check(name, () =>
     multiple(fixtures[name], three, [
       "1.200,30 EUR",
@@ -52,9 +59,25 @@ for (const name of ["three", "stated", "numbered", "csv", "pdfParts"])
       "500,42 EUR",
     ]),
   );
+for (const name of ["stated", "numbered", "csv"])
+  check(name + " needs manual review", () =>
+    multiple(fixtures[name], three, [
+      "1.200,30 EUR", "5.632,21 EUR", "500,42 EUR",
+    ], true),
+  );
 check("empty original subject", () =>
   multiple({ ...fixtures.three, subject: "" }, three),
 );
+check("undecodable original subject cannot authorize a category", () => {
+  const r = run({ ...fixtures.pdf, subject: "=?UTF-8?B?/w==?=" });
+  assert.equal(r.confidence, "high");
+  assert.equal(r.needsReview, false);
+  assert.equal(r.newSubject, "");
+  assert.equal(r.patchSubject, "");
+  assert.equal(r.category, "");
+  assert.equal(r.patchCategory, "");
+  assert.match(r.warnings, /subject unavailable/);
+});
 check("preserve arbitrary original subject", () =>
   multiple(
     { ...fixtures.two, subject: "WG: Abrechnung 4711 - Rückfrage?" },
@@ -128,8 +151,38 @@ check("explicit extra payment equal to aggregate is retained", () =>
       body: "Zusätzlich zu den angehängten Zahlungsavisen haben wir heute separat 7.332,93 EUR überwiesen.",
     },
     three + " + 7.332,93",
+    undefined,
+    true,
   ),
 );
+check("one medium-confidence attachment holds back the entire amount list", () => {
+  multiple({ attachments: [fixtures.two.attachments[0], {
+    name: "avis2.txt",
+    text: "Zahlungsavis\nWir haben Ihre Rechnung heute bezahlt.\n5.632,21 EUR\nMit freundlichen Gruessen",
+  }] }, two, ["1.200,30 EUR", "5.632,21 EUR"], true);
+});
+check("a repeated medium-confidence body does not weaken independently safe amounts", () => {
+  multiple({ ...fixtures.pdf, body: textAdvice("1.200,30") }, two);
+});
+check("an unreadable third advice prevents automatic processing of the known amounts", () => {
+  const r = run({ attachments: [...fixtures.pdf.attachments, {
+    name: "avis-fehlt.pdf", type: "application/pdf", text: "%PDF-1.4\n%%EOF",
+  }] });
+  assert.equal(r.verdict, "several");
+  assertReview(r);
+});
+for (const usePdf of [false, true]) {
+  check(`a weaker payment block prevents automatic processing (${usePdf ? "PDF" : "text"})`, () => {
+    const text = "Zahlungsavis\nZahlung 1 von 2\nWir haben Ihre Rechnungen heute bezahlt.\nZahlbetrag: 1.200,30 EUR\nZahlung 2 von 2\nWir haben Ihre Rechnungen heute bezahlt.\nBetrag: 5.632,21 EUR";
+    multiple({ attachments: [{ name: usePdf ? "avis.pdf" : "avis.txt", type: usePdf ? "application/pdf" : "text/plain; charset=utf-8", text: usePdf ? pdf(text) : text }] }, two, undefined, true);
+  });
+}
+for (const source of ["pdf", "pdfParts"]) {
+  check(`conflicting amount actually paid blocks ${source} list`, () => {
+    const r = run({ ...fixtures[source], body: "Attached are the remittance advices. The payment actually sent today is EUR 1,000.00." });
+    assertReview(r);
+  });
+}
 check("same value different currencies remain separate", () =>
   multiple(
     {
@@ -252,7 +305,7 @@ const tables = {
     "Zahlungsavis\nZahlungsnummer;Rechnungsnummer;Zahlbetrag;Currency\nPAY101;RE100;1.000,00;EUR\nPAY101;RE101;200,30;EUR\nPAY102;RE102;1.200,30;EUR",
 };
 for (const [name, text] of Object.entries(tables))
-  check("CSV " + name, () =>
+  check("CSV " + name + " retains amounts for manual review", () =>
     multiple(
       {
         attachments: [
@@ -260,6 +313,8 @@ for (const [name, text] of Object.entries(tables))
         ],
       },
       name === "sameTotals" ? "1.200,30 + 1.200,30" : two,
+      undefined,
+      true,
     ),
   );
 check("equal payment multiplicity survives duplicate table", () => {
@@ -271,6 +326,8 @@ check("equal payment multiplicity survives duplicate table", () => {
   multiple(
     { attachments: [a, { ...a, name: "avis-kopie.csv" }] },
     "1.200,30 + 1.200,30",
+    undefined,
+    true,
   );
 });
 check("grand total is not an extra payment", () =>
@@ -287,6 +344,8 @@ check("grand total is not an extra payment", () =>
       ],
     },
     three,
+    undefined,
+    true,
   ),
 );
 check("unclosed payment block prevents partial subject", () => {
@@ -371,8 +430,9 @@ check(
 // The ordinary single-advice contract must survive the new multiple-advice path.
 for (const [confidence, category, marker] of [
   ["high", "Avis", ""],
-  ["medium", "Avis", " (prüfen)"],
+  ["medium", "", ""],
   ["low", "", ""],
+  ["unknown", "", ""],
 ]) {
   for (const value of [1200.3, -1200.3, 0]) {
     check(`single ${confidence}, amount ${value}`, () => {
@@ -394,8 +454,8 @@ for (const [confidence, category, marker] of [
       const amount =
         value === 0 ? "0,00" : value < 0 ? "-1.200,30" : "1.200,30";
       assert.equal(result.category, category);
-      assert.equal(result.needsReview, confidence === "low");
-      if (confidence === "low") assertReview(result);
+      assert.equal(result.needsReview, confidence !== "high");
+      if (confidence !== "high") assertReview(result);
       else {
         assert.equal(result.newSubject, amount + marker + " Abrechnung Oktober");
         assert.deepEqual(JSON.parse(result.patchCategory), {
@@ -409,6 +469,14 @@ for (const [confidence, category, marker] of [
     });
   }
 }
+
+check("medium-confidence advice in mail text is moved without subject or category changes", () => {
+  const r = run({ body: textAdvice("1.200,30"), subject: "Abrechnung Oktober?", keywords: "Wichtig, Intern" });
+  assert.equal(r.verdict, "advice");
+  assert.equal(r.confidence, "medium");
+  assert.equal(r.amountNumber, 1200.3);
+  assertReview(r);
+});
 
 check(
   "inferred document currency updates all inferred payment currencies",

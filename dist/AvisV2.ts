@@ -20,7 +20,7 @@ interface AvisResult {
   currency: string;       // "EUR" (default) / "USD" / "CHF" / "GBP"
   line: string;           // the text line the amount was taken from
   method: string;         // how it was chosen: keyword / keyword-next-line / column-sum / largest / none
-  confidence: string;     // high / medium / low – route "low" to a manual check
+  confidence: string;     // high / medium / low – only "high" permits automatic subject and category updates
   candidates: string[];   // top candidates "amount | score | line" for debugging
   pages: number;
   text: string;           // extracted text (capped)
@@ -33,7 +33,7 @@ interface AvisResult {
   category: string;       // Outlook category: "Avis" / "" (none)
   needsReview: boolean;   // true: move the mail for manual review without changing its subject or setting a category
   paymentAmounts: string[]; // separate payments for "several", e.g. ["1.200,30 EUR", "5.632,21 EUR"]; otherwise []
-  subjectPrefix: string;  // one amount (with optional check marker) or several joined by " + ", then a space
+  subjectPrefix: string;  // one safe amount or several joined by " + ", then a space; empty for review cases
   newSubject: string;     // prefix + subject ("2.601,35 Zahlungsavis"), "" when the subject stays as it is
   patchCategory: string;  // JSON body {"categories":[...]} for the HTTP request, "" when no category is set
   patchSubject: string;   // JSON body {"subject":"..."} for the HTTP request, "" when the subject stays as it is
@@ -15131,12 +15131,13 @@ function resultRank(r: AvisResult, score: number): number {
 // history: the number of payments of a table read as a payment history only for its period ("Zeitraum ..."), 0 = none;
 // forOwner: the document names the mailbox owner as its payee or addressee (DocInfo.forOwner)
 // note: the evidence is a short note without the paid document ("ist bezahlt, 5.949,58 €"), see AdviceEvidence
-interface DocResult { name: string; type: string; res: AvisResult; verdict: string; why: string; score: number; body: boolean; attachRef: boolean; positive: string; hint: string; strong: boolean; payer: boolean; against: string; alt: number; curHow: string; register: string; history: number; forOwner: boolean; note: boolean }
+// partsConfidence: confidence checked for every separate payment; low unless the individual parts prove otherwise
+interface DocResult { name: string; type: string; res: AvisResult; verdict: string; why: string; score: number; body: boolean; attachRef: boolean; positive: string; hint: string; strong: boolean; payer: boolean; against: string; alt: number; curHow: string; register: string; history: number; forOwner: boolean; note: boolean; partsConfidence: string }
 // advices with the same amount and currency (an advice PDF and the mail text that repeats its amount count once)
 interface AmountGroup { value: number; currency: string; docs: DocResult[] }
 
 function newDoc(name: string, type: string, res: AvisResult): DocResult {
-  return { name: name, type: type, res: res, verdict: "unclear", why: "", score: -1, body: false, attachRef: false, positive: "", hint: "", strong: false, payer: false, against: "", alt: 0, curHow: "", register: "", history: 0, forOwner: false, note: false };
+  return { name: name, type: type, res: res, verdict: "unclear", why: "", score: -1, body: false, attachRef: false, positive: "", hint: "", strong: false, payer: false, against: "", alt: 0, curHow: "", register: "", history: 0, forOwner: false, note: false, partsConfidence: "low" };
 }
 
 function unreadableDocument(name: string, type: string, why: string): DocResult {
@@ -15170,7 +15171,11 @@ function pdfDocument(name: string, data: Uint8Array, kw: string): DocResult {
   // several advices in one PDF (one per page, each with its own payment number and total)
   if (d.verdict === "advice") {
     const complete = [true];
-    const parts = paymentParts(o.res.text.split("\n"), kw, d.register === "", complete);
+    const confidence = ["low"];
+    const parts = paymentParts(o.res.text.split("\n"), kw, d.register === "", complete, confidence);
+    // A part's confidence cannot override extraction or signature warnings applying to the entire PDF.
+    const qualityError = o.res.error !== (o.pick.confidence === "low" ? "uncertain: " + (o.pick.reason || "weak signals") : "");
+    if (complete[0] && !qualityError && !o.incomplete) d.partsConfidence = confidence[0];
     if (parts.length >= 2) { d.verdict = "several"; d.res.paymentAmounts = complete[0] ? parts : []; d.why = parts.length + " payments in the document (" + parts.join("; ") + ")"; }
     else if (!complete[0]) { d.verdict = "unclear"; d.res.paymentAmounts = []; d.why = "separate payments in the document, but not all amounts readable"; }
   }
@@ -15305,7 +15310,7 @@ function bodyAmountFix(d: DocResult, lines: string[]): void {
   }
 }
 
-function paymentParts(lines: string[], kw: string, split: boolean, complete: boolean[]): string[] {
+function paymentParts(lines: string[], kw: string, split: boolean, complete: boolean[], confidence: string[] = ["low"]): string[] {
   // separate payments printed in one document, each part with a payment total of its own: parts that start at a heading
   // counting the payments ("Payment 1 of 2"), at the first line of each payment number of one kind ("Zahlbeleg
   // 1500011937" / "Zahlbeleg 1500012763") or at the mail header of each forwarded bank confirmation; returns the
@@ -15314,6 +15319,8 @@ function paymentParts(lines: string[], kw: string, split: boolean, complete: boo
   // payment history lists earlier payments, no new ones. split: also one payment split by the means of payment
   // (splitPayments; not in a payment register, whose lines go to several payees). complete[0] becomes false when a
   // named payment is missing/unreadable or a parsing limit omits parts; the partial list is then only diagnostic.
+  // confidence[0] describes the weakest individually selected part, never the global choice between all payments.
+  confidence[0] = "low";
   if (lines.length < 4 || lines.length > 4000) return [];
   const text = lines.join("\n");
   if (PAY_HISTORY.test(text)) return [];
@@ -15403,6 +15410,7 @@ function paymentParts(lines: string[], kw: string, split: boolean, complete: boo
   const vals: number[] = [];
   const curs: string[] = [];
   const picks: AmountPick[] = [];
+  const partConfidence: string[] = [];
   for (let s = 0; s < starts.length; s++) {
     if (runDeadline > 0 && Date.now() > runDeadline) { complete[0] = false; return []; }
     const part = lines.slice(s === 0 ? 0 : starts[s], s + 1 < starts.length ? starts[s + 1] : lines.length);
@@ -15431,6 +15439,8 @@ function paymentParts(lines: string[], kw: string, split: boolean, complete: boo
     vals.push(Math.round(b.value * 100) / 100);
     curs.push(pk.currency !== "" ? pk.currency : "EUR");
     picks.push(pk);
+    // A substituted candidate has not passed the confidence checks for the selected candidate.
+    partConfidence.push(b === pk.best ? pk.confidence : "low");
   }
   if (vals.length < 2) return [];
   // a grand total over the parts in one of them (same currency): that part's own payment is the rest
@@ -15439,13 +15449,14 @@ function paymentParts(lines: string[], kw: string, split: boolean, complete: boo
     for (let t = 0; t < vals.length; t++) if (t !== s && curs[t] === curs[s]) others += vals[t];
     const rest = Math.round((vals[s] - others) * 100) / 100;
     if (others <= 0 || rest <= 0) continue;
-    for (const c of picks[s].candidates) if (!c.copy && Math.abs(c.value - rest) < 0.005) { vals[s] = rest; break; }
+    for (const c of picks[s].candidates) if (!c.copy && Math.abs(c.value - rest) < 0.005) { vals[s] = rest; partConfidence[s] = "low"; break; }
   }
   const out: string[] = [];
   for (let s = 0; s < vals.length; s++) {
     const a = germanAmount(vals[s]) + " " + curs[s];
     if (out.indexOf(a) < 0) out.push(a);
   }
+  if (complete[0] && out.length >= 2) confidence[0] = partConfidence.every((c) => c === "high") ? "high" : partConfidence.every((c) => c === "high" || c === "medium") ? "medium" : "low";
   return out.length >= 2 ? out : [];
 }
 
@@ -15795,7 +15806,9 @@ function linesDocument(name: string, type: string, lines0: string[], kw: string,
   // several payments in one mail text or text file ("Zahllauf 22.10. ... Überweisungsbetrag", "Zahllauf 29.10. ...")
   if (d.verdict === "advice" && (body || TEXT_DOC.test(type))) {
     const complete = [true];
-    const parts = paymentParts(lines, kw, d.register === "", complete);
+    const confidence = ["low"];
+    const parts = paymentParts(lines, kw, d.register === "", complete, confidence);
+    if (complete[0]) d.partsConfidence = confidence[0];
     if (parts.length >= 2) { d.verdict = "several"; d.res.paymentAmounts = complete[0] ? parts : []; d.why = parts.length + " payments in the document (" + parts.join("; ") + ")"; }
     else if (!complete[0]) { d.verdict = "unclear"; d.res.paymentAmounts = []; d.why = "separate payments in the document, but not all amounts readable"; }
   }
@@ -15804,7 +15817,7 @@ function linesDocument(name: string, type: string, lines0: string[], kw: string,
   // RE-2026-10702"): one advice per payment
   if (body && (d.verdict === "advice" || d.verdict === "unclear") && pick.ev.payer && res.ok) {
     const sp = statedPayments(pick.doc.ownText, res.currency !== "" ? res.currency : "EUR");
-    if (sp.length >= 2) { d.verdict = "several"; d.res.paymentAmounts = sp; d.why = sp.length + " payments named in the mail text (" + sp.join("; ") + ")"; }
+    if (sp.length >= 2) { d.verdict = "several"; d.res.paymentAmounts = sp; d.partsConfidence = "low"; d.why = sp.length + " payments named in the mail text (" + sp.join("; ") + ")"; }
   }
   if (body) {
     // the writer asks for money back (a duplicate payment, an overpayment): the money goes to the writer, no advice. Beside
@@ -15837,6 +15850,7 @@ function linesDocument(name: string, type: string, lines0: string[], kw: string,
       if (cm !== null && d.verdict === "unclear" && pick.ev.positive === "" && pick.ev.hint === "" && (DUE_LABEL.test(pick.doc.ownText) || READER_COLLECTED.test(pick.doc.ownText)) && !SENT_OUT.test(pick.doc.ownText)) { d.verdict = "other"; d.why = d.against; }
     }
     if (res.ok && res.confidence === "high") res.confidence = "medium";
+    if (d.partsConfidence === "high") d.partsConfidence = "medium";
     // a cover note "anbei unser Zahlungsavis" with a doubtful amount (a figure of the signature, an invoice total): the
     // advice is the attachment
     if (d.verdict === "advice" && res.confidence === "low" && d.attachRef) { d.verdict = "unclear"; d.why = "mail text refers to an attachment, amount doubtful (" + v.why + ")"; }
@@ -15989,6 +16003,8 @@ function sheetExtras(d: DocResult, t: SheetTable, hintCtx: boolean, sheet: boole
   if (t.groups > 1 && (d.verdict === "advice" || (evidence && d.verdict !== "other"))) {
     // Keep the separate totals, including a possible history later confirmed by the mail text. Never expose a partial list.
     d.res.paymentAmounts = !cut && t.paymentAmounts.length >= t.groups ? t.paymentAmounts.map((a) => / [A-Z]{3}$/.test(a) ? a : a + " " + (d.res.currency || "EUR")) : [];
+    // Group totals lack individual high-confidence picks; complete arithmetic alone does not raise their confidence.
+    d.partsConfidence = "low";
     // a payment history (earlier payments over a period, a "year to date" total) names no new payment: titled as such and
     // without an advice title, a payer statement or an advice word in the subject or file name it is no advice; a period
     // or a "year to date" total alone leaves it for a check
@@ -16499,12 +16515,15 @@ function decideMail(docs: DocResult[], hint: string, noDocError: string): AvisRe
       if (d.res.paymentAmounts.length < 2) complete = false;
     }
     res.paymentAmounts = collectPaymentAmounts(docs, groups);
+    res.confidence = combinedPaymentConfidence(docs, groups, res.paymentAmounts);
+    if (conflict !== null) res.confidence = "low";
     res.verdict = "several";
     const what = groups.length < 2 ? "several payments in one document" : allPdf ? "several PDFs in the mail with different amounts" : "several advices in the mail with different amounts";
     res.verdictWhy = (groups.length >= 2 ? groups.length + " advices with different amounts" : "several payments in one document") + " (" + list.join("; ") + ")";
     res.error = what + " (" + list.join("; ") + ")";
     // Never write just the known part of a multi-payment document as if it were the complete list.
     if (!complete) {
+      res.confidence = "low";
       res.verdict = "unclear";
       res.verdictWhy = "separate payment amounts incomplete (" + res.verdictWhy + ")";
       res.error = res.verdictWhy;
@@ -17065,6 +17084,7 @@ function mailCurrency(docs: DocResult[]): void {
       const prev = d.res.error.indexOf("uncertain: ") === 0 ? d.res.error.substring(11) : d.res.error;
       inferredPaymentCurrency(d.res, "USD");
       d.res.confidence = "low";
+      d.partsConfidence = "low";
       d.res.error = "uncertain: no currency in the document, payer in the US (USD or EUR?)" + (prev !== "" ? "; " + prev : "");
       continue;
     }
@@ -17072,6 +17092,7 @@ function mailCurrency(docs: DocResult[]): void {
     inferredPaymentCurrency(d.res, code);
     if (!assumed) continue;
     if (d.res.confidence === "high") d.res.confidence = "medium";
+    if (d.partsConfidence === "high") d.partsConfidence = "medium";
     d.res.warnings = "no currency in " + d.name + " - " + code + " assumed from the mail" + (d.res.warnings !== "" ? " | " + d.res.warnings : "");
   }
 }
@@ -17539,18 +17560,68 @@ function documentResult(bytes: Uint8Array, raw: string, kw: string, subject: str
   return res;
 }
 
+function documentPaymentAmounts(d: DocResult, groups: AmountGroup[]): string[] {
+  if (d.verdict === "several") return d.res.paymentAmounts;
+  const parts: string[] = [];
+  if (d.verdict === "advice") {
+    for (const g of groups) if (g.docs.indexOf(d) >= 0) parts.push(germanAmount(g.value) + " " + g.currency);
+  }
+  return parts;
+}
+
+function combinedPaymentConfidence(docs: DocResult[], groups: AmountGroup[], amounts: string[]): string {
+  // Every occurrence needs a trusted source. A weaker copy or cover note cannot lower an independently confirmed
+  // amount, but one high-confidence occurrence cannot certify two identical payments from a weaker list.
+  const high: { [amount: string]: number } = {};
+  const medium: { [amount: string]: number } = {};
+  for (const d of docs) {
+    if (d.body && d.res.ok && d.verdict !== "other") {
+      const paid = paidSentence(d.res);
+      if (paid !== "" && !ADDITIONAL_PAYMENT.test(d.res.text) && (actualPaid(paid) || PART_PAID.test(paid))) {
+        // "Actually sent" or "only paid" can contradict a complete list even when the body was not an advice
+        // on its own. A matching combined total is a cover-note echo, not a contradiction or another payment.
+        let sum = 0, count = 0;
+        for (const p of amounts) {
+          const m = PAYMENT_AMOUNT.exec(p);
+          if (m !== null && m[2] === (d.res.currency || "EUR")) { sum += parseGermanAmount(m[1]); count++; }
+        }
+        if (count === 0 || Math.abs(sum - d.res.amountNumber) >= 0.005) return "low";
+      }
+    }
+    if (!d.body && d.verdict === "unclear") {
+      const relevant = d.hint !== "" || d.strong || adviceHint(d.name) !== "";
+      if (relevant && (UNREADABLE_TYPE.test(d.type) || d.type === "not-checked" || !d.res.ok)) return "low";
+      if (d.res.ok && d.res.confidence !== "low") {
+        const value = germanAmount(d.res.amountNumber) + " " + (d.res.currency || "EUR");
+        if (amounts.indexOf(value) < 0) return "low";
+      }
+    }
+    const confidence = d.verdict === "several" ? d.partsConfidence : d.res.confidence;
+    if (confidence !== "high" && confidence !== "medium") continue;
+    const seen: { [amount: string]: number } = {};
+    for (const p of documentPaymentAmounts(d, groups)) {
+      seen[p] = (seen[p] || 0) + 1;
+      medium[p] = Math.max(medium[p] || 0, seen[p]);
+      if (confidence === "high") high[p] = Math.max(high[p] || 0, seen[p]);
+    }
+  }
+  let result = amounts.length >= 2 ? "high" : "low";
+  const used: { [amount: string]: number } = {};
+  for (const p of amounts) {
+    used[p] = (used[p] || 0) + 1;
+    if (used[p] > (medium[p] || 0)) return "low";
+    if (used[p] > (high[p] || 0)) result = "medium";
+  }
+  return result;
+}
+
 function collectPaymentAmounts(docs: DocResult[], groups: AmountGroup[]): string[] {
   // Document order is retained. A PDF and its copy in the mail text count once; if a document explicitly contains
   // identical separate payments, retain that multiplicity rather than collapsing the payments into a single amount.
   const out: string[] = [];
   const counts: { [amount: string]: number } = {};
   for (const d of docs) {
-    const parts: string[] = [];
-    if (d.verdict === "several") {
-      for (const p of d.res.paymentAmounts) parts.push(p);
-    } else if (d.verdict === "advice") {
-      for (const g of groups) if (g.docs.indexOf(d) >= 0) parts.push(germanAmount(g.value) + " " + g.currency);
-    }
+    const parts = documentPaymentAmounts(d, groups);
     const seen: { [amount: string]: number } = {};
     for (const p of parts) {
       seen[p] = (seen[p] || 0) + 1;
@@ -17589,7 +17660,6 @@ function subjectFields(res: AvisResult, subject: string, keywords: string): void
     amt = germanAmount(res.amountNumber);
     amounts.push(amt);
     if (res.confidence === "high") { cat = "Avis"; tag = amt; }
-    else if (res.confidence === "medium") { cat = "Avis"; tag = amt + " (prüfen)"; }
     else { review = true; }
   } else if (res.verdict === "advice") {
     res.verdict = "unclear";
@@ -17602,7 +17672,10 @@ function subjectFields(res: AvisResult, subject: string, keywords: string): void
       if (m === null || !isFinite(value) || Math.abs(value) >= MAX_AMOUNT || germanAmount(value) !== m[1]) valid = false;
       else amounts.push(m[1]);
     }
-    if (valid) { cat = "Avis"; tag = amounts.join(" + "); }
+    if (valid) {
+      if (res.confidence === "high") { cat = "Avis"; tag = amounts.join(" + "); }
+      else review = true;
+    }
     else {
       res.verdict = "unclear";
       res.verdictWhy = "separate payment amounts incomplete or out of range (" + res.verdictWhy + ")";
@@ -17629,6 +17702,13 @@ function subjectFields(res: AvisResult, subject: string, keywords: string): void
   if (tag !== "" && subj !== "" && !sameAmount) {
     res.newSubject = subj === NO_SUBJECT ? tag : tag + " " + subj;
     res.patchSubject = JSON.stringify({ subject: res.newSubject });
+  }
+  if (cat !== "" && subj === "") {
+    // Empty here means unavailable/unreadable, not an empty mail subject (represented by NO_SUBJECT).
+    // Without a writable or already matching subject, the amount cannot authorize a category update.
+    cat = "";
+    res.category = "";
+    res.warnings += (res.warnings !== "" ? " | " : "") + "subject unavailable - no automatic category";
   }
   res.patchCategory = "";
   if (cat !== "") {
@@ -17735,6 +17815,8 @@ function inputNote(res: AvisResult, inp: InputBytes): AvisResult {
   res.warnings = "PDF arrived as text instead of Base64" + (inp.damaged > 0 ? " (" + inp.damaged + " characters lost)" : "")
     + (res.warnings !== "" ? " | " + res.warnings : "");
   if (inp.damaged === 0) return res;
+  // A multi-payment result has no single amount (ok=false), but damaged input still invalidates its confidence.
+  res.confidence = "low";
   if (res.ok) {
     const prev = res.error.indexOf("uncertain: ") === 0 ? res.error.substring(11) : res.error;
     res.confidence = "low";

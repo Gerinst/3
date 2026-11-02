@@ -1,0 +1,1 @@
+or(empty(outputs('Run_script')?['body/result/patchSubject']), equals(actions('Betreff_setzen')?['status'], 'Succeeded'))

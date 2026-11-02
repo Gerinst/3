@@ -82,6 +82,11 @@ function execute(actions, state) {
       if (!dependencies.every(([id, allowed]) => allowed.includes(state.status[id]))) {
         skipAll({ [name]: action }, state);
         local[name] = 'Skipped';
+      } else if (state.forced[name] === 'Skipped') {
+        // A skipped action has no side effects. Keep the enclosing condition
+        // successful here: a success gate must check the required write itself.
+        skipAll({ [name]: action }, state);
+        local[name] = 'Skipped';
       } else if (action.type === 'If') {
         const yes = condition(action.expression, state);
         skipAll(yes ? action.else.actions : action.actions, state);
@@ -137,26 +142,47 @@ function findNode(items, id) {
 }
 
 const parser = load();
+const single = parser.main({}, eml({ attachments: [fixtures.two.attachments[0]] }));
+const unreadableSubject = parser.main({}, eml({
+  attachments: [fixtures.two.attachments[0]], subject: '=?UTF-8?B?/w==?=',
+}));
 const multi = parser.main({}, eml(fixtures.three));
 const rerun = parser.main({}, eml({ ...fixtures.three, subject: multi.newSubject }));
 const missing = parser.main({}, eml({
   subject: 'Zahlungsavis',
   attachments: [{ name: 'Avis.pdf', type: 'application/pdf', text: '%PDF-1.4\n%%EOF' }],
 }));
-const low = vm.runInContext(`(() => {
-  const result = emptyResult();
-  Object.assign(result, { verdict: 'advice', ok: true, amountNumber: 1200.3,
-    currency: 'EUR', confidence: 'low' });
-  return finishResult(result, 'Abrechnung Oktober', '');
-})()`, parser);
+const medium = parser.main({}, eml({
+  keywords: 'Buchhaltung',
+  attachments: [{ name: 'Avis.txt', text:
+    'Zahlungsavis\nWir haben Ihre Rechnung heute bezahlt.\n1.200,30 EUR\nMit freundlichen Gruessen' }],
+}));
+const low = parser.main({}, eml({
+  keywords: 'Buchhaltung',
+  attachments: [{ name: 'Avis.txt', text:
+    'Zahlungsavis\nWir werden am 15. Dezember den Zahlbetrag 1.200,30 EUR ueberweisen.' }],
+}));
 const other = parser.main({}, eml({ subject: 'Hallo', body: 'Vielen Dank für Ihre Nachricht.' }));
 const noInput = parser.main({}, '');
 assert.equal(missing.needsReview, true);
-assert.equal(low.needsReview, true);
+assert.equal(single.confidence, 'high');
+assert.equal(unreadableSubject.confidence, 'high');
+assert.equal(unreadableSubject.needsReview, false);
+assert.equal(unreadableSubject.patchSubject, '');
+assert.equal(unreadableSubject.patchCategory, '');
+assert.equal(medium.confidence, 'medium');
+assert.equal(low.confidence, 'low');
+for (const result of [medium, low]) {
+  assert.equal(result.needsReview, true);
+  for (const key of ['category', 'patchCategory', 'subjectPrefix', 'newSubject', 'patchSubject']) {
+    assert.equal(result[key], '', result.confidence + ' must not change ' + key);
+  }
+}
 assert.equal(other.needsReview, false);
 assert.equal(noInput.needsReview, true);
 
 const main = { Bearbeitung_noetig: flow.code('Bearbeitung_noetig') };
+const mainUi = graphFromUi([findNode(flow.tree('main'), 'Bearbeitung_noetig')], 'main');
 const pbNode = findNode(flow.tree('planB'), 'Bearbeitung_noetig');
 const planB = graphFromUi([pbNode], 'planB');
 let checks = 0;
@@ -171,12 +197,16 @@ function check(label, graph, result, expected, options = {}) {
   return state;
 }
 
-for (const [mode, graph] of [['main', main], ['planB', planB]]) {
-  const subject = mode === 'main' ? ['Betreff_setzen'] : ['Kopie_anlegen', 'Kopie_anpassen', 'Kopie_senden'];
+for (const [mode, graph] of [['main', main], ['main UI', mainUi], ['planB', planB]]) {
+  const subject = mode === 'planB' ? ['Kopie_anlegen', 'Kopie_anpassen', 'Kopie_senden'] : ['Betreff_setzen'];
   const normal = [...subject, 'Kategorie_setzen', ...(mode === 'planB' ? ['Original_verschieben'] : [])];
+  check(mode + ' normal single', graph, single, normal);
   check(mode + ' normal multiple', graph, multi, normal);
   check(mode + ' repeated complete subject', graph, rerun, ['Kategorie_setzen']);
+  check(mode + ' unreadable original subject cannot be overwritten or categorized',
+    graph, unreadableSubject, []);
   check(mode + ' missing amount', graph, missing, ['Avisbetrag_fehlt_verschieben']);
+  check(mode + ' medium confidence', graph, medium, ['Avisbetrag_fehlt_verschieben']);
   check(mode + ' low confidence', graph, low,
     ['Avisbetrag_fehlt_verschieben']);
   check(mode + ' stale review subject is ignored', graph,
@@ -191,11 +221,18 @@ for (const [mode, graph] of [['main', main], ['planB', planB]]) {
   for (const scriptStatus of ['Failed', 'TimedOut', 'Skipped']) {
     check(mode + ' script ' + scriptStatus, graph, {}, ['Avisbetrag_fehlt_verschieben'], { scriptStatus });
   }
-  for (const failure of ['Failed', 'TimedOut']) {
+  for (const failure of ['Failed', 'TimedOut', 'Skipped']) {
     check(mode + ' failed move has no category fallback', graph, missing,
-      ['Avisbetrag_fehlt_verschieben'], { forced: { Avisbetrag_fehlt_verschieben: failure } });
-    check(mode + ' subject or copy failure still categorizes normal advice', graph, multi,
-      [subject[0], 'Kategorie_setzen'], { forced: { [subject[0]]: failure } });
+      failure === 'Skipped' ? [] : ['Avisbetrag_fehlt_verschieben'],
+      { forced: { Avisbetrag_fehlt_verschieben: failure } });
+    for (const [index, action] of subject.entries()) {
+      const attempted = subject.slice(0, index + (failure === 'Skipped' ? 0 : 1));
+      check(mode + ' required ' + action + ' ' + failure + ' blocks category and archive',
+        graph, multi, attempted, { forced: { [action]: failure } });
+    }
+    check(mode + ' category ' + failure + ' blocks archive', graph, multi,
+      [...subject, ...(failure === 'Skipped' ? [] : ['Kategorie_setzen'])],
+      { forced: { Kategorie_setzen: failure } });
   }
 }
 
@@ -216,11 +253,21 @@ assert.equal(move.inputs.parameters.folderPath, flow.ID.reviewFolder);
 
 const copyNode = findNode(flow.tree('planB'), 'Kopie_pruefen');
 const copies = graphFromUi([copyNode], 'planB');
-for (const subject of ['1.200,30 ? Zahlungsavis', '1.200,30 EUR ? - Zahlungsavis']) {
+for (const subject of [
+  '1.200,30 ? Zahlungsavis', '1.200,30 EUR ? - Zahlungsavis',
+  '1.200,30 (prüfen) Zahlungsavis', '1.200,30 EUR (prüfen) - Zahlungsavis',
+]) {
   check('old uncertain copy: ' + subject, copies, {}, ['Kopie_Pruefordner_verschieben'], { subject });
 }
 check('normal multiple copy with question in original subject', copies, {}, ['Kategorie_Kopie'],
   { subject: '1.200,30 + 5.632,21 Abrechnung?' });
+for (const subject of [
+  '1.200,30 Zahlungsavis (prüfen)', '1.200,30 EUR - Zahlungsavis (prüfen)',
+  '1.200,30 Zahlungsavis - Rückfrage ?',
+]) {
+  check('review word only in original subject stays normal: ' + subject,
+    copies, {}, ['Kategorie_Kopie'], { subject });
+}
 
 const files = {
   pdf: 'Run_script_pdfBase64', workLinks: 'Bearbeitung_noetig_links',
@@ -228,6 +275,8 @@ const files = {
   katText: 'Kategorie_setzen_Text', betLinks: 'Betreff_noetig_links',
   betText: 'Betreff_setzen_Text', betLinksB: 'Betreff_noetig_Plan_B_links',
   copyReviewLinks: 'Kopie_pruefen_links',
+  categoryAllowedLinks: 'Kategorie_erlaubt_links',
+  categoryAllowedLinksB: 'Kategorie_erlaubt_Plan_B_links',
 };
 for (const [key, name] of Object.entries(files)) {
   const formula = fs.readFileSync(path.join(__dirname, '../formeln/' + name + '.txt'), 'utf8').trim();
@@ -242,4 +291,4 @@ for (const mode of ['main', 'planB']) {
   assert.equal(new Set(ids).size, ids.length, mode + ' has unique action IDs');
   assert.deepEqual(plain(flow.order(mode)).slice(0, -1), ids, mode + ' navigation follows diagram');
 }
-console.log(`PASS: ${checks} review-routing scenarios; destination, 9 formulas and both diagrams verified.`);
+console.log(`PASS: ${checks} review-routing scenarios; destination, ${Object.keys(files).length} formulas and both diagrams verified.`);
