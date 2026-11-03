@@ -17536,6 +17536,123 @@ function mailCurrency(docs: DocResult[]): void {
   }
 }
 
+interface SubjectMoneyClaim { cents: number; currency: string; printed: string; list?: number }
+
+function subjectMoneyClaims(subject: string): SubjectMoneyClaim[] {
+  // Only explicit money, never arbitrary digit strings or reference/date fragments.
+  // Do not use the tolerant document amount scanner on a subject.
+  const currency = "(?:EUR|USD|CHF|GBP|CAD|AUD|NZD|JPY|CNY|SEK|NOK|DKK|PLN|CZK|HUF|RON|SGD|HKD|US\\$|CA\\$|AU\\$|NZ\\$|HK\\$|SG\\$|€|£|\\$)";
+  const currencyBefore = new RegExp("(?:^|[^A-Za-z])" + currency + "\\s*$", "i");
+  const currencyAfter = new RegExp("^\\s*" + currency + "(?:$|[^A-Za-z])", "i");
+  const text = subject.replace(/\u2212/g, "-").replace(/\b\d{1,2}[./-]\d{1,2}[./-]\d{2,4}\b|\b\d{4}-\d{2}-\d{2}\b|\b\d{1,2}:\d{2}(?::\d{2})?\b/g,
+    (part: string) => " ".repeat(part.length)).replace(/\b\d{1,2}\.\d{1,2}\.(?!\d)/g,
+      (part: string, offset: number, whole: string) => {
+        // A short date has the same spelling as an English amount with a full stop.
+        // Explicit currency makes "EUR 12.03." money rather than a date.
+        return currencyBefore.test(whole.substring(0, offset)) || currencyAfter.test(whole.substring(offset + part.length))
+          ? part : " ".repeat(part.length);
+      });
+  const number = "[-+]?(?:\\d{1,3}(?:\\.\\d{3})+,\\d{2}|\\d{1,3}(?:,\\d{3})+\\.\\d{2}|\\d{1,3}(?:['’ \\u00a0]\\d{3})+[.,]\\d{2}|\\d+[.,]\\d{2}|\\d{1,3}(?:[.,]\\d{3})+|\\d+)-?";
+  const re = new RegExp("(?:(" + currency + ")\\s*)?(" + number + ")(?:\\s*(" + currency + "))?", "gi");
+  const tokens: { claim: SubjectMoneyClaim; start: number; end: number; explicit: boolean }[] = [];
+  const listPrefix = BOT_PLAIN_PREFIX.exec(text);
+  const prefixEnd = listPrefix !== null ? listPrefix[0].length : 0;
+  let m = re.exec(text);
+  for (; m !== null; m = re.exec(text)) {
+    // In "100,00+200,00", '+' separates two amounts; it is not part of the second token's boundary.
+    const start = m.index + (!m[1] && m[2].startsWith("+") ? 1 : 0);
+    const end = m.index + m[0].length;
+    const before = text.substring(0, start);
+    const after = text.substring(end);
+    // No suffix of INV-1234.56, RE 4711, a date, decimal fraction or unit quantity.
+    if (/[a-zäöüß0-9_.,]$/i.test(before) || /^[a-zäöüß0-9_]|^[.,]\d/i.test(after)) continue;
+    if (/^\s*(?:%|prozent\b|per\s*cent\b|kg\b|g\b|t\b|mm\b|cm\b|m\b|pcs\b|stück\b|stueck\b|stk\b|h\b|std\b|stunden\b|hours?\b|min\b|l\b|liter\b)/i.test(after)) continue;
+    if (/(?:\b(?:re|inv|invoice|rechnung|ref|reference|nr|no|number|beleg|auftrag|po)\.?\s*[:#-]?|\b(?:rechnungsbetrag|rechnungswert|brutto|gross|skonto|rabatt|discount|fee|gebühr|gebuehr|restbetrag|saldo|offen|invoice amount|invoice total|gross amount|gross total|bruttobetrag))\s*[:=]?\s*$/i.test(before)) continue;
+    if (/(?:umrechnung|wechselkurs|gegenwert|equivalent(?: to)?|converted(?: to)?|entspricht)(?:\s+(?:ca\.?|circa|approx\.?|approximately|about|etwa))?\s*[:=]?\s*$/i.test(before) || /^\s*(?:gegenwert|equivalent|umgerechnet)\b/i.test(after)) continue;
+    const curBefore = m[1] && m[1] !== "$" ? currencyCode(m[1].toUpperCase()) : "";
+    const curAfter = m[3] && m[3] !== "$" ? currencyCode(m[3].toUpperCase()) : "";
+    if (curBefore !== "" && curAfter !== "" && curBefore !== curAfter) continue;
+    const cur = curBefore || curAfter;
+    let raw = m[2].replace(/[+'’\s]/g, "");
+    if (raw.endsWith("-")) {
+      if (raw.startsWith("-")) continue;
+      raw = "-" + raw.substring(0, raw.length - 1);
+    }
+    const decimal = /[.,]\d{2}$/.test(raw);
+    // The original subject after a generated prefix can itself start with a part amount or a total.
+    const localBefore = prefixEnd > 0 && start >= prefixEnd ? before.substring(prefixEnd) : before;
+    const leading = /^\s*(?:(?:aw|re|wg|fw|fwd|antw|tr|wtr|sv|vs)\s*:\s*)*\+?\s*$/i.test(localBefore);
+    const paymentLabel = /(?:zahlbetrag|zahlungsbetrag|gesamtbetrag|überweisungsbetrag|ueberweisungsbetrag|zahlung|überweisung|ueberweisung|zahlungsavis|avis|payment(?: amount| advice)?|amount paid|total paid|paid|remittance(?: advice)?)\s*(?:[:=]|über|ueber|of|for)?\s*$/i.test(before);
+    // An existing multi-payment prefix is also explicit money after each " + ".
+    const inPrefix = prefixEnd > 0 && start < prefixEnd;
+    const explicit = !!m[1] || !!m[3] || (decimal && (leading || paymentLabel || inPrefix));
+    let value: number;
+    if (/[,]\d{2}$/.test(raw)) value = parseGermanAmount(raw);
+    else if (/[.]\d{2}$/.test(raw)) value = parseEnglishAmount(raw);
+    else value = Number(raw.replace(/[.,]/g, ""));
+    if (!isFinite(value) || Math.abs(value) >= MAX_AMOUNT) continue;
+    tokens.push({ claim: { cents: Math.round(value * 100), currency: cur, printed: m[0].trim() }, start: start, end: end, explicit: explicit });
+  }
+  const out: SubjectMoneyClaim[] = [];
+  let list = 0;
+  for (let i = 0; i < tokens.length;) {
+    let end = i + 1;
+    while (end < tokens.length && /^\s*\+\s*$/.test(text.substring(tokens[end - 1].end, tokens[end].start))) end++;
+    // A list inherits money context from an explicit member. Bare invoice numbers alone never qualify.
+    if (tokens.slice(i, end).some((token: { claim: SubjectMoneyClaim; start: number; end: number; explicit: boolean }) => token.explicit)) {
+      const group = end > i + 1 ? ++list : 0;
+      for (let j = i; j < end; j++) { tokens[j].claim.list = group; out.push(tokens[j].claim); }
+    }
+    i = end;
+  }
+  return out;
+}
+
+function reviewSubjectAmountConflict(res: AvisResult, docs: DocResult[], subject: string): void {
+  // Only an already safe advice from a real PDF/table can establish a contradiction.
+  // Unrelated mail must never become a review case merely because its subject has money.
+  if (res.confidence !== "high" || (res.verdict !== "advice" && res.verdict !== "several")) return;
+  const evidence = docs.some((d: DocResult) => !d.body && /^(?:pdf|xlsx|xls|ods|csv|tsv|html-export|mhtml-export|xml2003)$/.test(d.type)
+    && (d.verdict === "advice" || d.verdict === "several") && (d.res.confidence === "high" || d.partsConfidence === "high"));
+  if (!evidence) return;
+  if (subject.length > 8192) {
+    res.confidence = "low";
+    res.error = "subject amount check exceeded length limit";
+    res.verdictWhy += "; " + res.error;
+    return;
+  }
+  const claims = subjectMoneyClaims(subject);
+  if (claims.length === 0) return;
+  const actual: SubjectMoneyClaim[] = [];
+  if (res.verdict === "advice" && res.ok) actual.push({ cents: Math.round(res.amountNumber * 100), currency: res.currency || "EUR", printed: docAmount(res) });
+  else for (const amount of res.paymentAmounts) {
+    const m = PAYMENT_AMOUNT.exec(amount);
+    if (m !== null) actual.push({ cents: Math.round(parseGermanAmount(m[1]) * 100), currency: m[2], printed: amount });
+  }
+  if (actual.length === 0) return;
+  // Each explicit '+' list retains its multiplicity. Separate prose assertions (including the original subject
+  // following a generated prefix) can repeat an individual payment or a same-currency combined total.
+  const ordered = claims.slice().sort((a: SubjectMoneyClaim, b: SubjectMoneyClaim) => (a.list || 0) - (b.list || 0)
+    || (a.currency === "" ? 1 : 0) - (b.currency === "" ? 1 : 0));
+  let group = -1;
+  let used: boolean[] = [];
+  for (const claim of ordered) {
+    const list = claim.list || 0;
+    if (list !== group || list === 0) { used = actual.map(() => false); group = list; }
+    const found = actual.findIndex((a: SubjectMoneyClaim, i: number) => !used[i] && a.cents === claim.cents && (claim.currency === "" || claim.currency === a.currency));
+    if (found >= 0) { used[found] = true; continue; }
+    if (list === 0 && actual.length > 1 && actual.every((a: SubjectMoneyClaim) => a.currency === actual[0].currency)
+      && (claim.currency === "" || claim.currency === actual[0].currency)
+      && claim.cents === actual.reduce((sum: number, a: SubjectMoneyClaim) => sum + a.cents, 0)) continue;
+    const reason = "subject amount conflict: " + claim.printed + " differs from verified document payment(s) " + actual.map((a: SubjectMoneyClaim) => a.printed).join(" + ");
+    res.confidence = "low";
+    res.error = reason;
+    res.verdictWhy += (res.verdictWhy !== "" ? "; " : "") + reason;
+    // subjectFields now routes for review and leaves all write patches empty.
+    return;
+  }
+}
+
 function mailResult(mail: MailScan, kw: string, subject: string): AvisResult {
   // result for a mail container (.eml, smime.p7m): every PDF, other attachment and the mail text is checked
   const docs: DocResult[] = [];
@@ -17979,6 +18096,7 @@ function mailResult(mail: MailScan, kw: string, subject: string): AvisResult {
   instalmentColumn(docs);
   mailCurrency(docs);
   const res = decideMail(docs, hint, noDocError);
+  reviewSubjectAmountConflict(res, docs, subject);
   // notes: where the result comes from and what was checked
   let chosenName = "";
   for (const d of docs) if (d.res === res && chosenName === "") chosenName = d.name;
@@ -18006,6 +18124,7 @@ function documentResult(bytes: Uint8Array, raw: string, kw: string, subject: str
   // the reason of the first document, before the mail decision may replace it with the container's
   const firstWhy = docs.length > 0 ? (docs[0].res.error !== "" ? docs[0].res.error : docs[0].why) : "";
   const res = decideMail(docs, subjectHint !== "" ? "advice word '" + subjectHint + "' in the subject" : "", notPdf);
+  reviewSubjectAmountConflict(res, docs, subject);
   // several payments: the error of the mail decision names them
   if (res.verdict === "several") return res;
   if (!res.ok && docs.length > 0) res.error = notPdf + " - read as " + docs[0].type + ": " + (firstWhy !== "" ? firstWhy : docs[0].why);
@@ -18331,7 +18450,9 @@ function main(workbook: ExcelScript.Workbook, pdfBase64: string, extraKeywords?:
       if (probe.indexOf("%PDF") < 0) return finishResult(inputNote(documentResult(bytes, pdfBase64, kw, subject), inp), subject, keywords);
     }
     const subjectHint = subject !== "" && !isReplySubject(subject) ? adviceHint(subject) : "";
-    const one = decideMail([pdfDocument("(input)", bytes, kw)], subjectHint !== "" ? "advice word '" + subjectHint + "' in the subject" : "", "");
+    const inputPdf = pdfDocument("(input)", bytes, kw);
+    const one = decideMail([inputPdf], subjectHint !== "" ? "advice word '" + subjectHint + "' in the subject" : "", "");
+    reviewSubjectAmountConflict(one, [inputPdf], subject);
     return finishResult(inputNote(one, inp), subject, keywords);
   } catch (e) {
     const r = emptyResult();

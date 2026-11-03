@@ -7,13 +7,32 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
-const { load, eml, fixtures } = require('./fixtures.cjs');
+const { load, eml, fixtures, pdf, textAdvice } = require('./fixtures.cjs');
+const mainOnly = process.argv.includes('--main-only') || process.env.AVIS_TEST_SCOPE === 'main';
+const modes = mainOnly ? ['main'] : ['main', 'planB'];
 
 const mailbox = 'avis@firma.de';
 const context = { window: {} };
-vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../dist/avis-flow.html'), 'utf8')
-  .match(/<script>([\s\S]*?)<\/script>/)[1], context);
+let flowScript = fs.readFileSync(path.join(__dirname, '../dist/avis-flow.html'), 'utf8')
+  .match(/<script>([\s\S]*?)<\/script>/)[1];
+if (mainOnly) {
+  // Do not traverse the unused Plan B navigation tree during HTML bootstrap.
+  // All main-flow code and formulas are evaluated exactly as shipped.
+  const unusedNavigation = "planB: flatNodes(TREE.planB).concat('finishB')";
+  assert.equal(flowScript.split(unusedNavigation).length, 2, 'expected one Plan B navigation initializer');
+  flowScript = flowScript.replace(unusedNavigation, 'planB: []');
+}
+vm.runInNewContext(flowScript, context);
 const flow = context.window.AvisFlow;
+if (mainOnly) {
+  for (const [name, modeIndex] of [['tree', 0], ['order', 0], ['node', 1]]) {
+    const original = flow[name];
+    flow[name] = (...args) => {
+      assert.notEqual(args[modeIndex], 'planB', 'Plan B access is excluded in main-only scope');
+      return original(...args);
+    };
+  }
+}
 const parser = load();
 const clone = value => JSON.parse(JSON.stringify(value));
 const local = text => text.replaceAll('{{MB}}', mailbox).replaceAll('{{mb}}', mailbox);
@@ -65,8 +84,8 @@ function uiGraph(items, mode) {
 }
 const graphs = {
   main: { Keine_Automatik: flow.code('Keine_Automatik') },
-  planB: uiGraph(flow.tree('planB').filter(x => x !== 'trigger'), 'planB'),
 };
+if (!mainOnly) graphs.planB = uiGraph(flow.tree('planB').filter(x => x !== 'trigger'), 'planB');
 function skip(actions, state) {
   for (const [id, action] of Object.entries(actions)) {
     state.status[id] = 'Skipped';
@@ -195,7 +214,7 @@ function knownRisk(name, fn) {
   test(name, fn); risks.push(name);
 }
 
-for (const mode of ['main', 'planB']) {
+for (const mode of modes) {
   test(mode + ': success preserves unrelated categories', () => {
     const env = environment(fixtures.three, { categories: ['Buchhaltung', 'Priorität', 'mehrere Avise'] });
     const state = run(mode, env);
@@ -240,6 +259,52 @@ for (const mode of ['main', 'planB']) {
     assert(!attempted(stale).includes('Kategorie_setzen'));
   });
 }
+const subjectAmountAdvice = {
+  attachments: [{ name: 'Zahlungsavis.pdf', type: 'application/pdf',
+    text: pdf(textAdvice('1.200,30')) }],
+};
+test('main: conflicting subject amount only moves the original and preserves existing categories', () => {
+  const subject = '9.999,99 EUR - Zahlungsavis';
+  const categories = ['Buchhaltung', 'Priorität'];
+  const env = environment(subjectAmountAdvice, { subject, categories: [...categories] });
+  const state = run('main', env);
+  assert.equal(state.result.needsReview, true);
+  for (const key of ['category', 'patchCategory', 'subjectPrefix', 'newSubject', 'patchSubject']) {
+    assert.equal(state.result[key], '', 'subject conflict must not authorize ' + key);
+  }
+  assert.deepEqual(attempted(state), ['Export_email', 'Run_script', 'Avisbetrag_fehlt_verschieben']);
+  assert(succeeded(state, 'Avisbetrag_fehlt_verschieben'));
+  assert.equal(env.record.subject, subject);
+  assert.deepEqual(env.record.categories, categories);
+  assert.equal(env.record.folder, 'Posteingang/Archive/Avisbetrag fehlt');
+  assert.equal(env.sent.length, 0);
+  assert.equal(env.drafts.length, 0);
+});
+test('main: matching subject amount permits normal subject-then-category processing', () => {
+  const subject = 'Zahlungsavis Betrag 1.200,30 EUR';
+  const env = environment(subjectAmountAdvice, { subject });
+  const state = run('main', env);
+  assert.equal(state.result.confidence, 'high');
+  assert.equal(state.result.needsReview, false);
+  assert.equal(env.record.subject, '1.200,30 ' + subject);
+  assert.deepEqual(env.record.categories, ['Buchhaltung', 'Avis']);
+  assert.equal(env.record.folder, 'Posteingang');
+  assert(succeeded(state, 'Betreff_setzen'));
+  assert(succeeded(state, 'Kategorie_setzen'));
+  assert(attempted(state).indexOf('Betreff_setzen') < attempted(state).indexOf('Kategorie_setzen'));
+  assert(!attempted(state).includes('Avisbetrag_fehlt_verschieben'));
+});
+test('main: invoice reference and date in subject are not a conflicting payment amount', () => {
+  const subject = 'Zahlungsavis RE-2026-999999 vom 29.10.2026';
+  const env = environment(subjectAmountAdvice, { subject });
+  const state = run('main', env);
+  assert.equal(state.result.confidence, 'high');
+  assert.equal(state.result.needsReview, false);
+  assert.equal(env.record.subject, '1.200,30 ' + subject);
+  assert.deepEqual(env.record.categories, ['Buchhaltung', 'Avis']);
+  assert.equal(env.record.folder, 'Posteingang');
+  assert(!attempted(state).includes('Avisbetrag_fehlt_verschieben'));
+});
 test('main: duplicate old delivery and fresh rerun do not stack prefixes', () => {
   const env = environment(); const event = eventOf(env.record);
   run('main', env, event); const expected = env.record.subject;
@@ -255,6 +320,7 @@ test('main: successful remote patch with timeout response still blocks category'
   assert(!attempted(state).includes('Kategorie_setzen'));
   assert.deepEqual(env.record.categories, ['Buchhaltung']);
 });
+if (!mainOnly) {
 test('planB: normal own copy terminates without exporting or creating another copy', () => {
   const env = environment(); run('planB', env);
   assert.equal(env.sent.length, 1);
@@ -297,6 +363,7 @@ knownRisk('planB: send committed but timed-out response permits a duplicate on r
   assert.equal(env.sent.length, 1); assert(!attempted(state).includes('Kategorie_setzen'));
   run('planB', env, event); assert.equal(env.sent.length, 2);
 });
+}
 test('main: stale trigger cannot overwrite a later manual subject edit', () => {
   const env = environment(); const event = eventOf(env.record);
   run('main', env, event);
@@ -328,7 +395,7 @@ knownRisk('main: category added between final GET and PATCH can still be lost', 
   });
   assert.deepEqual(env.record.categories, ['Buchhaltung', 'Avis']);
 });
-for (const mode of ['main', 'planB']) {
+for (const mode of modes) {
   for (const action of ['Nachricht_vor_Betreff_lesen', 'Nachricht_vor_Kategorie_lesen']) {
     for (const failure of ['Failed', 'TimedOut', 'Skipped']) {
       test(mode + ': ' + action + ' ' + failure + ' blocks category/archive', () => {
@@ -341,5 +408,6 @@ for (const mode of ['main', 'planB']) {
   }
 }
 console.log(`PASS: ${cases} stateful offline safety scenarios; ${risks.length} current limitations reproduced.`);
+if (mainOnly) console.log('Scope: main flow only; Plan B graphs and scenarios excluded.');
 for (const name of risks) console.log('KNOWN LIMITATION (simulation): ' + name);
 console.log('No network or Microsoft 365 calls made; delivery/ID changes/response loss are explicit simulated conditions.');

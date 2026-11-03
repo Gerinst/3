@@ -3,12 +3,30 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const { load, eml, fixtures } = require('./fixtures.cjs');
+const mainOnly = process.argv.includes('--main-only') || process.env.AVIS_TEST_SCOPE === 'main';
+const modes = mainOnly ? ['main'] : ['main', 'planB'];
 
 const html = fs.readFileSync(path.join(__dirname, '../dist/avis-flow.html'), 'utf8');
-const script = html.match(/<script>([\s\S]*?)<\/script>/)[1];
+let script = html.match(/<script>([\s\S]*?)<\/script>/)[1];
+if (mainOnly) {
+  // The HTML eagerly flattens both navigation trees. Suppress only the unused
+  // Plan B traversal; the actual main-flow code and formulas stay unchanged.
+  const unusedNavigation = "planB: flatNodes(TREE.planB).concat('finishB')";
+  assert.equal(script.split(unusedNavigation).length, 2, 'expected one Plan B navigation initializer');
+  script = script.replace(unusedNavigation, 'planB: []');
+}
 const context = { window: {} };
 vm.runInNewContext(script, context);
 const flow = context.window.AvisFlow;
+if (mainOnly) {
+  for (const [name, modeIndex] of [['tree', 0], ['order', 0], ['node', 1]]) {
+    const original = flow[name];
+    flow[name] = (...args) => {
+      assert.notEqual(args[modeIndex], 'planB', 'Plan B access is excluded in main-only scope');
+      return original(...args);
+    };
+  }
+}
 const plain = value => JSON.parse(JSON.stringify(value));
 const resultKeys = result => Object.fromEntries(
   Object.entries(result).map(([key, value]) => ['body/result/' + key, value]),
@@ -210,8 +228,11 @@ assert.equal(noInput.needsReview, true);
 
 const main = { Bearbeitung_noetig: flow.code('Bearbeitung_noetig') };
 const mainUi = graphFromUi([findNode(flow.tree('main'), 'Bearbeitung_noetig')], 'main');
-const pbNode = findNode(flow.tree('planB'), 'Bearbeitung_noetig');
-const planB = graphFromUi([pbNode], 'planB');
+const graphs = [['main', main], ['main UI', mainUi]];
+if (!mainOnly) {
+  const pbNode = findNode(flow.tree('planB'), 'Bearbeitung_noetig');
+  graphs.push(['planB', graphFromUi([pbNode], 'planB')]);
+}
 let checks = 0;
 function check(label, graph, result, expected, options = {}) {
   const state = {
@@ -224,7 +245,7 @@ function check(label, graph, result, expected, options = {}) {
   return state;
 }
 
-for (const [mode, graph] of [['main', main], ['main UI', mainUi], ['planB', planB]]) {
+for (const [mode, graph] of graphs) {
   const run = (label, result, expected, options = {}) =>
     check(mode + ' ' + label, graph, result, expected, { mode, ...options });
   const writes = mode === 'planB' ? ['Kopie_anlegen', 'Kopie_anpassen', 'Kopie_senden'] : ['Betreff_setzen'];
@@ -295,6 +316,7 @@ assert.equal(move.inputs.parameters.messageId, "@triggerOutputs()?['body/id']");
 assert.equal(move.inputs.parameters.mailboxAddress, 'team@example.org');
 assert.equal(move.inputs.parameters.folderPath, flow.ID.reviewFolder);
 
+if (!mainOnly) {
 const ownNode = findNode(flow.tree('planB'), 'Eigene_Kopie');
 assert.deepEqual(plain(ownNode.yes), [], 'sender alone must not classify an own copy');
 const copies = graphFromUi([ownNode], 'planB');
@@ -308,18 +330,22 @@ for (const subject of [
   check('own sender is not classified: ' + subject, copies, {}, [],
     { subject, from: 'avis@firma.de', mode: 'planB' });
 }
+}
 
 const files = {
   pdf: 'Run_script_pdfBase64', workLinks: 'Bearbeitung_noetig_links',
   reviewLinks: 'Pruefung_noetig_links', uri: 'URI_Kategorie_und_Betreff',
   katText: 'Kategorie_setzen_Text', betLinks: 'Betreff_noetig_links',
-  betText: 'Betreff_setzen_Text', betLinksB: 'Betreff_noetig_Plan_B_links',
+  betText: 'Betreff_setzen_Text',
   categoryAllowedLinks: 'Kategorie_erlaubt_links',
-  categoryAllowedLinksB: 'Kategorie_erlaubt_Plan_B_links',
   uriRead: 'Nachricht_lesen_URI',
   subjectUnchangedLinks: 'Betreff_unveraendert_links',
   categorySubjectLinks: 'Kategorie_Betreff_passt_links',
-  categorySubjectLinksB: 'Kategorie_Betreff_passt_Plan_B_links',
+  ...(!mainOnly ? {
+    betLinksB: 'Betreff_noetig_Plan_B_links',
+    categoryAllowedLinksB: 'Kategorie_erlaubt_Plan_B_links',
+    categorySubjectLinksB: 'Kategorie_Betreff_passt_Plan_B_links',
+  } : {}),
 };
 for (const [key, name] of Object.entries(files)) {
   const formula = fs.readFileSync(path.join(__dirname, '../formeln/' + name + '.txt'), 'utf8').trim();
@@ -329,9 +355,9 @@ function flatten(items) {
   return items.flatMap(item => typeof item === 'string' ? [item]
     : [item.cond, ...flatten(item.yes), ...flatten(item.no)]);
 }
-for (const mode of ['main', 'planB']) {
+for (const mode of modes) {
   const ids = plain(flatten(flow.tree(mode)));
   assert.equal(new Set(ids).size, ids.length, mode + ' has unique action IDs');
   assert.deepEqual(plain(flow.order(mode)).slice(0, -1), ids, mode + ' navigation follows diagram');
 }
-console.log(`PASS: ${checks} review-routing scenarios; destination, ${Object.keys(files).length} formulas and both diagrams verified.`);
+console.log(`PASS: ${checks} review-routing scenarios; destination, ${Object.keys(files).length} formulas and ${mainOnly ? 'main diagram verified; Plan B excluded' : 'both diagrams verified'}.`);
