@@ -1,5 +1,7 @@
 # Nachtrag: widersprüchliche Betreffbeträge am 3. November 2026
 
+**Historischer Bericht der Betreffkonflikt-Fassung:** Die nachfolgenden 17 Livefälle, Archivzahlen und 46 damals offenen Nicht-Avis-Reviews bleiben als ursprünglicher Nachweis erhalten. Die spätere [Nicht-Avis-Korrektur vom selben Tag](NICHT-AVIS-KORREKTUR-2026-11-03.md) wird getrennt geprüft und dokumentiert; ihre lokalen Ergebnisse und ihre Live-Abnahme dürfen nicht mit diesem Durchlauf gleichgesetzt werden.
+
 **Alle 17 Livefälle dieses Nachtrags sind fachlich bestanden: zwei Betreffkonflikte und 15 Nicht-Avise.** Die Offlineprüfungen bestanden ebenfalls; das neue Skript ist in Office gespeichert. Die zusätzliche Prüfung der zugestellten MIME-Inhalte ist für 13 Fälle bestanden und für vier Fälle nicht vollständig verifiziert. Diese Beleggrenze ist unten getrennt ausgewiesen.
 
 **Vollarchivabgleich abgeschlossen:** Der finale Quellstand wurde zusätzlich gegen alle **2.920 Archivdateifälle** ausgeführt. Es fehlen keine Eingaben oder unabhängigen Sollwerte. Der Sicherheitsrunner meldet keine Ausführungsfehler oder verletzten Freigabeinvarianten. Er erlaubt jedoch konservative Reviews: **46 erwartete Nicht-Avise werden zur Prüfung eingestuft**, statt unberührt zu bleiben. Diese Erkennungsgrenze bleibt ausdrücklich offen und ist keine vollständige fachliche Abnahme des Archivbestands.

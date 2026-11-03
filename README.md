@@ -1,8 +1,8 @@
 # Avis-Flow Version 2
 
-**Stand 03.11.2026:** Ein klarer Widerspruch zwischen einem Zahlungsbetrag im Betreff und dem sicher erkannten PDF-/Excel-Zahlbetrag führt unverändert und ohne neue Kategorie in den Prüfordner. Die [zusätzliche Abnahme](docs/BETREFFKONFLIKT-2026-11-03.md) dokumentiert die neue Regel, die Offlineprüfungen und 17 bestandene echte Mailfälle: zwei Konflikte und 15 unberührte Nicht-Avise.
+**Aktueller Stand 03.11.2026: Nicht-Avis-Korrektur.** Die neue Fassung korrigiert die bisher dokumentierten 46 unerwünschten Nicht-Avis-Reviews. Jede unabhängig als andere Mail erwartete Eingabe muss `other`, `needsReview = false` und vollständig leere Betreff-/Kategorie-Schreibfelder liefern. Reine Steuererstattungen und Lieferantenrückerstattungen wegen Doppelzahlung gehören nach bestätigter Nutzerentscheidung ebenfalls zu den unberührten anderen Mails. Die [neue Dokumentation](docs/NICHT-AVIS-KORREKTUR-2026-11-03.md) beschreibt die Abgrenzung und drei offen ausgewiesene historische Sollkonflikte.
 
-Der vollständige lokale Archivlauf umfasst jetzt **alle 2.920 Dateifälle**, einschließlich der je 200 deutschen und englischen Mails. Keine Eingaben fehlen; der Sicherheitsrunner meldet keine Ausführungsfehler oder verletzten Freigabeinvarianten. **46 erwartete Nicht-Avise werden dennoch vorsichtshalber zur Prüfung eingestuft.** Diese offene Erkennungsgrenze und alle Zählwerte stehen in der [Archivbilanz](docs/BETREFFKONFLIKT-ALTTESTS.json).
+Die abschließende lokale Prüfung bestand **907 Hauptflow-/Parserprüfungen in zwölf Suiten, Typprüfung, 152 Office-Vergleiche und alle 2.920 Archivfälle**. Alle 761 aktuell erwarteten anderen Mails bleiben unberührt; es gibt keine aktiven Findings oder Ausführungsfehler. Drei ausdrücklich bestätigte Änderungen historischer Fachorakel bleiben separat ausgewiesen. Ein beim zusätzlichen Inhaltsvergleich entdeckter Verlust einer unklaren Marktplatzauszahlung ist korrigiert und als Gegenprobe enthalten. Der [neue Archivbericht](docs/NICHT-AVIS-ALTTESTS.json) enthält den Ergebnisvergleich und je 200 deutsche/englische Fälle. **Live dieser Korrektur: NOT_EXECUTED nach einer unterbrochenen Browserverbindung.** Der vorherige Microsoft-365-Stand bleibt aktiv; sechs neue Fälle sind nur lokal vorgeprüft. Die [vorherige Betreffkonflikt-Abnahme](docs/BETREFFKONFLIKT-2026-11-03.md) mit 17 bestandenen Livefällen und ihre [Archivbilanz](docs/BETREFFKONFLIKT-ALTTESTS.json) bleiben historische Nachweise; die dort genannten 46 offenen Fehlroutings gehören zu jener früheren Fassung.
 
 **Gegenprüfung mit den alten Testdateien:** Der [ergänzende Prüfbericht](docs/GEGENPRUEFUNG-ALTTESTS.md) beschreibt die Prüfung gegen das Archiv `Gerinst/2testordner`, die aus Originalgeneratoren wiederhergestellten Eingaben und die zusätzliche Office-Script-Simulation. Fehlende Dateien, echte Abweichungen und vorsichtshalber zur Prüfung eingeordnete Fälle werden getrennt ausgewiesen. Diese Prüfung belegt keine Live-Ausführung im Microsoft-365-Postfach.
 
@@ -51,7 +51,7 @@ Die folgenden Berichte beschreiben den Stand vom 30./31.10.2026. Damalige Hinwei
 
 ## Lokal prüfen
 
-Mit Node.js 24 oder neuer: `node tests/run-all.cjs`. Die lokalen Suiten prüfen echte, künstlich erzeugte Mail- und Dateiinhalte sowie ein ausdrücklich simuliertes Flow-Modell; dafür ist keine Paketinstallation nötig.
+Mit Node.js 24 oder neuer für den hier geprüften Hauptflow: `npm run test:main` (entspricht `node tests/run-all.cjs --main-only`). Plan B wird dabei vollständig ausgelassen. Die lokalen Suiten prüfen echte, künstlich erzeugte Mail- und Dateiinhalte sowie ein ausdrücklich simuliertes Flow-Modell; dafür ist keine Paketinstallation nötig.
 
 Für den Typcheck und die zusätzliche Office-Kompatibilitätsprüfung die festgelegte TypeScript-Version 5.9.3 installieren:
 

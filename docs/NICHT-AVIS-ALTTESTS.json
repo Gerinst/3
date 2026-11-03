@@ -1,0 +1,1641 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-11-03",
+  "scope": "Local final parser execution over every available archived case. Main flow only; Plan B excluded. No live deployment or live acceptance is inferred from this report.",
+  "parserSha256": "9fa9bd0d9d634f9debe6981aaef7fac1520f1bc849e34d562e92377a1324972f",
+  "parserCommitAtRun": "997c5de52ee8f062d9aca9ada2def3baad695b7b",
+  "parserCommitNote": "The run may precede the source commit; the exact checked source is identified by parserSha256.",
+  "sourceRepository": "Gerinst/2testordner",
+  "archivedOracleCommit": "b9ada7d60cdb2ce76dfc06a90834cecce23ab422",
+  "inputSources": {
+    "archiveOriginalCases": 1705,
+    "userProvidedSupplementCases": 1215,
+    "historicallyReconstructedCasesNowFound": 685,
+    "historicallyMissingCasesNowFound": 530,
+    "supplementHistoricalHashMatches": 634,
+    "supplementHistoricalHashDifferences": 51,
+    "centralExpectedSha256": "ae70ff5ea0fc82c00a1aaf763ac56d64c1ee6daa1523c9b800f19c9c4113c351",
+    "discoveryManifestSha256": "2aa14cd82d72b79e6f1fc30216fb15df19aa76c3712fd72cfac5411315c2d5f5",
+    "provenanceManifestSha256": "329be10b78b47dedcec9087df978e20d2b48a7bbae6e75b2ee39382f046476ed"
+  },
+  "fullReportSha256": "0247d9db192d889db0064015fcb36bbb8034902d86113be32208994d562017a8",
+  "baselineReportSha256": "e201f1ae2cf2c6790afc208b89f9071ebfba9575ceb982b3902405af772f749f",
+  "currentBusinessOracleSha256": "b3d94cbcdd0b0d769ab2d5a4bfe1e9fa21b873d0778c64394602762fba9cff8d",
+  "policyDecision": {
+    "date": "2026-11-03",
+    "authority": "User-confirmed current business scope",
+    "rule": "Pure tax refunds and supplier refunds of duplicate payments are other and must remain untouched. A pure question asking whether payment was received or an invoice paid, without an independent payment confirmation, is likewise other. Genuine customer payments and uncertain actual advices remain protected."
+  },
+  "comparison": {
+    "sameInputHashes": 2920,
+    "sameOriginalOracles": 2920,
+    "baselineParserSha256": "7c6f90c2b9275d7fea063ff8059e903782066a5b2f58f637ae13d2c712587448",
+    "correctedPriorOtherReviews": 46,
+    "currentBusinessOverrides": 3
+  },
+  "semanticDelta": {
+    "fieldsCompared": [
+      "verdict",
+      "confidence",
+      "needsReview",
+      "amount",
+      "amountNumber",
+      "currency",
+      "paymentAmounts"
+    ],
+    "changedCases": 59,
+    "unchangedCases": 2861,
+    "correctedPriorOtherReviews": 46,
+    "currentBusinessOverrideCases": 3,
+    "additionalChangedCases": 10,
+    "additionalTransitions": {
+      "unclearReviewToOtherUntouched": 10
+    },
+    "additionalBusinessClasses": {
+      "taxAssessmentRefundOrOffset": 10
+    },
+    "independentContentExtractionSha256": "96b2418f1c3624fa310d9265e5b281b189c2314135fe69b7d011c179b3b095f6",
+    "safeToReviewOutsideCorrectedAndOverrideCases": 0,
+    "safeToOtherOutsideCorrectedAndOverrideCases": 0,
+    "otherResultFieldChangesOutsideCorrectedAndOverrideCases": 0,
+    "additionalCases": [
+      {
+        "file": "test/fixtures/r4_k2_finanzamt_auszahlungsbetrag_verrechnung.pdf",
+        "sha256": "85e6c0a1a5c32213b162d031e683d1cb02c49724c78e85123edaee1a556ddbec",
+        "changes": {
+          "verdict": {
+            "before": "unclear",
+            "after": "other"
+          },
+          "needsReview": {
+            "before": true,
+            "after": false
+          }
+        },
+        "businessClass": "tax-assessment-refund-or-offset",
+        "assessment": "Tax assessment, refund, offset or transfer between tax accounts; no independent customer payment. Covered by the confirmed business scope; original amount/check-only oracle remains unchanged."
+      },
+      {
+        "file": "test/fixtures/r4b_g01_fa_ust_erstattung.pdf",
+        "sha256": "1bf438cfe5593b58d166033183ca5a5f11e8a225e86d7bb0fa76bb9eecf4d265",
+        "changes": {
+          "verdict": {
+            "before": "unclear",
+            "after": "other"
+          },
+          "needsReview": {
+            "before": true,
+            "after": false
+          }
+        },
+        "businessClass": "tax-assessment-refund-or-offset",
+        "assessment": "Tax assessment, refund, offset or transfer between tax accounts; no independent customer payment. Covered by the confirmed business scope; original amount/check-only oracle remains unchanged."
+      },
+      {
+        "file": "test/fixtures/r4b_p02n_erstattungszinsen_plus.pdf",
+        "sha256": "43c9c8ac2b587fabc72dd68fbacd4fcd03ccd587a67b482ab3c14e1b4f697e98",
+        "changes": {
+          "verdict": {
+            "before": "unclear",
+            "after": "other"
+          },
+          "needsReview": {
+            "before": true,
+            "after": false
+          }
+        },
+        "businessClass": "tax-assessment-refund-or-offset",
+        "assessment": "Tax assessment, refund, offset or transfer between tax accounts; no independent customer payment. Covered by the confirmed business scope; original amount/check-only oracle remains unchanged."
+      },
+      {
+        "file": "test/fixtures/r4b_p02n_nachzahlung_nach_verrechnung.pdf",
+        "sha256": "13cfc815c396e1d321b508b21343b2fe8e1d48201042852536a5e9f80ac23b31",
+        "changes": {
+          "verdict": {
+            "before": "unclear",
+            "after": "other"
+          },
+          "needsReview": {
+            "before": true,
+            "after": false
+          }
+        },
+        "businessClass": "tax-assessment-refund-or-offset",
+        "assessment": "Tax assessment, refund, offset or transfer between tax accounts; no independent customer payment. Covered by the confirmed business scope; original amount/check-only oracle remains unchanged."
+      },
+      {
+        "file": "test/fixtures/r4b_p02n_umbuchung_vorauszahlung_antrag.pdf",
+        "sha256": "219fef164ca258b51896c9b9298a417cc51c8cf87d9a441a29e00eb1ce994178",
+        "changes": {
+          "verdict": {
+            "before": "unclear",
+            "after": "other"
+          },
+          "needsReview": {
+            "before": true,
+            "after": false
+          }
+        },
+        "businessClass": "tax-assessment-refund-or-offset",
+        "assessment": "Tax assessment, refund, offset or transfer between tax accounts; no independent customer payment. Covered by the confirmed business scope; original amount/check-only oracle remains unchanged."
+      },
+      {
+        "file": "test/fixtures/r4b_p02n_umgebucht_kein_rest.pdf",
+        "sha256": "cc93fec9823c0b0d47e8abca09f9c182e9cd04fcc026918582ef7cb430a5fa81",
+        "changes": {
+          "verdict": {
+            "before": "unclear",
+            "after": "other"
+          },
+          "needsReview": {
+            "before": true,
+            "after": false
+          }
+        },
+        "businessClass": "tax-assessment-refund-or-offset",
+        "assessment": "Tax assessment, refund, offset or transfer between tax accounts; no independent customer payment. Covered by the confirmed business scope; original amount/check-only oracle remains unchanged."
+      },
+      {
+        "file": "test/fixtures/r4b_p02p_ueberzahlung_verrechnet_insgesamt.pdf",
+        "sha256": "6a68683fe90142ce130a469d0f2dd4ac83b4b0043becd8e27a1c95a51ca408e3",
+        "changes": {
+          "verdict": {
+            "before": "unclear",
+            "after": "other"
+          },
+          "needsReview": {
+            "before": true,
+            "after": false
+          }
+        },
+        "businessClass": "tax-assessment-refund-or-offset",
+        "assessment": "Tax assessment, refund, offset or transfer between tax accounts; no independent customer payment. Covered by the confirmed business scope; original amount/check-only oracle remains unchanged."
+      },
+      {
+        "file": "test/fixtures/r4b_p02p_vorauszahlungen_angerechnet.pdf",
+        "sha256": "43aed18831d011655936e89acc756526c971b4a8f8a9a04d5242d4a9c5b9b7f3",
+        "changes": {
+          "verdict": {
+            "before": "unclear",
+            "after": "other"
+          },
+          "needsReview": {
+            "before": true,
+            "after": false
+          }
+        },
+        "businessClass": "tax-assessment-refund-or-offset",
+        "assessment": "Tax assessment, refund, offset or transfer between tax accounts; no independent customer payment. Covered by the confirmed business scope; original amount/check-only oracle remains unchanged."
+      },
+      {
+        "file": "test/fixtures/r4b_p02p_zoll_kfz_prose.pdf",
+        "sha256": "05814a207c3b4a33c709349209be40fb1cf5aa85d52450063a307e096d7f55c8",
+        "changes": {
+          "verdict": {
+            "before": "unclear",
+            "after": "other"
+          },
+          "needsReview": {
+            "before": true,
+            "after": false
+          }
+        },
+        "businessClass": "tax-assessment-refund-or-offset",
+        "assessment": "Tax assessment, refund, offset or transfer between tax accounts; no independent customer payment. Covered by the confirmed business scope; original amount/check-only oracle remains unchanged."
+      },
+      {
+        "file": "test/fixtures/r4b_q10_fa_in_kuerze.pdf",
+        "sha256": "bca2374b83f9417557c2d481cffcf3f6bf6320a07c63fcca6b9e52420f89425d",
+        "changes": {
+          "verdict": {
+            "before": "unclear",
+            "after": "other"
+          },
+          "needsReview": {
+            "before": true,
+            "after": false
+          }
+        },
+        "businessClass": "tax-assessment-refund-or-offset",
+        "assessment": "Tax assessment, refund, offset or transfer between tax accounts; no independent customer payment. Covered by the confirmed business scope; original amount/check-only oracle remains unchanged."
+      }
+    ],
+    "finalCorrection": {
+      "intermediateParserSha256": "2fbf6b169df7e11c8067fa1f1b94a8b99e1e414e69d121125b79be818471504b",
+      "intermediateReportSha256": "c32292670738d52605fba38274004b28a1012ddcd3953ebaaaa04d4387a69782",
+      "semanticChangesFromIntermediateCandidate": 1,
+      "file": "test/fixtures/r4b_r11_guthaben_wird_am_ausgezahlt.pdf",
+      "sha256": "e4a8962aab5cb34eef54714654071a1982aa2beaa3ee261cb918df8b5938b68a",
+      "reason": "The independent content review found no basis for other: a definite future marketplace payout remains reviewable. The old check-only oracle did not detect this routing loss. No original oracle was changed.",
+      "intermediateResult": {
+        "verdict": "other",
+        "confidence": "low",
+        "needsReview": false,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "finalResult": {
+        "verdict": "unclear",
+        "confidence": "low",
+        "needsReview": true,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      }
+    }
+  },
+  "summary": {
+    "records": 2920,
+    "existing": 2920,
+    "uniqueExecutions": 2834,
+    "missing": 0,
+    "empty": 0,
+    "regenerated": 0,
+    "withOracle": 2920,
+    "noOracle": 0,
+    "currentBusinessOverrides": 3,
+    "currentBusinessHashMismatches": 0,
+    "historicalFindingCases": 3,
+    "historicalFindings": 3,
+    "executionErrors": 0,
+    "findingCases": 0,
+    "conservativeReview": 792,
+    "expectedOtherCases": 761,
+    "expectedOtherReviewed": 0,
+    "expectedOtherUntouched": 761,
+    "legacyBehaviorDifferences": 5,
+    "originalFindingCases": 0,
+    "regeneratedFindingCases": 0,
+    "distinctInputHashes": 2816,
+    "elapsedSeconds": 69.2
+  },
+  "localValidation": {
+    "mainScope": "main-only",
+    "mainSuites": 12,
+    "mainChecks": 907,
+    "nonAdviceChecksIncluded": 180,
+    "officeFixtures": 38,
+    "officeModes": 4,
+    "officeComparisons": 152,
+    "typecheck": "PASS"
+  },
+  "languageGroups": [
+    {
+      "language": "Deutsch",
+      "group": "test/bench/mailF",
+      "cases": 200,
+      "findingCases": 0,
+      "expectedOther": 100,
+      "expectedOtherUntouched": 100,
+      "safeAdvice": 68,
+      "review": 32
+    },
+    {
+      "language": "Englisch",
+      "group": "test/bench/mailFE",
+      "cases": 200,
+      "findingCases": 0,
+      "expectedOther": 100,
+      "expectedOtherUntouched": 100,
+      "safeAdvice": 68,
+      "review": 32
+    }
+  ],
+  "correctedNonAdviceCases": [
+    {
+      "file": "test/bench/brainstorm/N11.eml",
+      "sha256": "3d52ab443ece984170ca0646ab055504c62cb3530c803dcc867abd7d2772c4b8",
+      "before": {
+        "verdict": "unclear",
+        "confidence": "medium",
+        "needsReview": true,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "after": {
+        "verdict": "other",
+        "confidence": "medium",
+        "needsReview": false,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "activeFindings": []
+    },
+    {
+      "file": "test/bench/brainstorm/N24.eml",
+      "sha256": "031083a86873187189f1c687922b14aebb00a46a5e1455d567737de650ac182b",
+      "before": {
+        "verdict": "unclear",
+        "confidence": "low",
+        "needsReview": true,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "after": {
+        "verdict": "other",
+        "confidence": "low",
+        "needsReview": false,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "activeFindings": []
+    },
+    {
+      "file": "test/bench/burst/B23.eml",
+      "sha256": "a7a030ec77dd616586a969dbedbe18eda90dbab22ee832447af47dae44076c32",
+      "before": {
+        "verdict": "unclear",
+        "confidence": "high",
+        "needsReview": true,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "after": {
+        "verdict": "other",
+        "confidence": "high",
+        "needsReview": false,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "activeFindings": []
+    },
+    {
+      "file": "test/bench/corpus2/smallbiz/smallbiz_29_rueckfrage-statt-zahlung.pdf",
+      "sha256": "9f6203b85b769683a4e772242030d768a990d0e2544ed5b0f4e3d0c28a417786",
+      "before": {
+        "verdict": "unclear",
+        "confidence": "low",
+        "needsReview": true,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "after": {
+        "verdict": "other",
+        "confidence": "low",
+        "needsReview": false,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "activeFindings": []
+    },
+    {
+      "file": "test/bench/corpus2/traps2/traps2_26_zahlungsavis-formular-leer.pdf",
+      "sha256": "5367bddca64ef62f5e09114f8abee7b3728b3dc0c0542acffca5c1e42ebec1b3",
+      "before": {
+        "verdict": "unclear",
+        "confidence": "low",
+        "needsReview": true,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "after": {
+        "verdict": "other",
+        "confidence": "low",
+        "needsReview": false,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "activeFindings": []
+    },
+    {
+      "file": "test/bench/corpus2/traps2/traps2_27_avis-d-echeance.pdf",
+      "sha256": "43e90425f9cc8e05caa2d1796681ba1226ea8b32f483b8c2da5e075e5015d5c6",
+      "before": {
+        "verdict": "unclear",
+        "confidence": "low",
+        "needsReview": true,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "after": {
+        "verdict": "other",
+        "confidence": "low",
+        "needsReview": false,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "activeFindings": []
+    },
+    {
+      "file": "test/bench/corpus2/traps2/traps2_28_dokumenteninkasso-avis.pdf",
+      "sha256": "1c2474df2d165c45b5b8b1fb3b308b51a51aae2b0138158370d859906360f882",
+      "before": {
+        "verdict": "unclear",
+        "confidence": "low",
+        "needsReview": true,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "after": {
+        "verdict": "other",
+        "confidence": "low",
+        "needsReview": false,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "activeFindings": []
+    },
+    {
+      "file": "test/bench/corpus3/netting/netting_11_verrechnung_saldo_negativ.pdf",
+      "sha256": "d3fc46f82216de93cdb6c3e917ffbf2c1a757131e35ed7fb67dad2e59d55c217",
+      "before": {
+        "verdict": "unclear",
+        "confidence": "low",
+        "needsReview": true,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "after": {
+        "verdict": "other",
+        "confidence": "low",
+        "needsReview": false,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "activeFindings": []
+    },
+    {
+      "file": "test/bench/corpus5/nonadvice/nonadvice_11_ratenzahlungsvorschlag.pdf",
+      "sha256": "196909a326238a44fe4f5dd6bf8131fb1c6b8d108be95b3bfa13bfe83820ebf4",
+      "before": {
+        "verdict": "unclear",
+        "confidence": "high",
+        "needsReview": true,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "after": {
+        "verdict": "other",
+        "confidence": "high",
+        "needsReview": false,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "activeFindings": []
+    },
+    {
+      "file": "test/blind/bodyhold/mails/H001.eml",
+      "sha256": "6a182e7d9b4d1e31154609e3c3f4c8185954085814c23c9bfe811f5c06b2310f",
+      "before": {
+        "verdict": "unclear",
+        "confidence": "medium",
+        "needsReview": true,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "after": {
+        "verdict": "other",
+        "confidence": "medium",
+        "needsReview": false,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "activeFindings": []
+    },
+    {
+      "file": "test/blind/bodyhold/mails/H005.eml",
+      "sha256": "932a1871ff6188853544f23ee49106e3dd20f427e660392428d6797c73311537",
+      "before": {
+        "verdict": "unclear",
+        "confidence": "low",
+        "needsReview": true,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "after": {
+        "verdict": "other",
+        "confidence": "low",
+        "needsReview": false,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "activeFindings": []
+    },
+    {
+      "file": "test/blind/bodyhold/mails/H022.eml",
+      "sha256": "0df76cd66790e96ee5e564227a36cae5cb338f9a44c7b22d6e87ffd0a8d13e99",
+      "before": {
+        "verdict": "unclear",
+        "confidence": "medium",
+        "needsReview": true,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "after": {
+        "verdict": "other",
+        "confidence": "medium",
+        "needsReview": false,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "activeFindings": []
+    },
+    {
+      "file": "test/blind/bodyhold/mails/H026.eml",
+      "sha256": "bef721e46b1bdf015ace347c640e4bc0b137946d3252b6af5a24a63243ebecd5",
+      "before": {
+        "verdict": "unclear",
+        "confidence": "medium",
+        "needsReview": true,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "after": {
+        "verdict": "other",
+        "confidence": "medium",
+        "needsReview": false,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "activeFindings": []
+    },
+    {
+      "file": "test/blind/bodyhold/mails/H047.eml",
+      "sha256": "d169a1dfc899ca5ef4ccd0b38c4dc391c4def9798d2d25afb62018ad707935c4",
+      "before": {
+        "verdict": "unclear",
+        "confidence": "low",
+        "needsReview": true,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "after": {
+        "verdict": "other",
+        "confidence": "low",
+        "needsReview": false,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "activeFindings": []
+    },
+    {
+      "file": "test/blind/bodyhold/mails/H051.eml",
+      "sha256": "9a7fa3eaef05b937be7d330c95ddf7978ff2db35421d50e9274d8219ce69d86e",
+      "before": {
+        "verdict": "unclear",
+        "confidence": "low",
+        "needsReview": true,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "after": {
+        "verdict": "other",
+        "confidence": "low",
+        "needsReview": false,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "activeFindings": []
+    },
+    {
+      "file": "test/blind/bodyhold/mails/H065.eml",
+      "sha256": "ea883ecd1515660183c57fb99732658a11fc9c5d60dd56bd352df509b44e1fbe",
+      "before": {
+        "verdict": "unclear",
+        "confidence": "medium",
+        "needsReview": true,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "after": {
+        "verdict": "other",
+        "confidence": "medium",
+        "needsReview": false,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "activeFindings": []
+    },
+    {
+      "file": "test/blind/bodyhold/mails/H093.eml",
+      "sha256": "8072e66a8730099fb4fbe946ef2e7a8076e920041ed1a0d4d8df3fb1a9167989",
+      "before": {
+        "verdict": "unclear",
+        "confidence": "low",
+        "needsReview": true,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "after": {
+        "verdict": "other",
+        "confidence": "low",
+        "needsReview": false,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "activeFindings": []
+    },
+    {
+      "file": "test/blind/bodyhold/mails/H097.eml",
+      "sha256": "2be41eef4b421b974b05488cca6aff83c2a65ca8392a37ecc261e7351a1adb11",
+      "before": {
+        "verdict": "unclear",
+        "confidence": "medium",
+        "needsReview": true,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "after": {
+        "verdict": "other",
+        "confidence": "medium",
+        "needsReview": false,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "activeFindings": []
+    },
+    {
+      "file": "test/blind/sweep/HT/mails/HT19.eml",
+      "sha256": "16b4e6eced3dd2ef63a8d271bc021216dbfccadcdcc0375943a7123299c1799f",
+      "before": {
+        "verdict": "unclear",
+        "confidence": "low",
+        "needsReview": true,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "after": {
+        "verdict": "other",
+        "confidence": "low",
+        "needsReview": false,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "activeFindings": []
+    },
+    {
+      "file": "test/blind/sweep/MX/mails/MX39.eml",
+      "sha256": "ed03bea134ad70594edb4a06acc1e9778e2347dc81a39442d6bb9130e7b84874",
+      "before": {
+        "verdict": "unclear",
+        "confidence": "high",
+        "needsReview": true,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "after": {
+        "verdict": "other",
+        "confidence": "high",
+        "needsReview": false,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "activeFindings": []
+    },
+    {
+      "file": "test/blind/sweep/PD/mails/PD02.eml",
+      "sha256": "79aba716ea31ff878592d7c91ee57013d774e9dee1c9550a48c860bd90823f5f",
+      "before": {
+        "verdict": "unclear",
+        "confidence": "low",
+        "needsReview": true,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "after": {
+        "verdict": "other",
+        "confidence": "low",
+        "needsReview": false,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "activeFindings": []
+    },
+    {
+      "file": "test/blind/sweep/XD/mails/XD02.eml",
+      "sha256": "da23578d136698536bb78517e64c04a840b042a8efe2ea2fb9d24bfd00a34055",
+      "before": {
+        "verdict": "unclear",
+        "confidence": "low",
+        "needsReview": true,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "after": {
+        "verdict": "other",
+        "confidence": "low",
+        "needsReview": false,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "activeFindings": []
+    },
+    {
+      "file": "test/blind/sweep/XD/mails/XD05.eml",
+      "sha256": "b4c52144673f3979a59a810411a4850b26dc3e0b5c5b204ae2cbd90180e5d678",
+      "before": {
+        "verdict": "unclear",
+        "confidence": "low",
+        "needsReview": true,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "after": {
+        "verdict": "other",
+        "confidence": "low",
+        "needsReview": false,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "activeFindings": []
+    },
+    {
+      "file": "test/blind/sweep/XD/mails/XD16.eml",
+      "sha256": "e6a7e0cf15677b3166be5c44d014386019d675926c7b2c9fe1d4e6011e1cb566",
+      "before": {
+        "verdict": "unclear",
+        "confidence": "high",
+        "needsReview": true,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "after": {
+        "verdict": "other",
+        "confidence": "high",
+        "needsReview": false,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "activeFindings": []
+    },
+    {
+      "file": "test/blind/sweep/XD/mails/XD32.eml",
+      "sha256": "02b6c8845274d30597bf7b9f4074ea7560be2e8352ef2e794fbe129451659f5d",
+      "before": {
+        "verdict": "unclear",
+        "confidence": "low",
+        "needsReview": true,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "after": {
+        "verdict": "other",
+        "confidence": "low",
+        "needsReview": false,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "activeFindings": []
+    },
+    {
+      "file": "test/blind/sweep/XE/mails/XE17.eml",
+      "sha256": "ee221036137a518e240bc7cf95a5a59bb07a98393099d2a0c6db0a9c84283f2c",
+      "before": {
+        "verdict": "unclear",
+        "confidence": "high",
+        "needsReview": true,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "after": {
+        "verdict": "other",
+        "confidence": "high",
+        "needsReview": false,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "activeFindings": []
+    },
+    {
+      "file": "test/blind/sweep/XE/mails/XE26.eml",
+      "sha256": "72088d7c52e16dbc68102f64064e8d3bf2c083562d70d899291471169474690a",
+      "before": {
+        "verdict": "unclear",
+        "confidence": "low",
+        "needsReview": true,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "after": {
+        "verdict": "other",
+        "confidence": "low",
+        "needsReview": false,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "activeFindings": []
+    },
+    {
+      "file": "test/blind/sweep2/B2/mails/B220.eml",
+      "sha256": "1d69184a63da206b65d80f83b1921432ad63f2b2b2c5618b012fe963d3e5e5cd",
+      "before": {
+        "verdict": "advice",
+        "confidence": "low",
+        "needsReview": true,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "after": {
+        "verdict": "other",
+        "confidence": "low",
+        "needsReview": false,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "activeFindings": []
+    },
+    {
+      "file": "test/blind/sweep2/B2/mails/B225.eml",
+      "sha256": "55b7208aed180c24d1983499a89e09fee086a4faf7030490e2396a6672b713a7",
+      "before": {
+        "verdict": "unclear",
+        "confidence": "low",
+        "needsReview": true,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "after": {
+        "verdict": "other",
+        "confidence": "low",
+        "needsReview": false,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "activeFindings": []
+    },
+    {
+      "file": "test/blind/sweep2/B2/mails/B235.eml",
+      "sha256": "b0c27a5ef2ffebb1eb232f4ad3ee74a37d5a58a79a06f38589bb1960255ad9b1",
+      "before": {
+        "verdict": "unclear",
+        "confidence": "low",
+        "needsReview": true,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "after": {
+        "verdict": "other",
+        "confidence": "low",
+        "needsReview": false,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "activeFindings": []
+    },
+    {
+      "file": "test/blind/sweep2/N2/mails/N229.eml",
+      "sha256": "b65f2ed027af019a5eb3324ffb05edc85c17b951824edbc17f56b1f8e59dd47b",
+      "before": {
+        "verdict": "unclear",
+        "confidence": "medium",
+        "needsReview": true,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "after": {
+        "verdict": "other",
+        "confidence": "medium",
+        "needsReview": false,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "activeFindings": []
+    },
+    {
+      "file": "test/blind/sweep2/P2/mails/P236.eml",
+      "sha256": "86068c3b9d21b345adf479d5ecf011ccf3d1527e10723da8a1096d1b406dafcc",
+      "before": {
+        "verdict": "unclear",
+        "confidence": "low",
+        "needsReview": true,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "after": {
+        "verdict": "other",
+        "confidence": "low",
+        "needsReview": false,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "activeFindings": []
+    },
+    {
+      "file": "test/blind/sweep2/P2/work/det1/mails/P236.eml",
+      "sha256": "86068c3b9d21b345adf479d5ecf011ccf3d1527e10723da8a1096d1b406dafcc",
+      "before": {
+        "verdict": "unclear",
+        "confidence": "low",
+        "needsReview": true,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "after": {
+        "verdict": "other",
+        "confidence": "low",
+        "needsReview": false,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "activeFindings": []
+    },
+    {
+      "file": "test/blind/sweep2/P2/work/det2/mails/P236.eml",
+      "sha256": "86068c3b9d21b345adf479d5ecf011ccf3d1527e10723da8a1096d1b406dafcc",
+      "before": {
+        "verdict": "unclear",
+        "confidence": "low",
+        "needsReview": true,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "after": {
+        "verdict": "other",
+        "confidence": "low",
+        "needsReview": false,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "activeFindings": []
+    },
+    {
+      "file": "test/blind/sweep2/T2/mails/T209.eml",
+      "sha256": "e4e086d23974a227678188268ae1c190ba5f5a81e3e1ca3a7cf2fdcebf47812e",
+      "before": {
+        "verdict": "unclear",
+        "confidence": "low",
+        "needsReview": true,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "after": {
+        "verdict": "other",
+        "confidence": "low",
+        "needsReview": false,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "activeFindings": []
+    },
+    {
+      "file": "test/blind/sweep2/T2/mails/T217.eml",
+      "sha256": "b9427902c54579e40eb22230dd8a9899d92bc94d55fedc71f73e26c7fa47535f",
+      "before": {
+        "verdict": "unclear",
+        "confidence": "low",
+        "needsReview": true,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "after": {
+        "verdict": "other",
+        "confidence": "low",
+        "needsReview": false,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "activeFindings": []
+    },
+    {
+      "file": "test/blind/sweep2/T2/mails/T234.eml",
+      "sha256": "1c59b849ed87d5ad4a0ed2f084cb7fdb18ab05cc6bb83bf436ef2845dc9a958c",
+      "before": {
+        "verdict": "unclear",
+        "confidence": "low",
+        "needsReview": true,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "after": {
+        "verdict": "other",
+        "confidence": "low",
+        "needsReview": false,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "activeFindings": []
+    },
+    {
+      "file": "test/blind/sweep2/X2/mails/X204.eml",
+      "sha256": "9e56dcdc8569509ca92491f50c8989c1069edc628d11da7318545ee8ffed28d9",
+      "before": {
+        "verdict": "advice",
+        "confidence": "low",
+        "needsReview": true,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "after": {
+        "verdict": "other",
+        "confidence": "low",
+        "needsReview": false,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "activeFindings": []
+    },
+    {
+      "file": "test/blind/sweep3/X3/mails/X302.eml",
+      "sha256": "0fc15ae0bfce510f9a44f9101e0006b61cdfc6efd5da08dd2ae6fc7c7767d8dd",
+      "before": {
+        "verdict": "unclear",
+        "confidence": "high",
+        "needsReview": true,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "after": {
+        "verdict": "other",
+        "confidence": "high",
+        "needsReview": false,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "activeFindings": []
+    },
+    {
+      "file": "test/blind/sweep3/X3/mails/X315.eml",
+      "sha256": "bd78143f511ffdd9b7424b780f05dc1b1fe80a3b12ee6b4d6c2d9337667a6300",
+      "before": {
+        "verdict": "unclear",
+        "confidence": "low",
+        "needsReview": true,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "after": {
+        "verdict": "other",
+        "confidence": "low",
+        "needsReview": false,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "activeFindings": []
+    },
+    {
+      "file": "test/blind/sweep3/X3/mails/X319.eml",
+      "sha256": "b775b7af6dab80d69cbfece676554fe23ee2ec0ea1c6e3da68d3a21f7685f1ac",
+      "before": {
+        "verdict": "unclear",
+        "confidence": "high",
+        "needsReview": true,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "after": {
+        "verdict": "other",
+        "confidence": "high",
+        "needsReview": false,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "activeFindings": []
+    },
+    {
+      "file": "test/blind/sweep3/X3/mails/X328.eml",
+      "sha256": "6c8942ee0608cc6451395e8e5f37c4e256cfc0ec066f95e41d6e9fe944cccce6",
+      "before": {
+        "verdict": "unclear",
+        "confidence": "medium",
+        "needsReview": true,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "after": {
+        "verdict": "other",
+        "confidence": "medium",
+        "needsReview": false,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "activeFindings": []
+    },
+    {
+      "file": "test/blind/sweep3/X3/mails/X332.eml",
+      "sha256": "23d7780fbdfa325252c3e430f059551401b16aaf05861c4bb33fd7a2f699cdaf",
+      "before": {
+        "verdict": "unclear",
+        "confidence": "low",
+        "needsReview": true,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "after": {
+        "verdict": "other",
+        "confidence": "low",
+        "needsReview": false,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "activeFindings": []
+    },
+    {
+      "file": "test/blind/sweep3/X3/mails/X335.eml",
+      "sha256": "40d777b0a829f7b0d0b037cf850e663914187d0b7cecc03453876bfbad99eaf6",
+      "before": {
+        "verdict": "unclear",
+        "confidence": "high",
+        "needsReview": true,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "after": {
+        "verdict": "other",
+        "confidence": "high",
+        "needsReview": false,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "activeFindings": []
+    },
+    {
+      "file": "test/blind/sweep3/X3/mails/X338.eml",
+      "sha256": "9ae280604f2eeb8f1402bb8fc074fa277fce7128cd4829e91dacb15107e62f0e",
+      "before": {
+        "verdict": "unclear",
+        "confidence": "low",
+        "needsReview": true,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "after": {
+        "verdict": "other",
+        "confidence": "low",
+        "needsReview": false,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "activeFindings": []
+    },
+    {
+      "file": "test/blind/sweep3/X3/mails/X339.eml",
+      "sha256": "4838472010fdfd8d171c4790bd1f5c9fbbc6d445101e868c5c3efc00c146d8a8",
+      "before": {
+        "verdict": "unclear",
+        "confidence": "low",
+        "needsReview": true,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "after": {
+        "verdict": "other",
+        "confidence": "low",
+        "needsReview": false,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "activeFindings": []
+    }
+  ],
+  "currentBusinessOverrides": [
+    {
+      "file": "test/bench/corpus4/payers/payers_02_finanzamt-ust-erstattung-verrechnung.pdf",
+      "sha256": "15bc51a4b07d536f9ac94f510f025f12fcbb64123b4bc7908a0264841a86a4d6",
+      "decisionDate": "2026-11-03",
+      "reason": "Pure tax refund",
+      "independentEvidence": "Independent PDF extraction identifies the tax authority as payer, a VAT assessment and an excess-tax credit; 2,631.76 EUR remains after tax arrears are offset. It settles no customer invoice.",
+      "originalOracles": [
+        {
+          "source": "test/bench/corpus4/manifest-payers.json",
+          "type": "truth",
+          "value": {
+            "kind": "avis",
+            "amountNumber": 2631.76,
+            "amountText": "2.631,76",
+            "currency": "EUR"
+          }
+        }
+      ],
+      "effectiveOracles": [
+        {
+          "source": "tests/current-business-oracles.json",
+          "type": "truth",
+          "value": {
+            "kind": "other"
+          },
+          "fileSha256": "15bc51a4b07d536f9ac94f510f025f12fcbb64123b4bc7908a0264841a86a4d6",
+          "evidence": "Independent PDF extraction identifies the tax authority as payer, a VAT assessment and an excess-tax credit; 2,631.76 EUR remains after tax arrears are offset. It settles no customer invoice.",
+          "reason": "Pure tax refund"
+        }
+      ],
+      "supersededEvaluations": [
+        {
+          "source": "test/bench/corpus4/manifest-payers.json",
+          "type": "truth",
+          "findings": [
+            "lost-advice: expected advice, got untouched other mail"
+          ],
+          "observations": [],
+          "expectedOther": false
+        }
+      ],
+      "historicalFindings": [
+        "lost-advice: expected advice, got untouched other mail"
+      ],
+      "result": {
+        "verdict": "other",
+        "confidence": "high",
+        "needsReview": false,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "activeFindings": []
+    },
+    {
+      "file": "test/bench/corpus5/letters/letters_08_grosshandel_rueckerstattung_doppelzahlung.pdf",
+      "sha256": "358bbf18609c81af17a4c9b2873f6be2f412afa1c8aad1f919d42b9492290443",
+      "decisionDate": "2026-11-03",
+      "reason": "Supplier returns a duplicate payment",
+      "independentEvidence": "Independent PDF extraction states that the supplier's own invoice was paid twice and that the supplier returns the duplicate 1,487.26 EUR. The recipient is the supplier's customer, not a seller receiving settlement of its own invoice.",
+      "originalOracles": [
+        {
+          "source": "test/bench/corpus5/manifest-letters.json",
+          "type": "truth",
+          "value": {
+            "kind": "avis",
+            "amountNumber": 1487.26,
+            "amountText": "1.487,26 EUR",
+            "currency": "EUR"
+          }
+        }
+      ],
+      "effectiveOracles": [
+        {
+          "source": "tests/current-business-oracles.json",
+          "type": "truth",
+          "value": {
+            "kind": "other"
+          },
+          "fileSha256": "358bbf18609c81af17a4c9b2873f6be2f412afa1c8aad1f919d42b9492290443",
+          "evidence": "Independent PDF extraction states that the supplier's own invoice was paid twice and that the supplier returns the duplicate 1,487.26 EUR. The recipient is the supplier's customer, not a seller receiving settlement of its own invoice.",
+          "reason": "Supplier returns a duplicate payment"
+        }
+      ],
+      "supersededEvaluations": [
+        {
+          "source": "test/bench/corpus5/manifest-letters.json",
+          "type": "truth",
+          "findings": [
+            "lost-advice: expected advice, got untouched other mail"
+          ],
+          "observations": [],
+          "expectedOther": false
+        }
+      ],
+      "historicalFindings": [
+        "lost-advice: expected advice, got untouched other mail"
+      ],
+      "result": {
+        "verdict": "other",
+        "confidence": "high",
+        "needsReview": false,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "activeFindings": []
+    },
+    {
+      "file": "test/fixtures/v2_fix_a4_question_en.eml",
+      "sha256": "0a3dcf04ea1caea1dbc60e64d04377cd29e51168ceebcf32a2c3173481a1159b",
+      "decisionDate": "2026-11-03",
+      "reason": "Question without a payment assertion",
+      "independentEvidence": "Independent MIME text/plain decoding contains only a request to confirm whether invoice INV-4711 for EUR 1,250.00 has been paid, followed by thanks. There is no assertion that a payment was executed and no advice attachment.",
+      "originalOracles": [
+        {
+          "source": "test/fixtures/expected.json",
+          "type": "legacy-expected",
+          "value": {
+            "verdict": "unclear",
+            "category": "Avis prüfen",
+            "newSubject": "",
+            "patchSubject": "",
+            "mailSubject": "Invoice INV-4711",
+            "subjectPrefix": ""
+          }
+        }
+      ],
+      "effectiveOracles": [
+        {
+          "source": "tests/current-business-oracles.json",
+          "type": "truth",
+          "value": {
+            "kind": "other"
+          },
+          "fileSha256": "0a3dcf04ea1caea1dbc60e64d04377cd29e51168ceebcf32a2c3173481a1159b",
+          "evidence": "Independent MIME text/plain decoding contains only a request to confirm whether invoice INV-4711 for EUR 1,250.00 has been paid, followed by thanks. There is no assertion that a payment was executed and no advice attachment.",
+          "reason": "Question without a payment assertion"
+        }
+      ],
+      "supersededEvaluations": [
+        {
+          "source": "test/fixtures/expected.json",
+          "type": "legacy-expected",
+          "findings": [
+            "lost-advice: legacy verdict unclear became other"
+          ],
+          "observations": [
+            "legacy verdict: unclear -> other"
+          ],
+          "expectedOther": false
+        }
+      ],
+      "historicalFindings": [
+        "lost-advice: legacy verdict unclear became other"
+      ],
+      "result": {
+        "verdict": "other",
+        "confidence": "medium",
+        "needsReview": false,
+        "category": "",
+        "patchCategory": "",
+        "subjectPrefix": "",
+        "newSubject": "",
+        "patchSubject": ""
+      },
+      "activeFindings": []
+    }
+  ],
+  "limitations": [
+    "Local results do not prove Office deployment, live mailbox actions or receipt of funds.",
+    "Remaining uncertain advice requires review; no claim of universal recognition.",
+    "Concurrent changes between the final GET and PATCH remain possible.",
+    "Historical MIME-specific live gaps remain separate."
+  ]
+}

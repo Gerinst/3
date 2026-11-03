@@ -9,12 +9,154 @@ const { execFileSync } = require('node:child_process');
 const { performance } = require('node:perf_hooks');
 const { stripTypeScriptTypes } = require('node:module');
 
+function cents(value) {
+  if (typeof value === 'number') return Math.round(value * 100);
+  if (typeof value !== 'string' || !value.trim()) return null;
+  // Expectations contain both German and English decimal formats; the rightmost
+  // separator followed by two digits is the decimal separator in these fixtures.
+  const clean = value.trim().replace(/-$/, '');
+  const decimal = /([.,])\d{2}$/.exec(clean);
+  const normalized = decimal ? clean.slice(0, decimal.index).replace(/[.,\s']/g, '') + '.' + clean.slice(decimal.index + 1)
+    : clean.replace(/[.,\s']/g, '');
+  const n = Number(normalized);
+  return Number.isFinite(n) ? Math.round(n * 100) * (/-$/.test(value) ? -1 : 1) : null;
+}
+function trusted(r) { return ['advice', 'several'].includes(r.verdict) && r.confidence === 'high' && !r.needsReview; }
+function sortedParts(r) {
+  return (r.paymentAmounts || []).map(value => {
+    const m = /^(.+)\s+([A-Z]{3})$/.exec(value);
+    return m ? cents(m[1]) + ':' + m[2] : value;
+  }).sort();
+}
+// An explicit archived non-advice oracle remains authoritative even when an old
+// acceptable[] list also tolerated review. The current requirement is untouched.
+function expectsOther(oracle) {
+  const t = oracle.value;
+  if (!t || typeof t !== 'object') return false;
+  const kind = t.kind === undefined ? t.verdict : t.kind;
+  if (['other', 'non-avis', 'non-advice'].includes(kind)) return true;
+  // One archived legacy case specifies only category:"": a failed transfer.
+  // Do not reinterpret amount:"", check:true or an explicit unclear verdict.
+  return oracle.type === 'legacy-expected' && kind === undefined && t.category === '';
+}
+const writeFields = ['category', 'patchCategory', 'subjectPrefix', 'newSubject', 'patchSubject'];
+function evaluate(oracle, r) {
+  const t = oracle.value;
+  const out = { source: oracle.source, type: oracle.type, findings: [], observations: [] };
+  const fail = detail => out.findings.push(detail);
+  const note = detail => out.observations.push(detail);
+  out.expectedOther = expectsOther(oracle);
+  if (out.expectedOther) {
+    if (t.category === 'Avis prüfen' || (Array.isArray(t.acceptable) && t.acceptable.includes('Avis prüfen'))) {
+      note('historical review allowance superseded by current untouched-other requirement');
+    }
+    if (r.verdict !== 'other') fail('non-advice verdict: expected other, got ' + String(r.verdict));
+    if (r.needsReview !== false) fail('non-advice routing: expected needsReview=false, got ' + String(r.needsReview));
+    for (const key of writeFields) if (r[key] !== '') fail('non-advice mutation: expected empty ' + key);
+    // Retain this diagnostic count for historical comparisons, now with findings.
+    if (r.needsReview) note('conservative review of expected other mail');
+  }
+  if (oracle.type === 'truth') {
+    const kind = t.kind === 'avis' ? 'advice' : t.kind === 'non-avis' ? 'other' : t.kind;
+    if (out.expectedOther) {
+      // The strict untouched checks above cover all independent non-advice forms.
+    } else if (['advice', 'several', 'unreadable-advice'].includes(kind)) {
+      if (r.verdict === 'other' && !r.needsReview) fail('lost-advice: expected advice, got untouched other mail');
+      else if (r.needsReview) note('conservative review');
+      if (kind === 'unreadable-advice' && trusted(r)) fail('unsafe-confidence: unreadable advice automatically trusted');
+      if (trusted(r)) {
+        if (kind === 'several') {
+          if (Array.isArray(t.amounts) && t.amounts.length) {
+            const want = t.amounts.map((a, i) => cents(a) + ':' + ((t.currencies || [])[i] || t.currency || 'EUR')).sort();
+            if (JSON.stringify(sortedParts(r)) !== JSON.stringify(want)) fail('wrong-payment-list: expected ' + JSON.stringify(want) + ', got ' + JSON.stringify(sortedParts(r)));
+          } else note('no independent amount-list oracle');
+        } else if (t.amountNumber != null) {
+          if (r.verdict !== 'advice' || cents(r.amountNumber) !== cents(t.amountNumber)) fail('wrong-amount: expected ' + t.amountNumber + ', got ' + r.amountNumber);
+          if (t.currency && r.currency !== t.currency) fail('wrong-currency: expected ' + t.currency + ', got ' + r.currency);
+        } else note('no independent amount oracle');
+      }
+    } else note('unmapped truth kind: ' + String(kind));
+    return out;
+  }
+  const want = typeof t === 'string' ? { amount: t } : t;
+  if (['advice', 'several', 'unclear'].includes(want.verdict) && r.verdict === 'other' && !r.needsReview) fail('lost-advice: legacy verdict ' + want.verdict + ' became other');
+  if ((want.check || (want.maxConfidence && want.maxConfidence !== 'high') || want.confidence === 'low') && trusted(r)) fail('unsafe-confidence: legacy oracle requires checking');
+  if (want.amount === '' && want.verdict !== 'several' && trusted(r)) fail('unsafe-confidence: legacy oracle expects no extractable single amount');
+  if (want.amount) {
+    if (trusted(r) && r.verdict === 'several' && want.verdict !== 'several') fail('wrong-payment-list: expected one amount ' + want.amount + ', got several');
+    if (r.ok && cents(r.amountNumber) !== cents(want.amount)) {
+      if (trusted(r)) fail('wrong-amount: expected ' + want.amount + ', got ' + r.amount);
+      else note('different untrusted amount: expected ' + want.amount + ', got ' + r.amount);
+    } else if (!r.ok) note('no single extracted amount, expected ' + want.amount);
+  }
+  if (want.currency && r.currency !== want.currency) {
+    if (trusted(r)) fail('wrong-currency: expected ' + want.currency + ', got ' + r.currency);
+    else note('different untrusted currency');
+  }
+  // Historical exact verdict/confidence/extraction behavior remains visible as a regression observation.
+  for (const key of ['verdict', 'confidence']) if (want[key] !== undefined && want[key] !== r[key]) note('legacy ' + key + ': ' + want[key] + ' -> ' + r[key]);
+  for (const [key, resultKey] of [['error', 'error'], ['warning', 'warnings']]) {
+    if (want[key] !== undefined && !String(r[resultKey] || '').includes(want[key])) note('legacy diagnostic changed: ' + key);
+  }
+  if (want.notInText && r.text.includes(want.notInText)) fail('excluded text leaked into extraction');
+  if (r.needsReview) note('conservative review');
+  return out;
+}
+
+function validateCurrentBusinessOracles(manifest) {
+  if (manifest?.schemaVersion !== 1 || !Array.isArray(manifest.cases)
+    || !/^\d{4}-\d{2}-\d{2}$/.test(manifest.decision?.date || '')
+    || typeof manifest.decision?.rule !== 'string' || !manifest.decision.rule.trim()) {
+    throw Error('Invalid current business oracle manifest');
+  }
+  const seen = new Set();
+  for (const rule of manifest.cases) {
+    if (typeof rule.file !== 'string' || !rule.file.startsWith('test/') || rule.file.includes('\\')
+      || rule.file.split('/').some(part => !part || part === '.' || part === '..')
+      || !/^[a-f0-9]{64}$/.test(rule.sha256 || '') || rule.truth?.kind !== 'other'
+      || typeof rule.reason !== 'string' || !rule.reason.trim()
+      || typeof rule.independentEvidence !== 'string' || !rule.independentEvidence.trim()) {
+      throw Error('Invalid current business oracle: ' + String(rule.file));
+    }
+    if (seen.has(rule.file)) throw Error('Duplicate current business oracle: ' + rule.file);
+    seen.add(rule.file);
+  }
+  return manifest.cases;
+}
+function selectCurrentBusinessOracles(entry, inputSha256, rules) {
+  const source = 'tests/current-business-oracles.json';
+  const matches = rules.filter(rule => rule.file === entry.file);
+  const unchanged = { effectiveOracles: entry.oracles, findings: [] };
+  if (matches.length === 0) return unchanged;
+  if (matches.length !== 1) return {
+    ...unchanged, findings: ['ambiguous current business oracle: ' + entry.file],
+  };
+  const rule = matches[0];
+  const currentBusinessOverride = { source, applied: rule.sha256 === inputSha256, rule };
+  if (!currentBusinessOverride.applied) return {
+    ...unchanged, currentBusinessOverride,
+    findings: ['current business oracle file hash mismatch: ' + entry.file
+      + '; expected ' + rule.sha256 + ', got ' + String(inputSha256)],
+  };
+  return {
+    currentBusinessOverride, findings: [],
+    effectiveOracles: [{ source, type: 'truth', value: rule.truth,
+      fileSha256: rule.sha256, evidence: rule.independentEvidence, reason: rule.reason }],
+  };
+}
+
+function run() {
 const source = path.resolve(process.argv[2] || '../gerinst-2testordner');
 const reportPath = path.resolve(process.argv[3] || '/tmp/avis-legacy-report.json');
 const filter = process.argv[4] || '';
 const generatedRoot = process.argv[5] ? path.resolve(process.argv[5]) : '';
 const timeoutMs = Number(process.env.AVIS_CASE_TIMEOUT_MS || 110000);
 if (!Number.isInteger(timeoutMs) || timeoutMs < 1000 || timeoutMs > 600000) throw Error('Invalid AVIS_CASE_TIMEOUT_MS');
+const currentBusinessOraclePath = path.join(__dirname, 'current-business-oracles.json');
+const currentBusinessOracleBytes = fs.readFileSync(currentBusinessOraclePath);
+const currentBusinessOracleManifest = JSON.parse(currentBusinessOracleBytes);
+const currentBusinessRules = validateCurrentBusinessOracles(currentBusinessOracleManifest);
+const currentBusinessOracleSha256 = crypto.createHash('sha256').update(currentBusinessOracleBytes).digest('hex');
 const testRoot = path.join(source, 'test');
 if (!fs.existsSync(path.join(testRoot, 'fixtures/expected.json'))) throw Error('Archived test repository not found: ' + source);
 function walk(dir) {
@@ -81,78 +223,6 @@ for (const item of audited) add(path.join(source, item.file), {
 // Include every physical EML, even if no independent expectation accompanied it.
 for (const file of allFiles.filter(f => /\.eml$/i.test(f))) add(file, null);
 
-function cents(value) {
-  if (typeof value === 'number') return Math.round(value * 100);
-  if (typeof value !== 'string' || !value.trim()) return null;
-  // Expectations contain both German and English decimal formats; the rightmost
-  // separator followed by two digits is the decimal separator in these fixtures.
-  const clean = value.trim().replace(/-$/, '');
-  const decimal = /([.,])\d{2}$/.exec(clean);
-  const normalized = decimal ? clean.slice(0, decimal.index).replace(/[.,\s']/g, '') + '.' + clean.slice(decimal.index + 1)
-    : clean.replace(/[.,\s']/g, '');
-  const n = Number(normalized);
-  return Number.isFinite(n) ? Math.round(n * 100) * (/-$/.test(value) ? -1 : 1) : null;
-}
-function trusted(r) { return ['advice', 'several'].includes(r.verdict) && r.confidence === 'high' && !r.needsReview; }
-function sortedParts(r) {
-  return (r.paymentAmounts || []).map(value => {
-    const m = /^(.+)\s+([A-Z]{3})$/.exec(value);
-    return m ? cents(m[1]) + ':' + m[2] : value;
-  }).sort();
-}
-function evaluate(oracle, r) {
-  const t = oracle.value;
-  const out = { source: oracle.source, type: oracle.type, findings: [], observations: [] };
-  const fail = detail => out.findings.push(detail);
-  const note = detail => out.observations.push(detail);
-  if (oracle.type === 'truth') {
-    const kind = t.kind === 'avis' ? 'advice' : t.kind === 'non-avis' ? 'other' : t.kind;
-    if (kind === 'other') {
-      if (trusted(r) || r.category) fail('false-positive: expected other mail, got automatic advice');
-      else if (r.needsReview) note('conservative review of expected other mail');
-    } else if (['advice', 'several', 'unreadable-advice'].includes(kind)) {
-      if (r.verdict === 'other' && !r.needsReview) fail('lost-advice: expected advice, got untouched other mail');
-      else if (r.needsReview) note('conservative review');
-      if (kind === 'unreadable-advice' && trusted(r)) fail('unsafe-confidence: unreadable advice automatically trusted');
-      if (trusted(r)) {
-        if (kind === 'several') {
-          if (Array.isArray(t.amounts) && t.amounts.length) {
-            const want = t.amounts.map((a, i) => cents(a) + ':' + ((t.currencies || [])[i] || t.currency || 'EUR')).sort();
-            if (JSON.stringify(sortedParts(r)) !== JSON.stringify(want)) fail('wrong-payment-list: expected ' + JSON.stringify(want) + ', got ' + JSON.stringify(sortedParts(r)));
-          } else note('no independent amount-list oracle');
-        } else if (t.amountNumber != null) {
-          if (r.verdict !== 'advice' || cents(r.amountNumber) !== cents(t.amountNumber)) fail('wrong-amount: expected ' + t.amountNumber + ', got ' + r.amountNumber);
-          if (t.currency && r.currency !== t.currency) fail('wrong-currency: expected ' + t.currency + ', got ' + r.currency);
-        } else note('no independent amount oracle');
-      }
-    } else note('unmapped truth kind: ' + String(kind));
-    return out;
-  }
-  const want = typeof t === 'string' ? { amount: t } : t;
-  if (want.verdict === 'other' && trusted(r)) fail('false-positive: legacy expected other mail');
-  if (['advice', 'several', 'unclear'].includes(want.verdict) && r.verdict === 'other' && !r.needsReview) fail('lost-advice: legacy verdict ' + want.verdict + ' became other');
-  if ((want.check || (want.maxConfidence && want.maxConfidence !== 'high') || want.confidence === 'low') && trusted(r)) fail('unsafe-confidence: legacy oracle requires checking');
-  if (want.amount === '' && want.verdict !== 'several' && trusted(r)) fail('unsafe-confidence: legacy oracle expects no extractable single amount');
-  if (want.amount) {
-    if (trusted(r) && r.verdict === 'several' && want.verdict !== 'several') fail('wrong-payment-list: expected one amount ' + want.amount + ', got several');
-    if (r.ok && cents(r.amountNumber) !== cents(want.amount)) {
-      if (trusted(r)) fail('wrong-amount: expected ' + want.amount + ', got ' + r.amount);
-      else note('different untrusted amount: expected ' + want.amount + ', got ' + r.amount);
-    } else if (!r.ok) note('no single extracted amount, expected ' + want.amount);
-  }
-  if (want.currency && r.currency !== want.currency) {
-    if (trusted(r)) fail('wrong-currency: expected ' + want.currency + ', got ' + r.currency);
-    else note('different untrusted currency');
-  }
-  // Historical exact verdict/confidence/extraction behavior remains visible as a regression observation.
-  for (const key of ['verdict', 'confidence']) if (want[key] !== undefined && want[key] !== r[key]) note('legacy ' + key + ': ' + want[key] + ' -> ' + r[key]);
-  for (const [key, resultKey] of [['error', 'error'], ['warning', 'warnings']]) {
-    if (want[key] !== undefined && !String(r[resultKey] || '').includes(want[key])) note('legacy diagnostic changed: ' + key);
-  }
-  if (want.notInText && r.text.includes(want.notInText)) fail('excluded text leaked into extraction');
-  if (r.needsReview) note('conservative review');
-  return out;
-}
 function mailboxFor(entry) {
   if (entry.file === 'test/bench/brainstorm/N16.eml') return { value: 'debitoren@nordwerk.example', basis: 'N16.json facts explicitly name the BCC recipient' };
   if (entry.file.startsWith('test/blind/')) return { value: 'debitoren@nordwerk.example', basis: 'fixed synthetic owner in archived blind generators' };
@@ -203,11 +273,18 @@ for (const entry of [...records.values()].sort((a, b) => a.file.localeCompare(b.
   const record = { ...entry, status: error ? 'execution-error' : entry.oracles.length ? 'evaluated' : 'no-oracle',
     sha256: hash, bytes: raw.length, origin, mailbox, elapsedMs, duplicateOf: previous ? previous.firstFile : undefined };
   cache.get(key).firstFile ||= entry.file;
-  if (error) { record.error = error; record.findings = [error]; output.push(record); continue; }
+  const selection = selectCurrentBusinessOracles(entry, hash, currentBusinessRules);
+  record.effectiveOracles = selection.effectiveOracles;
+  if (selection.currentBusinessOverride) record.currentBusinessOverride = selection.currentBusinessOverride;
+  if (error) { record.error = error; record.findings = [...selection.findings, error]; output.push(record); continue; }
   record.result = Object.fromEntries(['verdict', 'confidence', 'needsReview', 'amount', 'amountNumber', 'currency', 'paymentAmounts',
     'category', 'subjectPrefix', 'newSubject', 'patchSubject', 'patchCategory', 'verdictWhy', 'error', 'warnings', 'documents'].map(k => [k, result[k]]));
-  record.findings = [];
-  for (const oracle of entry.oracles) if (oracle.fileSha256 && oracle.fileSha256 !== hash) {
+  record.findings = [...selection.findings];
+  if (selection.currentBusinessOverride?.applied) {
+    record.supersededEvaluations = entry.oracles.map(o => evaluate(o, result));
+    record.historicalFindings = record.supersededEvaluations.flatMap(e => e.findings);
+  }
+  for (const oracle of selection.effectiveOracles) if (oracle.fileSha256 && oracle.fileSha256 !== hash) {
     record.findings.push('audited oracle file hash mismatch: ' + oracle.source);
   }
   if (result.needsReview) for (const k of ['category', 'patchCategory', 'subjectPrefix', 'newSubject', 'patchSubject']) {
@@ -215,7 +292,7 @@ for (const entry of [...records.values()].sort((a, b) => a.file.localeCompare(b.
   }
   if (result.category && (!trusted(result) || result.category !== 'Avis')) record.findings.push('automatic-category invariant violated');
   if (result.patchSubject && !trusted(result)) record.findings.push('automatic-subject invariant violated');
-  record.evaluations = entry.oracles.map(o => evaluate(o, result));
+  record.evaluations = selection.effectiveOracles.map(o => evaluate(o, result));
   for (const e of record.evaluations) record.findings.push(...e.findings);
   output.push(record);
 }
@@ -225,9 +302,15 @@ const summary = {
   records: output.length, existing: count(x => x.status !== 'missing'),
   uniqueExecutions: executed, missing: count(x => x.status === 'missing'), empty: count(x => x.bytes === 0), regenerated: count(x => x.origin === 'regenerated'),
   withOracle: count(x => x.status === 'evaluated'), noOracle: count(x => x.status === 'no-oracle'),
+  currentBusinessOverrides: count(x => x.currentBusinessOverride?.applied === true),
+  currentBusinessHashMismatches: count(x => x.currentBusinessOverride?.applied === false),
+  historicalFindingCases: count(x => x.historicalFindings?.length),
+  historicalFindings: output.reduce((sum, x) => sum + (x.historicalFindings?.length || 0), 0),
   executionErrors: count(x => x.status === 'execution-error'), findingCases: count(x => x.findings?.length),
   conservativeReview: count(x => x.evaluations?.some(e => e.observations.some(n => n.startsWith('conservative review')))),
-  expectedOtherReviewed: count(x => x.evaluations?.some(e => e.observations.includes('conservative review of expected other mail'))),
+  expectedOtherCases: count(x => x.evaluations?.some(e => e.expectedOther)),
+  expectedOtherReviewed: count(x => x.evaluations?.some(e => e.expectedOther) && x.result?.needsReview === true),
+  expectedOtherUntouched: count(x => x.evaluations?.some(e => e.expectedOther) && x.result?.verdict === 'other' && x.result?.needsReview === false && writeFields.every(k => x.result[k] === '')),
   legacyBehaviorDifferences: count(x => x.evaluations?.some(e => e.observations.some(n => n.startsWith('legacy ') || n.startsWith('different untrusted') || n.startsWith('no single extracted amount')))),
   originalFindingCases: count(x => x.origin === 'original' && x.findings?.length),
   regeneratedFindingCases: count(x => x.origin === 'regenerated' && x.findings?.length),
@@ -236,7 +319,8 @@ const summary = {
 };
 const report = { sourceRepository: 'Gerinst/2testordner', sourceCommit, parserCommit, parserSha256,
   timeoutMs, generatedRoot: generatedRoot || undefined,
-  scope: 'Local current-parser execution only; no archived JS executed, no external mail or Microsoft 365 calls. Legacy UI expectations intentionally not asserted.',
+  currentBusinessOracleSha256, currentBusinessOracleManifest,
+  scope: 'Local current-parser execution only; no archived JS executed, no external mail or Microsoft 365 calls. Explicit non-advice oracles require untouched other; historical advice UI expectations are not asserted.',
   summary, records: output };
 fs.mkdirSync(path.dirname(reportPath), { recursive: true });
 fs.writeFileSync(reportPath, JSON.stringify(report, null, 2) + '\n');
@@ -244,3 +328,7 @@ console.log(JSON.stringify(summary, null, 2));
 for (const r of output.filter(x => x.findings?.length)) console.log('FINDING ' + r.file + ': ' + r.findings.join('; '));
 console.log('Full report: ' + reportPath);
 process.exitCode = summary.findingCases ? 1 : 0;
+}
+
+module.exports = { evaluate, expectsOther, validateCurrentBusinessOracles, selectCurrentBusinessOracles };
+if (require.main === module) run();

@@ -14588,14 +14588,19 @@ function adviceEvidence(infos: LineInfo[], doc: DocInfo, best: Candidate | null)
 // Explicit execution status is evidence about whether money moved, independent of an advice title or total label.
 // Match assertions, not bare words in invoice references ("previously unpaid invoices") or boilerplate.
 const EXECUTION_TOPIC = /\b(?:payment|transfer|wire|remittance|funds|zahlung(?:sanweisung|sauftrag)?|[üu]e?berweisung(?:sauftrag)?|geld)\b/i;
-const EXECUTION_NEGATIVE = /\b(?:not|never|nicht|nie)\s+(?:(?:yet|been|actually|noch|bisher|bereits|ausgef[üu]e?hrt)\s+){0,3}(?:paid|transferred|remitted|settled|executed|made|approved|released|bezahlt|gezahlt|[üu]e?berwiesen|beglichen|ausgef[üu]e?hrt|freigegeben|genehmigt)\b|\b(?:no|kein(?:e|en)?)\s+(?:payment|transfer|funds|zahlung|[üu]e?berweisung|geld)\b[^.!?\n]{0,60}\b(?:made|executed|transferred|sent|erfolgt|geleistet|ausgef[üu]e?hrt|[üu]e?berwiesen)\b/i;
+const EXECUTION_NEGATIVE = /\b(?:haven['’]t|hasn['’]t|wasn['’]t|weren['’]t)\s+(?:(?:yet|been)\s+)?(?:paid|transferred|executed|sent)\b|\b(?:nichts|keine\s+zahlung)\s+(?:(?:wurde|ist|haben\s+wir|bislang|bisher|noch)\s+){0,3}(?:[üu]e?berwiesen|bezahlt|veranlasst|ausgef[üu]e?hrt)\b|\b(?:not|never|nicht|nie)\s+(?:(?:yet|been|actually|noch|bisher|bereits|ausgef[üu]e?hrt)\s+){0,3}(?:paid|transferred|remitted|settled|executed|made|approved|released|bezahlt|gezahlt|[üu]e?berwiesen|beglichen|ausgef[üu]e?hrt|freigegeben|genehmigt)\b|\b(?:no|kein(?:e|en)?)\s+(?:payment|transfer|funds|zahlung|[üu]e?berweisung|geld)\b[^.!?\n]{0,60}\b(?:made|executed|transferred|sent|erfolgt|geleistet|ausgef[üu]e?hrt|[üu]e?berwiesen)\b/i;
 const EXECUTION_FAILED = /\b(?:failed|unsuccessful|cancell?ed|voided|recalled|revoked|rejected|declined|storniert|annulliert|fehlgeschlagen|zur[üu]e?ckgerufen|widerrufen|abgelehnt)\b/i;
 const EXECUTION_PENDING = /\b(?:pending|awaiting|waiting for)\s+(?:approval|authori[sz]ation|execution|release)\b|\b(?:wartet|warten)\s+auf\s+(?:freigabe|genehmigung|ausf[üu]e?hrung)\b/i;
 const EXECUTION_STATUS_FIELD = /^\s*(?:(?:payment|transfer|execution)\s+status|status|zahlungsstatus|ausf[üu]e?hrungsstatus)\s*:\s*(?:pending|scheduled|queued|awaiting\b|draft|unpaid|not\s+(?:yet\s+)?(?:paid|executed|approved)|ausstehend|vorgemerkt|geplant|entwurf|unbezahlt|nicht\s+(?:ausgef[üu]e?hrt|freigegeben))\b/i;
 
 function executedPaymentStatement(s: string): boolean {
+  // A later receipt/status question does not retract an assertion before it. Split only
+  // at an explicit clause boundary introducing a request; amount commas stay intact.
+  const followUp = /(?:,\s+|\s+(?:and|und)\s+)(?=(?:(?:could|can|would)\s+you|k[öo]e?nnen\s+sie|k[öo]e?nnten\s+sie|please\s+(?:check|confirm)|bitte\s+(?:pr[üu]e?fen|best[äa]e?tigen))\b)/i.exec(s);
+  if (followUp !== null) s = s.substring(0, followUp.index);
   // A positive resumption must itself state execution; "no payment was executed" and "will be re-sent" do not.
-  if (EXECUTION_NEGATIVE.test(s) || PAID_NOT.test(s) || PAID_LATER.test(s) || PAYER_COND.test(s)) return false;
+  if (EXECUTION_NEGATIVE.test(s) || PAID_NOT.test(s) || PAID_LATER.test(s) || PAYER_COND.test(s)
+    || /\?\s*$/.test(s) || /(?:check|confirm|pr[üu]e?fen)[^.!?]{0,60}(?:whether|\bif\b|\bob\b)/i.test(s)) return false;
   return PAYER_DONE.test(s) || PAYER_DONE_MORE.test(s) || (RESENT.test(s) && DONE_VERB.test(s))
     || (EXECUTION_TOPIC.test(s) && /\b(?:was|were|has been|have been|wurde|wurden|ist|sind)\b[^.!?\n]{0,50}\b(?:executed|completed|sent|paid|transferred|ausgef[üu]e?hrt|[üu]e?berwiesen|bezahlt)\b/i.test(s));
 }
@@ -14674,11 +14679,99 @@ function conflictingPaymentCurrency(pick: AmountPick): string {
   return "";
 }
 
+// A document's purpose is stronger evidence than a stray payment word. These are positive
+// identifications of other business documents, not a fallback for an unrecognised advice.
+function nonAdvicePurpose(pick: AmountPick, attachment: boolean): string {
+  const doc = pick.doc, ev = pick.ev;
+  const text = doc.ownText, flat = unwrapLines(sentenceText(text)).replace(/[’‘]/g, "'");
+  const head = text.split("\n").slice(0, 16).join("\n");
+  const clauses = flat.split(/\n+|[.!?;]\s+/);
+  const executionStatus = text.split("\n").some((line) => /^\s*(?:(?:payment|transfer|execution)\s+status|zahlungsstatus|ausf[üu]e?hrungsstatus)\s*:\s*(?:executed|completed|paid|ausgef[üu]e?hrt|abgeschlossen|bezahlt)\s*[.!]?\s*$/i.test(line));
+  const completed = executionStatus || clauses.some((s) => (executedPaymentStatement(s)
+    || (/\b(?:payment|transfer|wire|funds)\s+(?:(?:was|were|has been|have been)\s+)?(?:released|executed|sent|paid|transferred)\s+(?:today|yesterday|on\s+\d)/i.test(s)
+      && !EXECUTION_NEGATIVE.test(s) && !PAYER_COND.test(s)))
+    && !/\b(?:may have|might have|could have|perhaps|possibly|vielleicht|m[öo]e?glicherweise)\b/i.test(s));
+  // An actually issued advice that is now cancelled/failed remains a review item,
+  // even in a message that also describes a future proposal.
+  if (clauses.some((line) => adviceHint(line) !== "" && EXECUTION_FAILED.test(line)
+    && !/\b(?:not|never|nicht|nie)\s+(?:been\s+)?(?:cancelled|canceled|voided|storniert)\b/i.test(line))) return "";
+  // Scope is incoming customer remittances. Supplier refunds and tax/own-investment
+  // credits are identified by their roles, not merely by the word credit/refund.
+  const customerPayment = clauses.some((s) => executedPaymentStatement(s) && FIRST_PERSON.test(s)
+    && /(?:your (?:invoice|delivery|services)|ihre[nr]? (?:rechnung|lieferung|leistung)|eure (?:rechnung|lieferung))/i.test(s));
+  const independentPayment = executionStatus || customerPayment || clauses.some((s) => executedPaymentStatement(s) && FIRST_PERSON.test(s)
+    && !/(?:erstatt|r[üu]e?ckzahl|refund|guthaben|festgeld|termingeld|deposit|tax refund)/i.test(s));
+  if (!independentPayment && /^tax refund \(/.test(doc.doubt)) return doc.doubt;
+  // A credit balance being paid out can also be a marketplace settlement. The older
+  // refund doubt alone is uncertainty; require evidence of an overpayment or the
+  // writer's own commercial credit note before excluding it as a supplier refund.
+  const supplierRefund = /\b(?:doppelzahlung|[üu]e?berzahlung|duplicate payment|double payment|overpayment|overpaid|paid twice)\b|\b(?:doppelt|zweimal|zu viel)\s+(?:bezahl|gezahlt|[üu]e?berwies)|\b(?:unsere[rn]? gutschrift|our credit note)\b/i.test(flat);
+  if (!customerPayment && supplierRefund && /^refund of a supplier \(/.test(doc.doubt)) return doc.doubt;
+  if (!independentPayment && (doc.bankOwn || /(?:ihr(?:e[sn]?)? (?:termingeld|festgeld)|r[üu]e?ckzahlung (?:ihres|des) (?:festgeld|termingeld|anlagebetrag)|your (?:fixed[- ]term|time) deposit)/i.test(text))
+    && /\b(?:zinsen|interest|anlagebetrag|principal)\b/i.test(text)) return "own investment settlement, not a customer remittance";
+  if (!attachment && !ev.strong && /\b(?:online[- ]?banking|banking notification|kontoinformation)\b/i.test(flat)
+    && /(?:incoming wire[^.!?]{0,100}(?:credited|received)|gutschrift[^.!?]{0,70}eingegangen)/i.test(flat)
+    && /(?:your account|ihrem konto|auftraggeber|originator)/i.test(flat)) return "bank account alert, not a payer's remittance";
+  // A receipt acknowledges the recipient's outgoing cash payment. An independent
+  // payer statement elsewhere in the same document must still remain visible.
+  if (!ev.payer && !ev.strong && /\b(?:quittung|cash receipt)\b/i.test(text)
+    && /(?:betrag dankend erhalten|barzahlung|cash payment|received from)/i.test(text)) return "receipt of a cash payment, not a payer's remittance";
+  if (!completed && /(?:gutschriftsverfahren|self[- ]billing)/i.test(text)) return "self-billing invoice, payment still due";
+  if (!completed && /(?:formular|vordruck|blank form|template)/i.test(text)
+    && /(?:hinweise zum ausf[üu]llen|formular ausgef[üu]llt|please (?:fill|complete)|for completion)/i.test(text)
+    && (pick.best === null || pick.best.value === 0)) return "blank payment form, no executed payment";
+  if (!completed && /(?:nur muster|leeres formular|rechenbeispiel|example only|blank template)/i.test(text)
+    && /(?:keine (?:echte )?zahlung|no (?:actual |real )?payment)/i.test(text)) return "illustrative payment template, no real transaction";
+  const compactHead = head.replace(/\s+/g, "");
+  if (!completed && /avis[d'’]*[ée]ch[ée]ance/i.test(compactHead)
+    && /(?:loyer|montant [àa] r[ée]gler|date d'exigibilit[ée])/i.test(text)) return "rent/payment demand, not a remittance";
+  if (!completed && /(?:dokumenteninkasso|documentary collection)/i.test(text)
+    && /(?:dokumente (?:erst )?nach zahlung|documents against payment|zahlungsauftrag zulasten|D\/P at sight)/i.test(flat)) return "documentary collection payment request";
+  if (!completed && /(?:saldo (?:zu unseren gunsten|in h[öo]he)|negative (?:netting )?balance)/i.test(text)
+    && /(?:zahlung unsererseits erfolgt[^.!?]*nicht|no payment (?:from us|will be made))/i.test(flat)) return "netting balance payable by the reader, no incoming payment";
+  // Explicitly future advice is not today's advice. A cancelled/failed actual advice
+  // remains a contradiction; it is not swallowed by a sentence promising another.
+  const futureAdvice = /(?:\b(?:I(?:'ll| will)|we(?:'ll| will))\s+(?:send|issue)[^.!?]{0,55}(?:remittance|payment advice)|(?:zahlungsavis|remittance advice)[^.!?]{0,75}(?:erhalten sie dann|once the payment|as soon as the money)|(?:das )?zahlungsavis erhalten sie[^.!?]{0,55}(?:nach|dann))/i.test(flat);
+  const notPaid = /(?:haven't paid|have not paid|not (?:yet )?paid|noch nicht bezahlt|keine zahlungen[^.!?]{0,30}ausf[üu]e?hren)/i.test(flat);
+  if (!completed && futureAdvice && notPaid && !EXECUTION_FAILED.test(flat)) return "future advice after an unpaid balance, no payment made";
+  // A return notice describes money returned to the sender. A successful retry in
+  // the writer's own text is separate evidence and prevents this classification.
+  if (!completed && /(?:payment[^.!?]{0,100}(?:bounced back|was returned)|[üu]e?berweisung[^.!?]{0,140}(?:zur[üu]e?ckgekommen|zur[üu]e?ckgegeben)|r[üu]e?ckl[äa]ufer[^.!?]{0,40}zur[üu]e?ckgekommen)/i.test(flat)
+    && /(?:return reason|return notice|r[üu]e?ckgabegrund|konto (?:erloschen|aufgel[öo]st)|bankverbindung|account details|ung[üu]e?ltiger empf[äa]e?ngerdaten)/i.test(flat)) return "returned payment and request for corrected bank details";
+  if (!completed && /(?:^|\n)\s*payment voided\s*(?:\n|$)/i.test(text)
+    && /will not be sent/i.test(text) && /(?:void (?:date|reason)|returned to open status)/i.test(text)) return "void notification, payment returned to open status";
+  if (!completed && /(?:payment proposal|zahlungsvorschlag|total proposed|scheduled payments|total scheduled)/i.test(head)
+    && /(?:draft|not approved|pending approval|proposed|scheduled|status\s*:\s*vorschlag|nicht ausgef[üu]e?hrt)/i.test(text)) return "payment proposal or open-items status, no executed remittance";
+  if (!completed && /(?:bitte|can you|could you)[^.!?]{0,50}(?:pr[üu]e?fen|confirm|check)[^.!?]{0,80}(?:whether|\bob\b)[^.!?]{0,90}(?:paid|bezahlt|zahlung)/i.test(flat)) return "request to reconcile unpaid invoices, not a payment statement";
+  if (!completed && (!ev.strong || doc.kind !== "advice")) {
+    if (/(?:korrigierte rechnung|corrected invoice)/i.test(flat)
+      && /(?:bitte schicken|bitte senden|please send)/i.test(flat)
+      && /(?:dann[^.!?]{0,40}[üu]e?berweisen|[üu]e?berweisen wir dann|(?:once|after)[^.!?]{0,45}(?:invoice|correction))/i.test(flat)) return "invoice correction requested before payment";
+    if (/(?:ratenzahlung|monatsraten|zahlungsplan|instalment (?:plan|schedule)|payment plan)/i.test(flat)
+      && /(?:bitten|antrag|vorschlag|schlagen|zustimmung|einverst[äa]ndnis|proposal|request|agree)/i.test(flat)) return "payment plan proposal awaiting agreement";
+    if (/(?:zahlungsvorschlag|payment proposal|total proposed|scheduled payments|total scheduled)/i.test(text)
+      || (/(?:offene[ -]posten|open items|invoice status|total outstanding)/i.test(text)
+        && /(?:abgleichen|gleichen sie|in pr[üu]fung|not due|under verification|grn pending|vorbereitung|n[äa]chsten zahllauf)/i.test(flat))) return "payment proposal or open-items status, no executed remittance";
+    if (/(?:\b(?:zahlen|bezahlen)\b[^.!?]{0,100}erst,?\s*wenn|on hold until[^.!?]{0,140}credit note|halten[^.!?]{0,30}zahlung[^.!?]{0,90}zur[üu]e?ck)/i.test(flat)) return "payment withheld until a credit note, no payment made";
+    if (/(?:check whether|pr[üu]fen.{0,20}ob)[^.!?]{0,90}(?:received payment|zahlung erhalten)|(?:aufstellung[^.!?]{0,75}rechnungen[^.!?]{0,40}offen)/i.test(flat)) return "request to reconcile unpaid invoices, not a payment statement";
+    if (/(?:bestell[üu]bersicht|offene bestellungen|open purchase orders|purchase order overview)/i.test(text)
+      && /(?:liefertermin|lieferant|delivery date|supplier|bestellwert)/i.test(text)) return "purchase-order and delivery schedule";
+    if (/mahnvorschlag|dunning proposal/i.test(text)) return "dunning proposal, not an incoming payment";
+    if (/(?:change of (?:our )?bank details|neue bankverbindung|[äa]nderung[^.!?]{0,20}bankverbindung)/i.test(flat)
+      && /(?:supplier records|stammdaten|future payments|from that date|k[üu]nftige zahlungen)/i.test(flat)) return "supplier bank-details information";
+    if (/(?:umstellung[^.!?]{0,75}zahlungsl[äa]ufe|(?:k[üu]nftig|k[üu]nftigen)[^.!?]{0,70}(?:versand|zahlungsavise)|future remittance advices)/i.test(flat)
+      && /(?:e-mail-adresse|adresse hinterlegt|erp-system|ab dem|ab 0|beginning|effective)/i.test(flat)) return "information about future payment/advice procedures";
+  }
+  return "";
+}
+
 function judgeDocument(pick: AmountPick, hasAmount: boolean, reply: boolean, attachment: boolean): DocVerdict {
   // verdict of one readable document. hasAmount: an amount was found; reply: the writer's text of a reply, whose payment
   // words refer to the thread; attachment: a file, not the mail text. A trusted amount alone is no evidence; a negative
   // signal beats weak evidence and makes strong evidence unclear (never a silent loss of an advice)
   const doc = pick.doc, ev = pick.ev;
+  const purpose = nonAdvicePurpose(pick, attachment);
+  if (purpose !== "") return { verdict: "other", why: "non-advice: " + purpose };
   // A commercial credit note to offset an invoice records a price adjustment, not a bank credit. Do not let its
   // "Gutschriftsbetrag" label alone turn the adjustment into a payment; an independently stated payment remains separate.
   if (!ev.payer && !ev.strong && !doc.bankCredit && !doc.transferForm
@@ -16163,6 +16256,7 @@ function linesDocument(name: string, type: string, lines0: string[], kw: string,
     if (sp.length >= 2) { d.verdict = "several"; d.res.paymentAmounts = sp; d.partsConfidence = "low"; d.why = sp.length + " payments named in the mail text (" + sp.join("; ") + ")"; }
   }
   if (body) {
+    if (v.why.indexOf("non-advice: ") === 0) d.against = v.why;
     // the writer asks for money back (a duplicate payment, an overpayment): the money goes to the writer, no advice. Beside
     // a payment the writer states as done (strong evidence) the mail stays for a check when the amount is the one asked
     // back; an advice title keeps the verdict
@@ -16750,6 +16844,44 @@ function unresolvedPaymentSource(d: DocResult): boolean {
 }
 
 function decideMail(docs: DocResult[], hint: string, noDocError: string): AvisResult {
+  // A cover note directing the reader to a credential form supplies no payment document.
+  // Readable independent advice files or a separate body payment keep their review protection.
+  const credentialCover = (d: DocResult): boolean => d.body && d.attachRef
+    && /(?:attached|beigef[üu]e?gt|anbei)[^.!?\n]{0,100}(?:remittance advice|payment advice|zahlungsavis)|(?:remittance advice|payment advice|zahlungsavis)[^.!?\n]{0,100}(?:im anhang|attached|beigef[üu]e?gt)/i.test(d.res.text)
+    && !d.res.text.split(/\n+|[.!?;]\s+/).some((line) => executedPaymentStatement(line)
+      && (!ATTACH_REF.test(line) || FIRST_PERSON.test(line) || /(?:separat|unabh[äa]ngig|getrennt|independent)/i.test(line)));
+  // Office can turn user functions into async functions. Call this helper directly
+  // inside a loop so Array.some/every never consumes its Promise as a truthy value.
+  let loginPresent = false, hasCredentialCover = false, allCredentialCovers = true;
+  for (const d of docs) {
+    const cover = credentialCover(d);
+    if (d.type === "html-login") loginPresent = true;
+    if (cover) hasCredentialCover = true;
+    if (d.verdict !== "other" && d.type !== "html-login" && !cover) allCredentialCovers = false;
+  }
+  const loginBait = loginPresent && hasCredentialCover && allCredentialCovers;
+  if (loginBait) {
+    for (const d of docs) if (d.verdict !== "other") { d.verdict = "other"; d.why = "non-advice: credential form with a cover note, no independent remittance"; }
+    hint = "";
+  }
+  // A pending-payment cover note and an actual advice for the same invoices conflict.
+  // Classifying the cover note itself as another document must not certify the attachment.
+  for (const d of docs) {
+    if (!d.body || d.name !== "body" || d.verdict !== "other"
+      || !/^non-advice: (?:future advice|payment plan proposal|payment proposal or open-items|payment withheld|invoice correction|returned payment|void notification)/.test(d.why)) continue;
+    const refs = refNumbers(d.res.text, true);
+    const conflicting = docs.some((a) => {
+      if (a.body || (a.verdict !== "advice" && a.verdict !== "several")) return false;
+      const other = refNumbers(a.res.text, true);
+      return refs.length === 0 || other.length === 0 || refs.some((r) => other.indexOf(r) >= 0);
+    });
+    if (conflicting) { d.verdict = "unclear"; d.why = "payment execution not confirmed (" + d.why + ")"; }
+  }
+  // Conclusive business-purpose evidence cannot be resurrected by the word Avis in a
+  // subject/name. A neutral cover note or an unexplained unreadable file cannot supply it.
+  if (docs.length > 0 && docs.every((d) => d.verdict === "other") && docs.some((d) =>
+    d.against !== "" || d.why.indexOf("non-advice: ") === 0
+    || /^(?:the recipient's own advice|own payment sent by a colleague|the bank's own credit)/.test(d.why))) hint = "";
   // advices with the same amount count once; two or more amounts (or several payments in one table) -> several; one ->
   // advice (other documents beside it, e.g. invoice copies, do not count); none -> unclear (an unclear document or an
   // advice word in the subject / a file name / the mail text) or other
@@ -16763,7 +16895,7 @@ function decideMail(docs: DocResult[], hint: string, noDocError: string): AvisRe
   for (const d of docs) if (d.body && d.name === "body" && d.against !== "") against = d;
   // an attached sign-in page is phishing bait: no document of the mail counts as an advice, whatever it says
   let login: DocResult | null = null;
-  for (const d of docs) if (d.type === "html-login" && login === null) login = d;
+  for (const d of docs) if (d.type === "html-login" && d.verdict !== "other" && login === null) login = d;
   if (login !== null) {
     for (const d of docs) {
       if (d === login || (d.verdict !== "advice" && d.verdict !== "several")) continue;
@@ -17941,6 +18073,7 @@ function mailResult(mail: MailScan, kw: string, subject: string): AvisResult {
     }
     if (d.res.ok || moneyText(d.res.text) || d.verdict === "advice" || d.verdict === "several") keep = true;
     else if (d.verdict === "unclear") {
+      if (d.payer && d.strong && d.res.text.split(/\n+|[.!?;]\s+/).some((line) => executedPaymentStatement(line))) { keep = true; continue; }
       const futureProposal = d.why.indexOf("payment execution not confirmed (") === 0 && !d.payer
         && PROVISIONAL_PAY.test(d.res.text) && SCHEDULED_PAY.test(d.res.text) && FUTURE_ADVICE_ONLY.test(d.res.text)
         && !EXECUTION_FAILED.test(d.res.text);
@@ -18015,6 +18148,28 @@ function mailResult(mail: MailScan, kw: string, subject: string): AvisResult {
       if (COLLEAGUE_QUOTES.test(d.res.text) || d.res.text.split("\n").some((l) => QUOTED_SENDER.test(l))) continue;
       d.verdict = "other";
       d.why = "own payment named by a colleague (" + d.why + ") - not a payment received";
+    }
+  }
+  // An internal execution report with the mailbox owner's own supplier register is
+  // outgoing payment traffic. A customer's separate advice has its own letterhead.
+  if (internalMail(mail) && /(?:zahllauf|payment run)[^\n]{0,90}(?:erfolgreich ausgef[üu]hrt|successfully executed)/i.test(bodyText)) {
+    for (const d of docs) {
+      if (d.body || d.forOwner || !/(?:begleitliste zahlungstr[äa]ger|supplier payment register)/i.test(d.res.text)) continue;
+      const ownerHead = d.res.text.split("\n").slice(0, 3).some((l) => ownerName(l.trim().split(/\s{2,}/)[0]));
+      if (ownerHead) { d.verdict = "other"; d.why = "non-advice: own supplier payment register in an internal execution report"; }
+    }
+  }
+  // Bind a single unreadable scan/Word letter to an explicit attachment description.
+  // This does not exempt encrypted, damaged, additional, or vaguely described files.
+  const attached = docs.filter((d) => !d.body);
+  const describedOther = /(?:anbei|beigef[üu]gt|attached)[^.!?\n]{0,150}(?:gegengezeichnete auftragsbest[äa]tigung|unterschriebene auftragsbest[äa]tigung|signed order confirmation|einfuhrabgabenbescheid|customs assessment|formal notification of a change of (?:our )?bank details)/i.test(bodyText);
+  const bodyCompleted = bodyText.split(/\n+|[.!?;]\s+/).some((l) => executedPaymentStatement(l));
+  if (attached.length === 1 && describedOther && !bodyCompleted && subjectHint === ""
+    && !docs.some((d) => d.verdict === "advice" || d.verdict === "several" || (d.body && d.strong))) {
+    const d = attached[0];
+    if ((d.type === "scan" || d.type === "word") && d.verdict === "unclear" && adviceHint(d.name) === "") {
+      d.verdict = "other";
+      d.why = "non-advice: single attachment explicitly described as an order, customs notice or bank-details letter";
     }
   }
   // advice words in the subject, a file name or the mail text lift "other" to "unclear" (never to "advice")

@@ -3,7 +3,7 @@ const { spawnSync } = require('node:child_process');
 const path = require('node:path');
 const mainOnly = process.argv.includes('--main-only') || process.env.AVIS_TEST_SCOPE === 'main';
 const suites = [
-  'multiple-advices.cjs', 'subject-conflict.cjs', 'review-routing.cjs', 'runtime-budget.cjs',
+  'multiple-advices.cjs', 'subject-conflict.cjs', 'non-advice.cjs', 'review-routing.cjs', 'runtime-budget.cjs',
   'safety-semantics.cjs', 'safety-multiple.cjs', 'safety-formats.cjs',
   'safety-runtime.cjs', 'safety-envelope.cjs', 'safety-flow.cjs', 'safety-volume.cjs',
 ];

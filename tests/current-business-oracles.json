@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "decision": {
+    "date": "2026-11-03",
+    "authority": "User-confirmed current business scope",
+    "rule": "Pure tax refunds and supplier refunds of duplicate payments are other and must remain untouched. A pure question asking whether payment was received or an invoice paid, without an independent payment confirmation, is likewise other. Genuine customer payments and uncertain actual advices remain protected."
+  },
+  "scope": "Current business expectations for exactly identified unchanged inputs. These replace historical business expectations only after exact path and SHA-256 verification; historical source oracles and evaluations remain in the corpus report. No parser result or parser hash selects an override.",
+  "cases": [
+    {
+      "file": "test/bench/corpus4/payers/payers_02_finanzamt-ust-erstattung-verrechnung.pdf",
+      "sha256": "15bc51a4b07d536f9ac94f510f025f12fcbb64123b4bc7908a0264841a86a4d6",
+      "truth": {
+        "kind": "other"
+      },
+      "reason": "Pure tax refund",
+      "independentEvidence": "Independent PDF extraction identifies the tax authority as payer, a VAT assessment and an excess-tax credit; 2,631.76 EUR remains after tax arrears are offset. It settles no customer invoice.",
+      "historicalOracleSources": [
+        "test/bench/corpus4/manifest-payers.json"
+      ]
+    },
+    {
+      "file": "test/bench/corpus5/letters/letters_08_grosshandel_rueckerstattung_doppelzahlung.pdf",
+      "sha256": "358bbf18609c81af17a4c9b2873f6be2f412afa1c8aad1f919d42b9492290443",
+      "truth": {
+        "kind": "other"
+      },
+      "reason": "Supplier returns a duplicate payment",
+      "independentEvidence": "Independent PDF extraction states that the supplier's own invoice was paid twice and that the supplier returns the duplicate 1,487.26 EUR. The recipient is the supplier's customer, not a seller receiving settlement of its own invoice.",
+      "historicalOracleSources": [
+        "test/bench/corpus5/manifest-letters.json"
+      ]
+    },
+    {
+      "file": "test/fixtures/v2_fix_a4_question_en.eml",
+      "sha256": "0a3dcf04ea1caea1dbc60e64d04377cd29e51168ceebcf32a2c3173481a1159b",
+      "truth": {
+        "kind": "other"
+      },
+      "reason": "Question without a payment assertion",
+      "independentEvidence": "Independent MIME text/plain decoding contains only a request to confirm whether invoice INV-4711 for EUR 1,250.00 has been paid, followed by thanks. There is no assertion that a payment was executed and no advice attachment.",
+      "historicalOracleSources": [
+        "test/fixtures/expected.json"
+      ]
+    }
+  ]
+}
