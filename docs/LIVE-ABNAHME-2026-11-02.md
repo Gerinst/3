@@ -57,9 +57,11 @@ Für alle 14 bewerteten Fälle wurden der Originalbetreff im zugestellten MIME u
 
 ## Zusätzliche lokale Prüfung: Beträge in Betreff und Dateiname
 
+**Historischer Stand vor dem Nachtrag vom 03.11.2026:** Die folgende Tabelle dokumentiert das frühere Verhalten. Die anschließend beauftragte Widerspruchssperre für Betreffbeträge und deren gesonderte Prüfungen stehen im [Nachtrag](BETREFFKONFLIKT-2026-11-03.md). Die hier dokumentierten 16 Originalfälle werden dadurch nicht rückwirkend zu Tests der neuen Regel.
+
 Auf Nachfrage wurden vier zusätzliche Beispiele mit einem eindeutig erkannten PDF-Zahlbetrag von `3.454,00` lokal geprüft. Diese Beispiele sind keine weiteren Microsoft-365-Livefälle und verändern die Bilanz der 16 vorbereiteten Fälle nicht.
 
-| Eingabe | Aktuelles Verhalten bei sicherem PDF-Ergebnis |
+| Eingabe | Damals beobachtetes Verhalten bei sicherem PDF-Ergebnis |
 | --- | --- |
 | Betreff `3.454,00 Zahlungsavis` | Betreff bleibt; Kategorie Avis |
 | Betreff `9.999,00 Zahlungsavis` | Neuer Betreff `3.454,00 9.999,00 Zahlungsavis`; danach Avis |

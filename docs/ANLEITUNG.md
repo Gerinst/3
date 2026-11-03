@@ -4,6 +4,8 @@ Diese Anleitung baut den Flow für ein **freigegebenes Postfach** (Exchange Shar
 
 Im Folgenden heißt dieser Zielordner kurz **Prüfordner**. `Archive` endet mit **e**; `Avisbetrag fehlt` besteht aus dem Wort **Avisbetrag**, einem Leerzeichen und **fehlt**. Gemeint ist der Unterordner im freigegebenen Postfach.
 
+Ein **klar abweichender Zahlungsbetrag im Betreff** sperrt seit dem Nachtrag vom 03.11.2026 die automatische Freigabe eines sonst sicheren PDF-/Tabellenavis. Die Mail wird mit unverändertem Betreff und ohne neue Kategorie in den Prüfordner verschoben. Passende Beträge bleiben zulässig; Rechnungsnummern, Datumsangaben, Prozente und Mengen zählen nicht als Zahlungsbeträge. Einzelheiten und Prüfstand stehen im [Nachtrag zur Betreffprüfung](BETREFFKONFLIKT-2026-11-03.md).
+
 Die früheren Klickwege und Live-Tests vom 30./31.10.2026 beziehen sich auf den damaligen Stand. Die erste lokale Sicherheitsprüfung vom 02.11.2026 umfasst Parsertests und simulierte Flow-Abläufe; der Gesamtstand ist **noch nicht in Microsoft 365 abgenommen**. Umfang, gefundene Fehler und verbleibende Risiken stehen im [Testbericht](TESTBERICHT.md). **Plan B ist nicht für den Produktivbetrieb freigegeben.** Der aktuelle Nachbau mit Feldern, Einstellungen und Formeln steht in `dist/avis-flow.html` (herunterladen und im Browser öffnen). Ein GitHub-Update ändert einen bereits laufenden Power-Automate-Flow nicht automatisch.
 
 Die ergänzende [Gegenprüfung mit dem alten Testarchiv](GEGENPRUEFUNG-ALTTESTS.md) verwendet die Eingaben aus `Gerinst/2testordner` und aus dessen Originalgeneratoren wiederhergestellte Dateien. Sie trennt verfügbare von fehlenden Eingaben, fachliche Fehler von geänderten früheren Kategorien und konservative Prüffälle von exakt übereinstimmenden Ergebnissen. Dazu kommt eine lokale Office-Script-Simulation. Auch diese Ergebnisse sind keine Live-Abnahme des angeschlossenen Postfachs.
@@ -18,6 +20,7 @@ Die [Liveprüfung vom 02.11.2026](LIVE-ABNAHME-2026-11-02.md) dokumentiert **14 
 | Ein Avis, Betrag nur ziemlich sicher (`medium`) | In den Prüfordner verschieben; keine neue Kategorie | unverändert |
 | Ein Avis, Betrag unsicher (`low`) | In den Prüfordner verschieben; keine neue Kategorie | unverändert |
 | Mehrere sichere Avise (`high`) mit vollständiger Betragsliste | Erst Betreff, danach Kategorie Avis | `1.200,30 + 5.632,21 + 500,42 Zahlungsavis` |
+| Klarer Widerspruch zwischen Betreffbetrag und sicherem PDF-/Tabellen-Zahlbetrag | In den Prüfordner verschieben; keine neue Kategorie | unverändert |
 | Unklar, kein lesbarer Betrag oder unvollständige/ungültige Betragsliste | In den Prüfordner verschieben; keine neue Kategorie | unverändert |
 | Export-/Skriptfehler oder Zeitüberschreitung | In den Prüfordner verschieben; keine neue Kategorie | unverändert |
 | Kein Avis (Rechnung, Reklamation, Bestellung, Info, Mahnung …) | keine Änderung | unverändert |
