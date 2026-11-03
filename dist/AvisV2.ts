@@ -4242,7 +4242,7 @@ function htmlToLines(html: string, reply: boolean): string[] {
   return lines;
 }
 
-function plainToLines(text: string, reply: boolean, forward: boolean): string[] {
+function plainToLines(text: string, reply: boolean, forward: boolean, keepParagraphs?: boolean): string[] {
   // plain text body -> lines (tabs as cell gaps, empty lines dropped); a reply ends where the quoted mail starts; in a
   // forward the ">" quote marks are removed
   const t = text.length > BODY_MAX_CHARS ? text.substring(0, BODY_MAX_CHARS) : text;
@@ -4252,7 +4252,7 @@ function plainToLines(text: string, reply: boolean, forward: boolean): string[] 
     let l = r.replace(/\t/g, "   ").replace(/\u00a0/g, " ").replace(/[\u200b-\u200d\ufeff]/g, "");
     if (forward) l = l.replace(/^(?:\s*>)+ ?/, "");
     l = trimEnd(l);
-    if (l.trim() !== "") out.push(l);
+    if (l.trim() !== "" || keepParagraphs) out.push(l);
   }
   return reply ? cutQuoted(out) : out;
 }
@@ -17863,7 +17863,7 @@ function mailResult(mail: MailScan, kw: string, subject: string): AvisResult {
   if (mail.encrypted) docs.push(unreadableDocument("smime.p7m", "smime-encrypted", "S/MIME encrypted mail - cannot be read"));
   if (mail.rpmsg) docs.push(unreadableDocument("message.rpmsg", "rpmsg", "protected mail (Microsoft Purview) - cannot be read"));
   // the mail text: one per mail (the outer one and attached mails), HTML preferred; a reply without its quoted history
-  let bodyHint = "";
+  let bodyHint = "", bodyStatements = "";
   for (let m = 0; m < mail.msgs.length; m++) {
     let html = false;
     for (const t of mail.texts) if (t.msg === m && t.html) html = true;
@@ -17895,6 +17895,16 @@ function mailResult(mail: MailScan, kw: string, subject: string): AvisResult {
           if (/\d[.,]\d{2}(?!\d)/.test(rest) && (AVIS_TITLE.test(restN) || PAYER_STATEMENT.test(restN) || PAYER_DONE.test(restN))) quotedPay = true;
           ls = cut;
         }
+      }
+      if (m === 0) {
+        // MIME transports wrap plain text inside a sentence. Keep the original
+        // paragraph and quote boundaries for the narrow attachment-description
+        // guard; the normal amount/layout input remains unchanged.
+        let statementLines = html ? ls : plainToLines(str, rep, fwd, true);
+        if (!rep && !fwd) statementLines = cutReplyQuote(statementLines);
+        const statements = statementLines.join("\n");
+        bodyStatements += (bodyStatements !== "" ? "\n\n" : "") + (html ? statements
+          : statements.split(/\n[ \t]*\n/).map((p) => p.replace(/[ \t]*\n[ \t]*/g, " ")).join("\n\n"));
       }
       for (const l of ls) lines.push(l);
       if (html && firstHtml === null) firstHtml = t.data;
@@ -18162,8 +18172,8 @@ function mailResult(mail: MailScan, kw: string, subject: string): AvisResult {
   // Bind a single unreadable scan/Word letter to an explicit attachment description.
   // This does not exempt encrypted, damaged, additional, or vaguely described files.
   const attached = docs.filter((d) => !d.body);
-  const describedOther = /(?:anbei|beigef[üu]gt|attached)[^.!?\n]{0,150}(?:gegengezeichnete auftragsbest[äa]tigung|unterschriebene auftragsbest[äa]tigung|signed order confirmation|einfuhrabgabenbescheid|customs assessment|formal notification of a change of (?:our )?bank details)/i.test(bodyText);
-  const bodyCompleted = bodyText.split(/\n+|[.!?;]\s+/).some((l) => executedPaymentStatement(l));
+  const describedOther = /(?:anbei|beigef[üu]gt|attached)[^.!?\n]{0,150}(?:gegengezeichnete auftragsbest[äa]tigung|unterschriebene auftragsbest[äa]tigung|signed order confirmation|einfuhrabgabenbescheid|customs assessment|formal notification of a change of (?:our )?bank details)/i.test(bodyStatements);
+  const bodyCompleted = bodyStatements.split(/\n+|[.!?;]\s+/).some((l) => executedPaymentStatement(l));
   if (attached.length === 1 && describedOther && !bodyCompleted && subjectHint === ""
     && !docs.some((d) => d.verdict === "advice" || d.verdict === "several" || (d.body && d.strong))) {
     const d = attached[0];

@@ -1,6 +1,6 @@
 const assert = require('node:assert/strict');
 const { load, eml, pdf, textAdvice } = require('./fixtures.cjs');
-const { xlsx } = require('./format-fixtures/builders.cjs');
+const { xlsx, zip } = require('./format-fixtures/builders.cjs');
 const { evaluate, expectsOther, validateCurrentBusinessOracles, selectCurrentBusinessOracles } = require('./legacy-corpus.cjs');
 
 // Independent business oracles: these texts describe requests, non-customer
@@ -251,6 +251,34 @@ check('the identical payment question alone remains untouched', () => other(ctx.
 check('ambiguous marketplace balance payout remains reviewable', () => review(parse(
   'BEISPIELMARKT GmbH\nMarktplatz-Services · Köln\nInformation\nDatum 28.10.2026\nIhr Guthaben von 980,00 EUR wird am 05.11.2026 ausgezahlt.',
   'direct-pdf',
+)));
+
+// A normal transport wrap does not change an explicit attachment description.
+// The parser cannot read Word files, so this exemption must stay limited to the
+// one described letter and must never hide a separate executed payment.
+const bankLetter = {
+  name: 'information.docx',
+  type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  text: zip([
+    { name: '[Content_Types].xml', data: '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>' },
+    { name: '_rels/.rels', data: '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="document" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>' },
+    { name: 'word/document.xml', data: '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body><w:p><w:r><w:t>Supplier account information</w:t></w:r></w:p><w:p><w:r><w:t>Please update our bank details in your supplier records for future payments. This letter announces no payment.</w:t></w:r></w:p></w:body></w:document>' },
+  ]),
+};
+const bankLetterDescription = 'Attached is a formal notification of a change of our bank details.';
+const parseBankLetter = body => ctx.main({}, eml({
+  subject: 'Account information', body, attachments: [bankLetter],
+}));
+for (const [name, body] of [
+  ['unwrapped', bankLetterDescription],
+  ['transport-wrapped', bankLetterDescription.replace('bank details', 'bank\ndetails')],
+]) check('single explicitly described Word bank letter is untouched / ' + name, () => other(parseBankLetter(body)));
+check('wrapped independent executed payment survives the Word-letter exemption', () => review(parseBankLetter(
+  bankLetterDescription.replace('bank details', 'bank\ndetails')
+    + '\n\nWe have\npaid your invoice INV-4711 today.\nTotal paid: EUR 1,234.56',
+)));
+check('separate paragraphs do not complete a Word attachment description', () => review(parseBankLetter(
+  bankLetterDescription.replace('bank details', 'bank\n\ndetails'),
 )));
 
 if (failures.length) { console.error(failures.join('\n')); process.exitCode = 1; }

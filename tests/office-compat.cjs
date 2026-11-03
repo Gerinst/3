@@ -9,7 +9,7 @@ const vm = require('node:vm');
 const assert = require('node:assert/strict');
 const { spawnSync } = require('node:child_process');
 const { load, eml, pdf, textAdvice, fixtures } = require('./fixtures.cjs');
-const { xlsx, ods, msg, cmsSigned } = require('./format-fixtures/builders.cjs');
+const { zip, xlsx, ods, msg, cmsSigned } = require('./format-fixtures/builders.cjs');
 
 const tsPath = process.argv[2] ? path.resolve(process.argv[2]) : process.env.OSEMU_TS || require.resolve('typescript');
 const ts = require(tsPath);
@@ -79,7 +79,31 @@ for (const [name, sample] of Object.entries(subjectCases)) {
 
 // Exercise the new non-advice decisions and their safety boundary in every
 // async model. These expectations are independent of the synchronous result.
+const bankLetter = {
+  name: 'bank-details.docx',
+  type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  text: zip([
+    { name: '[Content_Types].xml', data: '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>' },
+    { name: '_rels/.rels', data: '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>' },
+    { name: 'word/document.xml', data: '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body><w:p><w:r><w:t>Notification of changed bank details, not a payment advice.</w:t></w:r></w:p></w:body></w:document>' },
+  ]),
+};
+const bankDescription = 'Please find attached our formal notification of a change of our bank details and registered office address, effective 1 December 2026.';
+const wrappedBankDescription = bankDescription.replace('bank details', 'bank\r\ndetails');
 const nonAdviceCases = {
+  'non-advice-bank-letter-unwrapped.eml': {
+    outcome: 'other', subject: 'Change of bank details', body: bankDescription,
+    attachments: [bankLetter],
+  },
+  'non-advice-bank-letter-wrapped.eml': {
+    outcome: 'other', subject: 'Change of bank details', body: wrappedBankDescription,
+    attachments: [bankLetter],
+  },
+  'non-advice-bank-letter-with-wrapped-payment.eml': {
+    outcome: 'review', subject: 'Change of bank details',
+    body: wrappedBankDescription + '\r\n\r\nWe have today\r\npaid your invoices.\r\nAmount transferred: EUR 1,200.30',
+    attachments: [bankLetter],
+  },
   'non-advice-planned-payment.eml': {
     outcome: 'other', subject: 'Scheduled payment proposal',
     body: 'This payment proposal has not been approved. EUR 1,200.30 is scheduled for next month. A separate remittance advice will follow only after execution.',
@@ -156,6 +180,13 @@ const nonAdviceCases = {
 for (const [name, sample] of Object.entries(nonAdviceCases)) {
   samples[name] = sample.directPdf ? Buffer.from(pdf(sample.directPdf)) : Buffer.from(eml(sample), 'base64');
 }
+// Optionally exercise the exact privately retained received MIME, including its
+// transport wrapping, without committing message headers or attachment bytes.
+if (process.env.AVIS_OFFICE_RECEIVED_BANK_MAIL) {
+  const name = 'received-bank-details.eml';
+  samples[name] = fs.readFileSync(path.resolve(process.env.AVIS_OFFICE_RECEIVED_BANK_MAIL));
+  nonAdviceCases[name] = { outcome: 'other', useMimeSubject: true };
+}
 function checkNonAdviceOutcome(name, result) {
   const sample = nonAdviceCases[name];
   if (!sample) return;
@@ -204,7 +235,7 @@ for (const [name, input] of Object.entries(samples)) {
   const bytes = Buffer.from(input);
   fs.writeFileSync(path.join(fixtureDir, name), bytes);
   sync.officeInput = bytes.toString('base64');
-  sync.officeSubject = subjectCases[name]?.subject || nonAdviceCases[name]?.subject || 'Office Test';
+  sync.officeSubject = nonAdviceCases[name]?.useMimeSubject ? '' : subjectCases[name]?.subject || nonAdviceCases[name]?.subject || 'Office Test';
   const result = vm.runInContext("main({}, officeInput, '', officeSubject)", sync, { timeout: 10000 });
   checkSubjectOutcome(name, result);
   checkNonAdviceOutcome(name, result);
